@@ -82,7 +82,7 @@ export default function WebhookConfig() {
     }
 
     // Ajuste os roles como quiser (aqui deixei restrito)
-    const allowedRoles = ["admin", "juiz"];
+    const allowedRoles = ["admin", "juiz", "admin"];
     if (!allowedRoles.includes(user.role)) {
       alert("Acesso negado. Você não tem permissão para configurar Webhooks.");
       navigate("/dashboard");
