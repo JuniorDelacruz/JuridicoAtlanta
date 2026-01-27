@@ -1,7 +1,7 @@
 // frontend/src/pages/RequerimentoDetalhes.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { ArrowLeft, FileText, Clock, CheckCircle, XCircle, User } from 'lucide-react';
 
@@ -60,7 +60,7 @@ function RequerimentoDetalhes() {
           </div>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/requerimentos')}
+              onClick={() => navigate(`/requerimentos/${requerimento.tipo}`)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -129,7 +129,7 @@ function RequerimentoDetalhes() {
         {/* Botões de ação (futuro: aprovar, indeferir, editar) */}
         <div className="mt-8 flex justify-end gap-4">
           <button
-            onClick={() => navigate('/requerimentos')}
+            onClick={() => navigate(`/requerimentos/${requerimento.tipo}`)}
             className="px-6 py-2 bg-gray-300 hover:bg-gray-400 rounded-md"
           >
             Voltar
