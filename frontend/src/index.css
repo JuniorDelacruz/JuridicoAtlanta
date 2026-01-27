@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Você pode adicionar estilos customizados aqui depois */
+@theme {
+  --color-primary: #1e40af;     /* blue-800 exemplo */
+  --color-primary-dark: #1e3a8a;
+}
+
+/* Ou use classes normais do Tailwind */
