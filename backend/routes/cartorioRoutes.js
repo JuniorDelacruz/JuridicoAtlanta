@@ -107,7 +107,7 @@ router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res)
         await cadastro.save();
 
         // Chama o bot Discord para enviar mensagem (via webhook ou API interna)
-        await notifyDiscordBot(WEBHOOK_TYPES.CADASTRO_CIDADAO, cadastro);
+        await notifyDiscordBot("cadastroCidadao", cadastro);
 
         res.json({ msg: 'Cadastro aprovado e notificado no Discord', cadastro });
     } catch (err) {

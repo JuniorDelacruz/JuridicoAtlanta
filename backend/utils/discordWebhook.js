@@ -1,5 +1,8 @@
 // backend/utils/discordWebhook.js
 import axios from "axios";
+import db from "../models/index.js";
+
+const { WebhookConfig } = db;
 
 /**
  * Tipos oficiais (padroniza as chaves)
@@ -20,7 +23,8 @@ export const WEBHOOK_TYPES = {
 /**
  * Helpers
  */
-const safe = (val) => (val === undefined || val === null || val === "" ? "—" : String(val));
+const safe = (val) =>
+  val === undefined || val === null || val === "" ? "—" : String(val);
 
 const mentionUser = (discordId) => {
   const id = String(discordId ?? "").trim();
@@ -29,13 +33,22 @@ const mentionUser = (discordId) => {
 };
 
 /**
- * Resolve webhook:
- * - Prioridade 1: DISCORD_WEBHOOKS_JSON (JSON com chaves)
- * - Prioridade 2: DISCORD_WEBHOOK_<NOME> (por tipo)
- * - Fallback: DISCORD_WEBHOOK_DEFAULT
+ * Resolve webhook URL por tipo (via banco)
+ * - 1) tenta WebhookConfig (enabled=true)
+ * - 2) fallback para envs (JSON / env individuais / DEFAULT)
  */
-function resolveWebhookUrl(type) {
-  // Opção B
+async function resolveWebhookUrl(type) {
+  // 1) Banco (prioridade máxima)
+  try {
+    if (WebhookConfig) {
+      const row = await WebhookConfig.findOne({ where: { tipo: type } });
+      if (row && row.enabled && row.url) return row.url;
+    }
+  } catch (e) {
+    console.error("[discordWebhook] falha ao buscar webhook no banco:", e?.message || e);
+  }
+
+  // 2) Fallback env JSON
   const rawJson = process.env.DISCORD_WEBHOOKS_JSON;
   if (rawJson) {
     try {
@@ -46,7 +59,7 @@ function resolveWebhookUrl(type) {
     }
   }
 
-  // Opção A: mapeia type -> env key
+  // 3) Fallback env individuais
   const envKeyByType = {
     [WEBHOOK_TYPES.CADASTRO_CIDADAO]: "DISCORD_WEBHOOK_CADASTRO_CIDADAO",
     [WEBHOOK_TYPES.PORTE_ARMA]: "DISCORD_WEBHOOK_PORTE_ARMA",
@@ -136,9 +149,20 @@ function buildEmbed(type, data) {
         title: "REQUERIMENTO",
         description: `Tipo: ${safe(type)} • ID: ${safe(data?.id)}`,
         fields: [
-          { name: "Solicitante", value: safe(data?.nomeCompleto || data?.nome || data?.author), inline: false },
+          {
+            name: "Solicitante",
+            value: safe(data?.nomeCompleto || data?.nome || data?.author),
+            inline: false,
+          },
           { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
-          { name: "Dados", value: "```json\n" + JSON.stringify(data ?? {}, null, 2).slice(0, 900) + "\n```", inline: false },
+          {
+            name: "Dados",
+            value:
+              "```json\n" +
+              JSON.stringify(data ?? {}, null, 2).slice(0, 900) +
+              "\n```",
+            inline: false,
+          },
         ],
       };
     }
@@ -149,10 +173,12 @@ function buildEmbed(type, data) {
  * API principal
  */
 export async function notifyDiscord(type, data) {
-  const webhookUrl = resolveWebhookUrl(type);
+  const webhookUrl = await resolveWebhookUrl(type);
 
   if (!webhookUrl) {
-    console.error(`[discordWebhook] Nenhum webhook configurado para type="${type}" (nem DEFAULT).`);
+    console.error(
+      `[discordWebhook] Nenhum webhook configurado para type="${type}" (nem DEFAULT).`
+    );
     return;
   }
 
@@ -167,7 +193,8 @@ export async function notifyDiscord(type, data) {
     console.log(`[discordWebhook] enviado type="${type}" status=${res.status}`);
   } catch (err) {
     console.error(`[discordWebhook] erro ao enviar type="${type}":`, err.message);
-    if (err.response) console.error("Resposta do Discord:", JSON.stringify(err.response.data, null, 2));
+    if (err.response)
+      console.error("Resposta do Discord:", JSON.stringify(err.response.data, null, 2));
   }
 }
 
