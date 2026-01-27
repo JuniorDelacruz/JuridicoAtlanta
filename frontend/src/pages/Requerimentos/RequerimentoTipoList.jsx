@@ -97,7 +97,7 @@ export default function RequerimentoTipoList() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/requerimento")}
+              onClick={() => navigate("/requerimentos")}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
               <ArrowLeft className="h-4 w-4" />
