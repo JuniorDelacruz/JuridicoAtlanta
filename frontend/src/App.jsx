@@ -21,6 +21,7 @@ import TriagemCadastro from './pages/Triagem/Cadastro'
 import CodigoPenalAtlanta from './pages/CodigoPenalAtlanta';
 import DiretrizesTribunal from './pages/DiretrizesTribunal';
 import ConstituicaoAtlanta from './pages/ConstituicaoAtlanta';
+import WebhookConfigPage from './pages/Paineis/ConfigWebHook';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -162,6 +163,7 @@ function App() {
       <Route path="/requerimentos" element={<Requerimentos />} />
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
       <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
+      <Route path="/config/webhooks" element={<WebhookConfigPage />} />
 
       {/* 404 */}
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center text-2xl">Página não encontrada (404)</div>} />
