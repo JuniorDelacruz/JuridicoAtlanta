@@ -1,11 +1,26 @@
 // frontend/src/pages/WebhookConfig.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
+import {
+  Webhook,
+  Settings,
+  ArrowLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  RefreshCcw,
+  Search,
+  X,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
-/**
- * Ajuste se seu front usa outro baseURL.
- * Se você já tiver axios/service, pode trocar fetch por ele.
- */
-const API_BASE = import.meta?.env?.VITE_API_BASE_URL || ""; // ex: "https://juridicoatlanta.starkstore.dev.br"
+const API_URL =
+  import.meta?.env?.VITE_API_URL ||
+  import.meta?.env?.VITE_API_BASE_URL ||
+  "https://apijuridico.starkstore.dev.br";
 
 /**
  * Tipos oficiais (mesmos do backend)
@@ -26,120 +41,138 @@ const WEBHOOK_TYPES = [
 function isValidWebhookUrl(url) {
   try {
     const u = new URL(url);
-    // Discord webhooks normalmente começam com https://discord.com/api/webhooks/...
-    // mas se você usar outro provedor, mantém só o básico:
     return u.protocol === "https:" || u.protocol === "http:";
   } catch {
     return false;
   }
 }
 
-async function apiFetch(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    credentials: "include", // se seu auth usa cookie/sessão
-    ...options,
-  });
-
-  const text = await res.text();
-  let data = null;
-
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-
-  if (!res.ok) {
-    const msg =
-      (data && (data.message || data.error)) ||
-      `Erro HTTP ${res.status} em ${path}`;
-    throw new Error(msg);
-  }
-  return data;
+function typeLabel(tipo) {
+  const found = WEBHOOK_TYPES.find((t) => t.key === tipo);
+  return found ? found.label : tipo;
 }
 
-export default function WebhookConfigPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function WebhookConfig() {
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
 
-  // Form (create/edit)
-  const [editingId, setEditingId] = useState(null);
+  // modal
+  const [openModal, setOpenModal] = useState(false);
+  const [editing, setEditing] = useState(null); // {id,...} | null
+
+  // form
   const [tipo, setTipo] = useState(WEBHOOK_TYPES[0]?.key || "");
-  const [tipoCustom, setTipoCustom] = useState("");
+  const [customTipo, setCustomTipo] = useState("");
+  const [useCustom, setUseCustom] = useState(false);
   const [url, setUrl] = useState("");
   const [enabled, setEnabled] = useState(true);
 
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState(null); // {type:'ok'|'err', text:''}
+  const [toast, setToast] = useState(null); // {type:'ok'|'err', text:''}
+
+  // ===== permissão =====
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    // Ajuste os roles como quiser (aqui deixei restrito)
+    const allowedRoles = ["admin", "juiz"];
+    if (!allowedRoles.includes(user.role)) {
+      alert("Acesso negado. Você não tem permissão para configurar Webhooks.");
+      navigate("/dashboard");
+      return;
+    }
+  }, [isAuthenticated, user.role, navigate]);
 
   const tipoFinal = useMemo(() => {
-    if (tipo === "__custom__") return (tipoCustom || "").trim();
-    return tipo;
-  }, [tipo, tipoCustom]);
+    return useCustom ? (customTipo || "").trim() : tipo;
+  }, [useCustom, customTipo, tipo]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return items;
-    return items.filter((i) =>
-      String(i.tipo || "")
-        .toLowerCase()
-        .includes(term)
-    );
+    return items.filter((i) => String(i.tipo || "").toLowerCase().includes(term));
   }, [items, q]);
+
+  const authHeaders = () => {
+    const token = localStorage.getItem("token");
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   async function load() {
     setLoading(true);
-    setMsg(null);
+    setToast(null);
     try {
-      // esperado: [{id, tipo, url, enabled, createdAt, updatedAt}, ...]
-      const data = await apiFetch("/api/webhooks");
+      // esperado: [{ id, tipo, url, enabled, createdAt, updatedAt }]
+      const res = await axios.get(`${API_URL}/api/webhooks`, {
+        headers: authHeaders(),
+      });
+      const data = res.data;
       setItems(Array.isArray(data) ? data : data?.items || []);
-    } catch (e) {
-      setMsg({ type: "err", text: e.message });
+    } catch (err) {
+      setToast({
+        type: "err",
+        text: err.response?.data?.msg || err.response?.data?.message || err.message,
+      });
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    if (isAuthenticated) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   function resetForm() {
-    setEditingId(null);
+    setEditing(null);
     setTipo(WEBHOOK_TYPES[0]?.key || "");
-    setTipoCustom("");
+    setUseCustom(false);
+    setCustomTipo("");
     setUrl("");
     setEnabled(true);
   }
 
-  function startEdit(row) {
-    setEditingId(row.id);
+  function openCreate() {
+    resetForm();
+    setOpenModal(true);
+  }
+
+  function openEdit(row) {
+    setEditing(row);
     const known = WEBHOOK_TYPES.some((t) => t.key === row.tipo);
-    setTipo(known ? row.tipo : "__custom__");
-    setTipoCustom(known ? "" : row.tipo);
+    setUseCustom(!known);
+    setTipo(known ? row.tipo : WEBHOOK_TYPES[0]?.key || "");
+    setCustomTipo(known ? "" : row.tipo);
     setUrl(row.url || "");
     setEnabled(Boolean(row.enabled));
-    setMsg(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setOpenModal(true);
+    setToast(null);
+  }
+
+  function closeModal() {
+    setOpenModal(false);
+    resetForm();
   }
 
   async function onSubmit(e) {
     e.preventDefault();
-    setMsg(null);
+    setToast(null);
 
     if (!tipoFinal) {
-      setMsg({ type: "err", text: "Informe o tipo do webhook." });
+      setToast({ type: "err", text: "Informe o tipo do webhook." });
       return;
     }
     if (!url || !isValidWebhookUrl(url)) {
-      setMsg({ type: "err", text: "Informe uma URL válida." });
+      setToast({ type: "err", text: "Informe uma URL válida." });
       return;
     }
 
@@ -147,336 +180,377 @@ export default function WebhookConfigPage() {
     try {
       const payload = { tipo: tipoFinal, url: url.trim(), enabled };
 
-      if (editingId) {
-        await apiFetch(`/api/webhooks/${editingId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
+      if (editing?.id) {
+        await axios.put(`${API_URL}/api/webhooks/${editing.id}`, payload, {
+          headers: authHeaders(),
         });
-        setMsg({ type: "ok", text: "Webhook atualizado." });
+        setToast({ type: "ok", text: "Webhook atualizado com sucesso." });
       } else {
-        await apiFetch(`/api/webhooks`, {
-          method: "POST",
-          body: JSON.stringify(payload),
+        await axios.post(`${API_URL}/api/webhooks`, payload, {
+          headers: authHeaders(),
         });
-        setMsg({ type: "ok", text: "Webhook criado." });
+        setToast({ type: "ok", text: "Webhook criado com sucesso." });
       }
 
-      resetForm();
       await load();
-    } catch (e) {
-      setMsg({ type: "err", text: e.message });
+      closeModal();
+    } catch (err) {
+      setToast({
+        type: "err",
+        text: err.response?.data?.msg || err.response?.data?.message || err.message,
+      });
     } finally {
       setSaving(false);
     }
   }
 
   async function onDelete(row) {
-    const ok = confirm(
-      `Deletar webhook do tipo "${row.tipo}"? Isso não tem volta.`
-    );
+    const ok = confirm(`Deletar o webhook do tipo "${row.tipo}"? Isso não tem volta.`);
     if (!ok) return;
 
-    setMsg(null);
+    setToast(null);
     try {
-      await apiFetch(`/api/webhooks/${row.id}`, { method: "DELETE" });
-      setMsg({ type: "ok", text: "Webhook deletado." });
+      await axios.delete(`${API_URL}/api/webhooks/${row.id}`, {
+        headers: authHeaders(),
+      });
+      setToast({ type: "ok", text: "Webhook deletado." });
       await load();
-    } catch (e) {
-      setMsg({ type: "err", text: e.message });
+    } catch (err) {
+      setToast({
+        type: "err",
+        text: err.response?.data?.msg || err.response?.data?.message || err.message,
+      });
     }
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 6 }}>Configurar Webhooks</h1>
-      <p style={{ marginTop: 0, opacity: 0.8 }}>
-        Cada tipo de requerimento pode enviar para um webhook diferente.
-      </p>
-
-      {msg?.type === "err" && (
-        <div
-          style={{
-            padding: 12,
-            border: "1px solid #ffb4b4",
-            background: "#ffe9e9",
-            borderRadius: 10,
-            marginBottom: 16,
-          }}
-        >
-          <b>Erro:</b> {msg.text}
-        </div>
-      )}
-      {msg?.type === "ok" && (
-        <div
-          style={{
-            padding: 12,
-            border: "1px solid #b5f5c8",
-            background: "#eafff0",
-            borderRadius: 10,
-            marginBottom: 16,
-          }}
-        >
-          {msg.text}
-        </div>
-      )}
-
-      {/* FORM */}
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,.12)",
-          borderRadius: 14,
-          padding: 16,
-          marginBottom: 18,
-        }}
-      >
-        <h2 style={{ marginTop: 0, marginBottom: 12 }}>
-          {editingId ? "Editar Webhook" : "Novo Webhook"}
-        </h2>
-
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-          <div style={{ display: "grid", gap: 8 }}>
-            <label style={{ fontWeight: 600 }}>Tipo</label>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <select
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
-                style={{ padding: 10, borderRadius: 10, minWidth: 260 }}
-              >
-                {WEBHOOK_TYPES.map((t) => (
-                  <option key={t.key} value={t.key}>
-                    {t.label} ({t.key})
-                  </option>
-                ))}
-                <option value="__custom__">Custom (digitar chave)</option>
-              </select>
-
-              {tipo === "__custom__" && (
-                <input
-                  value={tipoCustom}
-                  onChange={(e) => setTipoCustom(e.target.value)}
-                  placeholder='Ex: "meuTipoNovo"'
-                  style={{
-                    padding: 10,
-                    borderRadius: 10,
-                    minWidth: 260,
-                    flex: 1,
-                  }}
-                />
-              )}
-            </div>
-
-            <small style={{ opacity: 0.75 }}>
-              Dica: no backend você usa isso como <code>tipo</code> pra resolver o webhook.
-            </small>
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Settings className="h-8 w-8" />
+            <h1 className="text-xl font-bold">Configuração de Webhooks - Jurídico Atlanta RP</h1>
           </div>
 
-          <div style={{ display: "grid", gap: 8 }}>
-            <label style={{ fontWeight: 600 }}>URL do Webhook</label>
-            <input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://discord.com/api/webhooks/...."
-              style={{ padding: 10, borderRadius: 10 }}
-            />
-            {!url ? null : isValidWebhookUrl(url) ? (
-              <small style={{ color: "green" }}>URL ok.</small>
-            ) : (
-              <small style={{ color: "crimson" }}>URL inválida.</small>
-            )}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <input
-              id="enabled"
-              type="checkbox"
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-            />
-            <label htmlFor="enabled" style={{ fontWeight: 600 }}>
-              Ativo (enabled)
-            </label>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div className="flex items-center gap-4">
             <button
-              type="submit"
-              disabled={saving}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 12,
-                border: 0,
-                cursor: "pointer",
-              }}
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
-              {saving ? "Salvando..." : editingId ? "Salvar alterações" : "Criar webhook"}
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao Dashboard
             </button>
 
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={saving}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,.2)",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-              >
-                Cancelar edição
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+            <span className="text-sm">Bem-vindo, {user.username || "Usuário"}</span>
 
-      {/* LISTA */}
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,.12)",
-          borderRadius: 14,
-          padding: 16,
-        }}
-      >
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <h2 style={{ margin: 0, flex: 1 }}>Webhooks cadastrados</h2>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Filtrar por tipo..."
-            style={{ padding: 10, borderRadius: 10, minWidth: 260 }}
-          />
-          <button
-            onClick={load}
-            disabled={loading}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,.2)",
-              background: "transparent",
-              cursor: "pointer",
-            }}
-          >
-            {loading ? "Carregando..." : "Atualizar"}
-          </button>
+            <button
+              onClick={logout}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Conteúdo */}
+      <main className="flex-grow max-w-7xl mx-auto py-8 px-6 w-full">
+        <h2 className="text-3xl font-bold text-gray-800 mb-3 text-center">Configurar Webhooks</h2>
+
+        <p className="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+          Aqui você define para qual webhook do Discord cada tipo de requerimento vai notificar.
+          Você pode ativar/desativar e trocar URLs sem mexer no código.
+        </p>
+
+        {/* Toast */}
+        {toast?.type === "err" && (
+          <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-lg">
+            <b>Erro:</b> {toast.text}
+          </div>
+        )}
+        {toast?.type === "ok" && (
+          <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-100 border border-green-200 text-green-800 rounded-lg">
+            {toast.text}
+          </div>
+        )}
+
+        {/* Cards (ações) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-white border border-blue-200 hover:shadow-lg rounded-xl p-6 transition">
+            <div className="flex items-center gap-3 mb-3">
+              <Webhook className="h-8 w-8 text-blue-700" />
+              <h3 className="text-xl font-semibold">Gerenciar Webhooks</h3>
+            </div>
+            <p className="text-gray-600 mb-5">
+              Crie/edite webhooks por tipo de requerimento.
+            </p>
+            <button
+              onClick={openCreate}
+              className="w-full flex items-center justify-center gap-2 px-6 py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Webhook
+            </button>
+          </div>
+
+          <div className="bg-white border border-gray-200 hover:shadow-lg rounded-xl p-6 transition">
+            <div className="flex items-center gap-3 mb-3">
+              <Search className="h-8 w-8 text-gray-700" />
+              <h3 className="text-xl font-semibold">Filtrar por tipo</h3>
+            </div>
+            <p className="text-gray-600 mb-3">Procure por chave do tipo (ex: registroArma).</p>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Digite para filtrar..."
+            />
+          </div>
+
+          <div className="bg-white border border-gray-200 hover:shadow-lg rounded-xl p-6 transition">
+            <div className="flex items-center gap-3 mb-3">
+              <RefreshCcw className="h-8 w-8 text-gray-700" />
+              <h3 className="text-xl font-semibold">Sincronizar</h3>
+            </div>
+            <p className="text-gray-600 mb-5">
+              Atualiza a lista direto do banco.
+            </p>
+            <button
+              onClick={load}
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 px-6 py-2 rounded-md font-medium ${
+                loading ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-gray-700 text-white hover:bg-gray-800"
+              }`}
+            >
+              <RefreshCcw className="h-4 w-4" />
+              {loading ? "Carregando..." : "Atualizar"}
+            </button>
+          </div>
         </div>
 
-        <div style={{ marginTop: 12, overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              minWidth: 900,
-            }}
-          >
-            <thead>
-              <tr style={{ textAlign: "left", opacity: 0.85 }}>
-                <th style={{ padding: 10, borderBottom: "1px solid rgba(255,255,255,.12)" }}>
-                  Tipo
-                </th>
-                <th style={{ padding: 10, borderBottom: "1px solid rgba(255,255,255,.12)" }}>
-                  URL
-                </th>
-                <th style={{ padding: 10, borderBottom: "1px solid rgba(255,255,255,.12)" }}>
-                  Enabled
-                </th>
-                <th style={{ padding: 10, borderBottom: "1px solid rgba(255,255,255,.12)" }}>
-                  Ações
-                </th>
-              </tr>
-            </thead>
+        {/* Tabela */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-5 border-b flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-800">Webhooks cadastrados</h3>
+            <span className="text-sm text-gray-500">
+              Total: <b>{filtered.length}</b>
+            </span>
+          </div>
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} style={{ padding: 14 }}>
-                    Carregando...
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
+              <thead className="bg-gray-50">
+                <tr className="text-left text-gray-700">
+                  <th className="p-4 font-semibold">Tipo</th>
+                  <th className="p-4 font-semibold">URL</th>
+                  <th className="p-4 font-semibold">Status</th>
+                  <th className="p-4 font-semibold">Ações</th>
                 </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={{ padding: 14, opacity: 0.75 }}>
-                    Nenhum webhook encontrado.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td
-                      style={{
-                        padding: 10,
-                        borderBottom: "1px solid rgba(255,255,255,.08)",
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      {row.tipo}
-                    </td>
-                    <td
-                      style={{
-                        padding: 10,
-                        borderBottom: "1px solid rgba(255,255,255,.08)",
-                        fontFamily: "monospace",
-                        opacity: 0.9,
-                      }}
-                      title={row.url}
-                    >
-                      {String(row.url || "").slice(0, 80)}
-                      {String(row.url || "").length > 80 ? "..." : ""}
-                    </td>
-                    <td
-                      style={{
-                        padding: 10,
-                        borderBottom: "1px solid rgba(255,255,255,.08)",
-                      }}
-                    >
-                      {row.enabled ? "✅" : "❌"}
-                    </td>
-                    <td
-                      style={{
-                        padding: 10,
-                        borderBottom: "1px solid rgba(255,255,255,.08)",
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        onClick={() => startEdit(row)}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "1px solid rgba(255,255,255,.2)",
-                          background: "transparent",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => onDelete(row)}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "1px solid rgba(255,0,0,.35)",
-                          background: "transparent",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Deletar
-                      </button>
+              </thead>
+
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td className="p-4 text-gray-600" colSpan={4}>
+                      Carregando...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td className="p-4 text-gray-600" colSpan={4}>
+                      Nenhum webhook encontrado.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((row) => (
+                    <tr key={row.id} className="border-t">
+                      <td className="p-4">
+                        <div className="font-semibold text-gray-900">{typeLabel(row.tipo)}</div>
+                        <div className="text-xs text-gray-500 font-mono">{row.tipo}</div>
+                      </td>
 
-          <div style={{ marginTop: 10, opacity: 0.75 }}>
-            Total: <b>{filtered.length}</b>
+                      <td className="p-4">
+                        <div className="font-mono text-sm text-gray-700">
+                          {String(row.url || "").slice(0, 85)}
+                          {String(row.url || "").length > 85 ? "..." : ""}
+                        </div>
+                      </td>
+
+                      <td className="p-4">
+                        {row.enabled ? (
+                          <span className="inline-flex items-center gap-2 text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2 text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm">
+                            <XCircle className="h-4 w-4" />
+                            Desativado
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="p-4">
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => openEdit(row)}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium transition"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Editar
+                          </button>
+
+                          <button
+                            onClick={() => onDelete(row)}
+                            className="flex items-center gap-2 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm font-medium transition"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Deletar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+
+        {/* Modal */}
+        {openModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h3 className="text-2xl font-bold">
+                  {editing?.id ? "Editar Webhook" : "Novo Webhook"}
+                </h3>
+                <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <form onSubmit={onSubmit} className="space-y-4">
+                  {/* Tipo */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo do requerimento
+                    </label>
+
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <select
+                        value={tipo}
+                        onChange={(e) => setTipo(e.target.value)}
+                        disabled={useCustom}
+                        className={`w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          useCustom ? "bg-gray-100 text-gray-500" : ""
+                        }`}
+                      >
+                        {WEBHOOK_TYPES.map((t) => (
+                          <option key={t.key} value={t.key}>
+                            {t.label} ({t.key})
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="useCustom"
+                          type="checkbox"
+                          checked={useCustom}
+                          onChange={(e) => setUseCustom(e.target.checked)}
+                        />
+                        <label htmlFor="useCustom" className="text-sm text-gray-700">
+                          Custom
+                        </label>
+                      </div>
+                    </div>
+
+                    {useCustom && (
+                      <div className="mt-3">
+                        <input
+                          value={customTipo}
+                          onChange={(e) => setCustomTipo(e.target.value)}
+                          placeholder='Ex: "porteArmaEspecial"'
+                          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Use essa chave no backend ao salvar o requerimento (<span className="font-mono">tipo</span>).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* URL */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      URL do Webhook
+                    </label>
+                    <input
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://discord.com/api/webhooks/..."
+                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {url ? (
+                      isValidWebhookUrl(url) ? (
+                        <p className="text-xs text-green-700 mt-1">URL válida.</p>
+                      ) : (
+                        <p className="text-xs text-red-700 mt-1">URL inválida.</p>
+                      )
+                    ) : null}
+                  </div>
+
+                  {/* Enabled */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="enabled"
+                      type="checkbox"
+                      checked={enabled}
+                      onChange={(e) => setEnabled(e.target.checked)}
+                    />
+                    <label htmlFor="enabled" className="text-sm font-medium text-gray-700">
+                      Ativo (enabled)
+                    </label>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="mt-8 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="px-6 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {saving ? "Salvando..." : editing?.id ? "Salvar alterações" : "Criar webhook"}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="mt-6 text-xs text-gray-500">
+                  <b>Dica:</b> você pode ter 1 webhook por tipo. Se quiser múltiplos por tipo, a gente muda o schema pra
+                  ter “canal”/“categoria” também.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-gray-400 py-6 text-center mt-auto">
+        <p>© {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados</p>
+      </footer>
     </div>
   );
 }
