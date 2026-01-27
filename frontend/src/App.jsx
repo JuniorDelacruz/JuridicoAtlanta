@@ -162,7 +162,7 @@ function App() {
       <Route path="/triagem" element={<Triagem />} />
 
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
-      <Route path="/requerimento/:slug/novo" element={<RequerimentoNovo />} />
+      <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
       <Route path="/requerimentos/:slug" element={<RequerimentoTipoList />} />
       <Route path="/constituicao" element={<ConstituicaoAtlanta />} />
