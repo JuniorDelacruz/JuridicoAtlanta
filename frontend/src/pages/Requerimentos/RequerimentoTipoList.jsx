@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext";
-import { getTipoBySlug } from "../config/requerimentosTipos";
+import { useAuth } from "../../context/AuthContext";
+import { getTipoBySlug } from "../../config/requerimentosTipos";
 import { ArrowLeft, Plus, Search as SearchIcon } from "lucide-react";
 
 const API_URL = import.meta?.env?.VITE_API_URL || "https://apijuridico.starkstore.dev.br";
