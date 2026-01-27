@@ -8,7 +8,7 @@ const router = express.Router();
 const { Requerimento, User } = db;
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
-router.get("/resumo", authMiddleware(), async (req, res) => {
+router.get("/resumo", authMiddleware([ 'admin']), async (req, res) => {
     try {
         const where = {};
         if (!["admin", "conselheiro"].includes(req.user.role) && req.user.subRole !== "equipejuridico") {
@@ -109,6 +109,30 @@ router.post("/", authMiddleware(), async (req, res) => {
     }
 });
 
+
+// PATCH /api/requerimentos/:id/carimbar
+router.patch("/:id/carimbar", authMiddleware(["tabeliao", "escrivao"]), async (req, res) => {
+    try {
+        const requer = await Requerimento.findByPk(req.params.id);
+        if (!requer) return res.status(404).json({ msg: "Requerimento não encontrado" });
+
+        if (requer.tipo !== "Porte de Arma" || requer.status !== "APROVADO") {
+            return res.status(400).json({ msg: "Não pode carimbar este requerimento" });
+        }
+
+        // Se essas colunas não existem no model/tabela, isso também vai quebrar.
+        requer.carimbadoPor = req.user.id;
+        requer.dataCarimbo = new Date();
+        await requer.save();
+
+        res.json({ msg: "Carimbado com sucesso", requerimento: requer });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Erro ao carimbar" });
+    }
+});
+
+
 // GET /api/requerimentos/:numero - Detalhes de um requerimento
 router.get("/:numero", authMiddleware(), async (req, res) => {
     try {
@@ -144,26 +168,5 @@ router.get("/:numero", authMiddleware(), async (req, res) => {
     }
 });
 
-// PATCH /api/requerimentos/:id/carimbar
-router.patch("/:id/carimbar", authMiddleware(["tabeliao", "escrivao"]), async (req, res) => {
-    try {
-        const requer = await Requerimento.findByPk(req.params.id);
-        if (!requer) return res.status(404).json({ msg: "Requerimento não encontrado" });
-
-        if (requer.tipo !== "Porte de Arma" || requer.status !== "APROVADO") {
-            return res.status(400).json({ msg: "Não pode carimbar este requerimento" });
-        }
-
-        // Se essas colunas não existem no model/tabela, isso também vai quebrar.
-        requer.carimbadoPor = req.user.id;
-        requer.dataCarimbo = new Date();
-        await requer.save();
-
-        res.json({ msg: "Carimbado com sucesso", requerimento: requer });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ msg: "Erro ao carimbar" });
-    }
-});
 
 export default router;

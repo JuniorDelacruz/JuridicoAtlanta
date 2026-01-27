@@ -160,7 +160,7 @@ function App() {
       <Route path="/cartorio" element={<Cartorio />} />
       <Route path="/triagem" element={<Triagem />} />
 
-      <Route path="/requerimentos/:id" element={<RequerimentoDetalhes />} />
+      <Route path="/requerimentos/detalhe/:id" element={<RequerimentoDetalhes />} />
 
       <Route path="/requerimentos" element={<RequerimentoHub />} />
       <Route path="/requerimentos/:slug" element={<RequerimentoTipoList />} />
