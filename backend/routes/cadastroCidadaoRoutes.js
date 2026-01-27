@@ -9,7 +9,7 @@ const { CadastroCidadao } = db;
 
 
 // GET /api/cadastros/existe?identidade=XXX
-router.get("/existe", authMiddleware(), async (req, res) => {
+router.get("/existe", authMiddleware(['admin']), async (req, res) => {
 try {
 const identidade = String(req.query.identidade || "").trim();
 if (!identidade) return res.status(400).json({ msg: "Identidade é obrigatória" });
