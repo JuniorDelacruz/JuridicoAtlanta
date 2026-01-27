@@ -110,7 +110,7 @@ router.post("/", authMiddleware(), async (req, res) => {
 });
 
 // ✅ GET /api/requerimentos/:numero — SÓ NÚMEROS
-router.get("/:numero(\\d+)", authMiddleware(), async (req, res) => {
+router.get("/:numero", authMiddleware(), async (req, res) => {
   try {
     const numero = Number(req.params.numero);
 
