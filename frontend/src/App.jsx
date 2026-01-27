@@ -21,7 +21,7 @@ import TriagemCadastro from './pages/Triagem/Cadastro'
 import CodigoPenalAtlanta from './pages/CodigoPenalAtlanta';
 import DiretrizesTribunal from './pages/DiretrizesTribunal';
 import ConstituicaoAtlanta from './pages/ConstituicaoAtlanta';
-import WebhookConfigPage from './pages/Paineis/ConfigWebHook';
+import WebhookConfig from './pages/Paineis/ConfigWebHook';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -154,7 +154,7 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/paineis/webhooks" element={<WebhookConfigPage />} />
+      <Route path="/paineis/webhooks" element={<WebhookConfig />} />
       <Route path="/triagem/cadastro" element={<TriagemCadastro />} />
       <Route path="/cartorio" element={<Cartorio />} />
       <Route path="/triagem" element={<Triagem />} />
