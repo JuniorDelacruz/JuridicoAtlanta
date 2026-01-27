@@ -78,7 +78,7 @@ export default function RequerimentoNovo() {
     }
     if (!permitido) {
       alert("Acesso negado para este tipo de requerimento.");
-      navigate(`/requerimento/${slug}`);
+      navigate(`/requerimentos/${slug}`);
       return;
     }
 
@@ -191,7 +191,7 @@ export default function RequerimentoNovo() {
       });
 
       setToast({ type: "ok", text: "Requerimento criado com sucesso!" });
-      navigate(`/requerimento/${slug}`); // volta pra lista do tipo
+      navigate(`/requerimentos/${slug}`); // volta pra lista do tipo
     } catch (err) {
       setToast({
         type: "err",
@@ -214,7 +214,7 @@ export default function RequerimentoNovo() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate(`/requerimento/${slug}`)}
+              onClick={() => navigate(`/requerimentos/${slug}`)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
               <ArrowLeft className="h-4 w-4" />

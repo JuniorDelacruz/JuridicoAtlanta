@@ -6,7 +6,7 @@ import axios from 'axios';
 import { ArrowLeft, FileText, Clock, CheckCircle, XCircle, User } from 'lucide-react';
 
 function RequerimentoDetalhes() {
-  const { id } = useParams(); // pega o :id da URL
+  const { id, slug } = useParams(); // pega o :id da URL
   const { user, logout , isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [requerimento, setRequerimento] = useState(null);
@@ -60,7 +60,7 @@ function RequerimentoDetalhes() {
           </div>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate(`/requerimentos`)}
+              onClick={() => navigate(`/requerimentos/${slug}`)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -129,7 +129,7 @@ function RequerimentoDetalhes() {
         {/* Botões de ação (futuro: aprovar, indeferir, editar) */}
         <div className="mt-8 flex justify-end gap-4">
           <button
-            onClick={() => navigate(`/requerimentos`)}
+            onClick={() => navigate(`/requerimentos/${slug}`)}
             className="px-6 py-2 bg-gray-300 hover:bg-gray-400 rounded-md"
           >
             Voltar
