@@ -33,6 +33,7 @@ out/
 .next/
 .next-cache/
 coverage/
+package-lock.json
 
 
 # =========================
