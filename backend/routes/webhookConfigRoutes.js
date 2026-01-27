@@ -8,12 +8,12 @@ import {
 } from "../controllers/webhookConfigController.js";
 
 import auth from "../middleware/auth.js"; // <= ajuste pro seu middleware real
-import { requireRoles } from "../middleware/roleGuard.js";
+import { authMiddleware } from "../middleware/auth.js";
 
 const router = Router();
 
 // Somente admin/juiz (ajuste se quiser)
-router.use(auth, requireRoles("admin", "juiz"));
+router.use(auth, authMiddleware(["admin", "juiz"]));
 
 router.get("/", listWebhooks);
 router.post("/", createWebhook);
