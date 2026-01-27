@@ -15,7 +15,7 @@ export const TIPOS_REQUERIMENTO = [
                     "Pump Shotgun", "Sawedoff Shotgun", "Metralhadora Thompson", "Todos os armamentos"
                 ]
             },
-            { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true },
+            { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true, verifyCadastro: true, },
         ],
     },
     {
@@ -24,7 +24,7 @@ export const TIPOS_REQUERIMENTO = [
         label: "Troca de Nome",
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
         fields: [
-            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true },
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
             { name: "novoNome", label: "Novo Nome Desejado", type: "text", required: true },
             { name: "motivo", label: "Motivo da troca", type: "textarea", required: true },
         ],

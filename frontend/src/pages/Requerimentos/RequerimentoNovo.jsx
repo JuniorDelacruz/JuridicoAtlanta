@@ -1,9 +1,10 @@
+// frontend/src/pages/requerimentos/RequerimentoNovo.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { getTipoBySlug } from "../../config/requerimentosTipos";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 const API_URL =
   import.meta?.env?.VITE_API_URL ||
@@ -43,7 +44,9 @@ export default function RequerimentoNovo() {
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
+    return (
+      tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin"
+    );
   }, [tipoCfg, user?.role, isEquipeJuridica]);
 
   const [values, setValues] = useState(() => initialValues(tipoCfg?.fields));
@@ -51,22 +54,37 @@ export default function RequerimentoNovo() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // ====== verificação de cadastro (identidade/cartório) ======
+  const [verif, setVerif] = useState({
+    status: "idle", // idle | checking | ok | fail
+    identidade: "",
+    cidadao: null,
+    error: null,
+  });
+
+  // pega 1 campo que tenha verifyCadastro: true
+  const verifyField = useMemo(() => {
+    return (tipoCfg?.fields || []).find((f) => f.verifyCadastro) || null;
+  }, [tipoCfg]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     if (!tipoCfg) {
-      navigate("/requerimentos");
+      navigate("/requerimento");
       return;
     }
     if (!permitido) {
       alert("Acesso negado para este tipo de requerimento.");
-      navigate(`/requerimentos/${slug}`);
+      navigate(`/requerimento/${slug}`);
       return;
     }
+
     setValues(initialValues(tipoCfg.fields));
     setErrors({});
+    setVerif({ status: "idle", identidade: "", cidadao: null, error: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, isAuthenticated]);
 
@@ -74,13 +92,90 @@ export default function RequerimentoNovo() {
     setValues((p) => ({ ...p, [name]: value }));
   }
 
+  // debounce + verificação no backend
+  useEffect(() => {
+    if (!verifyField) return;
+
+    const identidade = String(values[verifyField.name] || "").trim();
+
+    if (!identidade) {
+      setVerif({ status: "idle", identidade: "", cidadao: null, error: null });
+      return;
+    }
+
+    setVerif((p) => ({ ...p, status: "checking", identidade, error: null }));
+
+    const t = setTimeout(async () => {
+      try {
+        // BACKEND deve ter: GET /api/cadastros/existe?identidade=XXX
+        const res = await axios.get(`${API_URL}/api/cadastros/existe`, {
+          headers: authHeaders(),
+          params: { identidade },
+        });
+
+        if (res.data?.exists) {
+          setVerif({
+            status: "ok",
+            identidade,
+            cidadao: res.data.cidadao || null,
+            error: null,
+          });
+        } else {
+          setVerif({
+            status: "fail",
+            identidade,
+            cidadao: null,
+            error: null,
+          });
+        }
+      } catch (err) {
+        setVerif({
+          status: "fail",
+          identidade,
+          cidadao: null,
+          error: err.response?.data?.msg || err.response?.data?.message || err.message,
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(t);
+  }, [values, verifyField]);
+
+  const submitDisabled = useMemo(() => {
+    if (saving) return true;
+    if (!verifyField) return false;
+
+    const identidade = String(values[verifyField.name] || "").trim();
+    if (!identidade) return true;
+
+    // precisa estar ok e ser exatamente a identidade atual
+    return verif.status !== "ok" || verif.identidade !== identidade;
+  }, [saving, verifyField, values, verif.status, verif.identidade]);
+
   async function onSubmit(e) {
     e.preventDefault();
     if (!tipoCfg) return;
 
+    // valida required
     const v = validate(tipoCfg.fields, values);
     setErrors(v);
     if (Object.keys(v).length) return;
+
+    // trava submit se o campo de cartório existe e não validou
+    if (verifyField) {
+      const identidade = String(values[verifyField.name] || "").trim();
+      if (!identidade) {
+        setErrors((p) => ({ ...p, [verifyField.name]: "Campo obrigatório" }));
+        return;
+      }
+      if (verif.status !== "ok" || verif.identidade !== identidade) {
+        setToast({
+          type: "err",
+          text: "Identidade do cartório não encontrada (ou ainda verificando).",
+        });
+        return;
+      }
+    }
 
     setSaving(true);
     setToast(null);
@@ -96,7 +191,7 @@ export default function RequerimentoNovo() {
       });
 
       setToast({ type: "ok", text: "Requerimento criado com sucesso!" });
-      navigate(`/requerimentos/${slug}`); // volta pra lista do tipo
+      navigate(`/requerimento/${slug}`); // volta pra lista do tipo
     } catch (err) {
       setToast({
         type: "err",
@@ -119,7 +214,7 @@ export default function RequerimentoNovo() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate(`/requerimentos/${slug}`)}
+              onClick={() => navigate(`/requerimento/${slug}`)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -152,7 +247,9 @@ export default function RequerimentoNovo() {
 
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{tipoCfg.label}</h2>
-          <p className="text-gray-600 mb-6">Preencha os campos abaixo para abrir o requerimento.</p>
+          <p className="text-gray-600 mb-6">
+            Preencha os campos abaixo para abrir o requerimento.
+          </p>
 
           <form onSubmit={onSubmit} className="space-y-4">
             {tipoCfg.fields.map((f) => (
@@ -190,20 +287,52 @@ export default function RequerimentoNovo() {
                   />
                 )}
 
-                {errors[f.name] && <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>}
+                {/* status de verificação do cartório (se esse campo estiver marcado) */}
+                {f.verifyCadastro && (
+                  <div className="mt-2 text-sm">
+                    {verif.status === "checking" ? (
+                      <span className="inline-flex items-center gap-2 text-gray-600">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Verificando no cartório...
+                      </span>
+                    ) : verif.status === "ok" ? (
+                      <span className="inline-flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Encontrado: <b>{verif.cidadao?.nomeCompleto || "Cidadão"}</b>{" "}
+                        ({verif.cidadao?.status})
+                      </span>
+                    ) : verif.status === "fail" ? (
+                      <span className="inline-flex items-center gap-2 text-red-700 bg-red-50 px-3 py-1 rounded-full">
+                        <XCircle className="h-4 w-4" />
+                        Não encontrado no banco do cartório
+                        {verif.error ? `: ${verif.error}` : "."}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+
+                {errors[f.name] && (
+                  <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>
+                )}
               </div>
             ))}
 
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={submitDisabled}
                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
               >
                 <Save className="h-4 w-4" />
                 {saving ? "Salvando..." : "Criar requerimento"}
               </button>
             </div>
+
+            {/* dica rápida pra dev */}
+            {verifyField && verif.status !== "ok" && (
+              <p className="text-xs text-gray-500">
+                * Este tipo exige validação do cartório antes de enviar.
+              </p>
+            )}
           </form>
         </div>
       </main>
