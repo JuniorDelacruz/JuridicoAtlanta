@@ -22,6 +22,8 @@ import CodigoPenalAtlanta from './pages/CodigoPenalAtlanta';
 import DiretrizesTribunal from './pages/DiretrizesTribunal';
 import ConstituicaoAtlanta from './pages/ConstituicaoAtlanta';
 import WebhookConfig from './pages/Paineis/ConfigWebHook';
+import RequerimentoHub from './pages/Requerimentos';
+import RequerimentoTipoList from './pages/Requerimentos/RequerimentoTipoList';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -160,8 +162,11 @@ function App() {
       <Route path="/triagem" element={<Triagem />} />
 
       <Route path="/requerimentos/:id" element={<RequerimentoDetalhes />} />
+
+      <Route path="/requerimento" element={<RequerimentoHub />} />
+      <Route path="/requerimento/:slug" element={<RequerimentoTipoList />} />
       <Route path="/constituicao" element={<ConstituicaoAtlanta />} />
-      <Route path="/requerimentos" element={<Requerimentos />} />
+      
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
       <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
 
