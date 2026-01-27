@@ -20,7 +20,7 @@ router.get('/discord/callback',
     );
     
     // Redireciona para o frontend com token (ou salva na session)
-    res.redirect(`https://juridicoatlanta.starkstore.dev.br//dashboard?token=${token}`);
+    res.redirect(`https://juridicoatlanta.starkstore.dev.br/dashboard?token=${token}`);
     // Ou use res.json({ token }) se for API pura
   }
 );
