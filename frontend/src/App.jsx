@@ -13,7 +13,6 @@ import Login from './pages/Login'; // ajuste o caminho se for diferente
 import Dashboard from './pages/Dashboard';
 import Paineis from './pages/Paineis';
 import ProtectedRoute from './components/ProtectedRoute';
-import Requerimentos from './pages/Requerimentos';
 import RequerimentoDetalhes from './pages/RequerimentoDetalhes';
 import Triagem from './pages/Triagem';
 import Cartorio from './pages/Cartorio';
