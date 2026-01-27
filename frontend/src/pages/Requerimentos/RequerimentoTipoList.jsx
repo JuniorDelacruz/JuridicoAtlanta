@@ -38,12 +38,12 @@ export default function RequerimentoTipoList() {
       return;
     }
     if (!tipoCfg) {
-      navigate("/requerimento");
+      navigate("/requerimentos");
       return;
     }
     if (!permitido) {
       alert("Acesso negado para este tipo de requerimento.");
-      navigate("/requerimento");
+      navigate("/requerimentos");
       return;
     }
 
@@ -83,7 +83,7 @@ export default function RequerimentoTipoList() {
 
   // Aqui você decide: navegar pra /requerimento/:slug/novo (recomendado)
   // ou abrir modal. Vou deixar navegação.
-  const handleNovo = () => navigate(`/requerimento/${slug}/novo`);
+  const handleNovo = () => navigate(`/requerimentos/${slug}/novo`);
 
   if (!tipoCfg) return null;
 
