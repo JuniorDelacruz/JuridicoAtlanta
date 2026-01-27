@@ -162,8 +162,8 @@ function App() {
 
       <Route path="/requerimentos/:id" element={<RequerimentoDetalhes />} />
 
-      <Route path="/requerimento" element={<RequerimentoHub />} />
-      <Route path="/requerimento/:slug" element={<RequerimentoTipoList />} />
+      <Route path="/requerimentos" element={<RequerimentoHub />} />
+      <Route path="/requerimentos/:slug" element={<RequerimentoTipoList />} />
       <Route path="/constituicao" element={<ConstituicaoAtlanta />} />
       
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
