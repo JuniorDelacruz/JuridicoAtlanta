@@ -8,7 +8,7 @@ import {
 } from "../controllers/webhookConfigController.js";
 
 import auth from "../middleware/auth.js"; // <= ajuste pro seu middleware real
-import { authMiddleware } from "../middleware/auth.js";
+import authMiddleware from '../middleware/auth.js';
 
 const router = Router();
 
