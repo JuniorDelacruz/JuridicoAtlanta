@@ -26,8 +26,8 @@ router.get("/existe", authMiddleware(), async (req, res) => {
     const cidadao = await CadastroCidadao.findOne({
       where: {
         [Op.or]: [
-          { identidade: identidade },
-          { identidade: identidadeNorm },
+          { id: identidade },
+          { id: identidadeNorm },
         ],
       },
       attributes: ["id", "nomeCompleto", "identidade", "status", "discordId", "createdAt"],
