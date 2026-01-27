@@ -34,24 +34,36 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Casamento",
         label: "Casamento",
         roles: ["tabeliao", "escrivao", "juiz", "admin"],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+        ]
     },
     {
         slug: "limpeza-de-ficha",
         tipoDb: "Limpeza de Ficha",
         label: "Limpeza de Ficha",
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+        ]
     },
     {
         slug: "alvara",
         tipoDb: "Emitir Alvará",
         label: "Emitir Alvará",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+        ]
     },
     {
         slug: "renovacao-alvara",
         tipoDb: "Renovação de Alvará",
         label: "Renovação de Alvará",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+        ]
     },
 ];
 
