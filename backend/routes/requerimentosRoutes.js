@@ -7,25 +7,30 @@ const router = express.Router();
 const { Requerimento, User } = db;
 
 // GET /api/requerimentos - Lista requerimentos (todos para admin/equipe, só os seus para outros)
-router.get('/', authMiddleware(), async (req, res) => {
+// GET /api/requerimentos?tipo=Troca%20de%20Nome&status=PENDENTE
+router.get("/", authMiddleware(), async (req, res) => {
     try {
         const where = {};
+        const { tipo, status } = req.query;
 
-        // Admin e conselheiro veem todos
-        if (!['admin', 'conselheiro'].includes(req.user.role) && req.user.subRole !== 'equipejuridico') {
-            where.userId = req.user.id; // só vê os seus
+        // Admin/conselheiro/equipe vê tudo, senão vê só os seus
+        if (!["admin", "conselheiro"].includes(req.user.role) && req.user.subRole !== "equipejuridico") {
+            where.userId = req.user.id;
         }
+
+        if (tipo) where.tipo = tipo;
+        if (status && ["PENDENTE", "APROVADO", "INDEFERIDO"].includes(status)) where.status = status;
 
         const requerimentos = await Requerimento.findAll({
             where,
-            include: [{ model: User, attributes: ['username'] }],
-            order: [['createdAt', 'DESC']],
+            include: [{ model: User, attributes: ["username"] }],
+            order: [["createdAt", "DESC"]],
         });
 
         res.json(requerimentos);
     } catch (err) {
-        console.error('Erro ao listar requerimentos:', err);
-        res.status(500).json({ msg: 'Erro ao listar requerimentos' });
+        console.error("Erro ao listar requerimentos:", err);
+        res.status(500).json({ msg: "Erro ao listar requerimentos" });
     }
 });
 
@@ -110,6 +115,44 @@ router.patch('/:id/carimbar', authMiddleware(['tabeliao', 'escrivao']), async (r
     } catch (err) {
         console.error(err);
         res.status(500).json({ msg: 'Erro ao carimbar' });
+    }
+});
+
+// GET /api/requerimentos/resumo
+import { Sequelize } from "sequelize";
+
+router.get("/resumo", authMiddleware(), async (req, res) => {
+    try {
+        const where = {};
+        if (!["admin", "conselheiro"].includes(req.user.role) && req.user.subRole !== "equipejuridico") {
+            where.userId = req.user.id;
+        }
+
+        const rows = await Requerimento.findAll({
+            where,
+            attributes: [
+                "tipo",
+                "status",
+                [Sequelize.fn("COUNT", Sequelize.col("numero")), "count"],
+            ],
+            group: ["tipo", "status"],
+        });
+
+        // formato fácil pro front
+        const resumo = {};
+        for (const r of rows) {
+            const tipo = r.get("tipo");
+            const status = r.get("status");
+            const count = Number(r.get("count") || 0);
+            resumo[tipo] ||= { PENDENTE: 0, APROVADO: 0, INDEFERIDO: 0, TOTAL: 0 };
+            resumo[tipo][status] += count;
+            resumo[tipo].TOTAL += count;
+        }
+
+        res.json(resumo);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Erro ao carregar resumo" });
     }
 });
 
