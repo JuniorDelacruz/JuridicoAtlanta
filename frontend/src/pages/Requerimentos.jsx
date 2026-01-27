@@ -118,7 +118,7 @@ export default function RequerimentoHub() {
               </div>
 
               <button
-                onClick={() => c.permitido && navigate(`/requerimento/${c.slug}`)}
+                onClick={() => c.permitido && navigate(`/requerimentos/${c.slug}`)}
                 disabled={!c.permitido || loading}
                 className={`w-full px-6 py-2 rounded-md font-medium ${
                   c.permitido && !loading
