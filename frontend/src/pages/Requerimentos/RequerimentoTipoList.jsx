@@ -194,7 +194,7 @@ export default function RequerimentoTipoList() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
-                            onClick={() => navigate(`/requerimentos/${req.numero}`)}
+                            onClick={() => navigate(`/requerimentos/detalhes/${req.numero}`)}
                             className="text-indigo-600 hover:text-indigo-900 font-medium"
                           >
                             Ver detalhes
