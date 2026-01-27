@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { ArrowLeft, Scale, Search as SearchIcon } from 'lucide-react';
+import { ArrowLeft, Scale, Search as SearchIcon, Webhook } from 'lucide-react';
 
 function Paineis() {
     const { user, logout, isAuthenticated } = useAuth();
@@ -127,21 +127,32 @@ function Paineis() {
 
             {/* Conteúdo principal */}
             <main className="flex-grow max-w-7xl mx-auto py-8 px-6">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                     <h2 className="text-3xl font-bold text-gray-800">
                         Gerenciamento de Cargos
                     </h2>
 
-                    {/* Campo de busca */}
-                    <div className="relative w-64">
-                        <input
-                            type="text"
-                            placeholder="Buscar por nome, ID ou Discord ID..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                        {/* Botão Webhooks */}
+                        <button
+                            onClick={() => navigate('/paineis/webhooks')}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition shadow"
+                        >
+                            <Webhook className="h-4 w-4" />
+                            Configurar Webhooks
+                        </button>
+
+                        {/* Campo de busca */}
+                        <div className="relative w-full sm:w-72">
+                            <input
+                                type="text"
+                                placeholder="Buscar por nome, ID ou Discord ID..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        </div>
                     </div>
                 </div>
 
@@ -166,6 +177,9 @@ function Paineis() {
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Alterar Cargo
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Equipe Jurídica
                                         </th>
                                     </tr>
                                 </thead>
@@ -201,6 +215,7 @@ function Paineis() {
                                                     <option value="admin">Admin</option>
                                                 </select>
                                             </td>
+
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                                 <label className="inline-flex items-center">
                                                     <input
@@ -208,7 +223,7 @@ function Paineis() {
                                                         checked={u.subRole === 'equipejuridico'}
                                                         onChange={(e) => {
                                                             const newSubRole = e.target.checked ? 'equipejuridico' : null;
-                                                            handleRoleChange(u.id, u.role, newSubRole); // vamos ajustar a função
+                                                            handleRoleChange(u.id, u.role, newSubRole);
                                                         }}
                                                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                                     />
