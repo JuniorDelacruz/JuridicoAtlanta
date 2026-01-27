@@ -10,6 +10,7 @@ import userRoutes from './routes/userRoutes.js'
 import session from 'express-session';
 import requerimentosRoutes from './routes/requerimentosRoutes.js'
 import cartorioRoutes from './routes/cartorioRoutes.js'
+import webhookConfigRoutes from "./routes/webhookConfigRoutes.js";
 
 dotenv.config();
 
@@ -82,6 +83,7 @@ app.use('/api/requerimentos', requerimentosRoutes);
 app.use('/api/triagem', requerimentosRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/cartorio', cartorioRoutes);
+app.use("/api/webhooks", webhookConfigRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // Rotas de teste
 app.get('/api', (req, res) => {
