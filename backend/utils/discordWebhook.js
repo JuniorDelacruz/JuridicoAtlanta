@@ -126,14 +126,20 @@ function buildEmbed(type, data) {
     }
 
     case WEBHOOK_TYPES.PORTE_ARMA: {
+      console.log(data)
       return {
         ...base,
         color: 0xf1c40f,
-        title: "PORTE DE ARMA",
-        description: `PORTE Nº ${safe(data?.id)}`,
+        title: "PORTE DE ARMA APROVADO",
+        description: `
+        Requerimento Nº ${safe(data?.id)}
+
+        O excelentíssimo Senhor Dr. Sven Lundgren, Juíz Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        `,
         fields: [
-          { name: "Cidadão", value: safe(data?.nomeCompleto), inline: false },
-          { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
+          { name: "NOME COMPLETO", value: safe(data?.nomeCompleto), inline: true },
+          { name: "REGISTRO DE CIDADÃO", value: safe(data?.id), inline: true },
+          { name: "POMBO", value: safe(data?.pombo), inline: false},
           { name: "Categoria", value: safe(data?.categoria), inline: true },
           { name: "Validade", value: safe(data?.validade), inline: true },
           { name: "Status", value: safe(data?.status), inline: true },
