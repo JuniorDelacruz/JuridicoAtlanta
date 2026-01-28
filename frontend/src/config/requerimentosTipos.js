@@ -8,7 +8,7 @@ export const TIPOS_REQUERIMENTO = [
         subRole: ['equipejuridico'],
         fields: [
             {
-                name: "arma", label: "Qual a arma?", type: "select", required: true, options: [
+                name: "arma", label: "Qual a arma?", type: "select", required: true, multiple: true, options: [
                     "Revolver Lemat", "Revolver Navy Crossover", "Revolver Navy", "Pistol M1899", "Pistol Mauser",
                     "Carabine Repeater", "Evans Repeater", "Winchester Repeater", "Boltaction Rifle", "Springfield Rifle",
                     "Elephant Rifle", "Varmint Rifle", "Rolling Block Rifle", "Carcano Rifle",
