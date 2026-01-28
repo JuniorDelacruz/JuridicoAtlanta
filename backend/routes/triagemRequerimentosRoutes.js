@@ -175,74 +175,91 @@ router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (re
 });
 
 router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
-  try {
-    const numero = Number(req.params.numero);
-    if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
+    try {
+        const numero = Number(req.params.numero);
+        if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
 
-    const item = await Requerimento.findOne({ where: { numero } });
-    if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
+        const item = await Requerimento.findOne({ where: { numero } });
+        if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
 
-    if (item.status !== "PENDENTE") {
-      return res.status(400).json({ msg: "Somente PENDENTES podem ser aprovados" });
+        if (item.status !== "PENDENTE") {
+            return res.status(400).json({ msg: "Somente PENDENTES podem ser aprovados" });
+        }
+
+        const role = req.user?.role;
+
+        // ✅ Fluxo especial: Porte -> juiz/aprovação encaminha pra carimbo
+        // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
+        // O correto é:
+        const isJuizOuAdmin = role === "juiz" || role === "admin";
+
+        if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
+            const dadosAtual = item.dados || {};
+
+            item.status = "AGUARDANDO_CARIMBO";
+            item.dados = {
+                ...dadosAtual,
+                workflow: {
+                    ...(dadosAtual.workflow || {}),
+                    juiz: {
+                        aprovado: true,
+                        aprovadoPor: req.user?.id || null,
+                        aprovadoPorNome: req.user?.username || null,
+                        data: new Date().toISOString(),
+                    },
+                },
+            };
+
+            await item.save();
+
+            // (Opcional) webhook de "encaminhado para carimbo" se você quiser criar um type específico.
+            // Por enquanto, não manda webhook final aqui.
+
+            // ✅ Decide qual webhook mandar
+            const hookType = webhookTypeByRequerimentoTipo(item.tipo);
+
+            if (hookType) {
+                const payload = buildWebhookPayload(item, req.user);
+                notifyDiscord(hookType, payload).catch((e) =>
+                    console.error("[webhook aprovar] falha:", e?.message || e)
+                );
+            } else {
+                console.warn("[webhook aprovar] tipo sem mapeamento:", item.tipo);
+            }
+
+
+
+            return res.json({
+                msg: "Aprovado pelo Juiz. Encaminhado para Carimbo.",
+                requerimento: item,
+                next: { slug: "carimbo", numero: item.numero },
+            });
+
+
+
+        }
+
+        // ✅ Fluxo padrão: finaliza aprovação
+        item.status = "APROVADO";
+        await item.save();
+
+        // ✅ Decide qual webhook mandar
+        const hookType = webhookTypeByRequerimentoTipo(item.tipo);
+
+        if (hookType) {
+            const payload = buildWebhookPayload(item, req.user);
+            notifyDiscord(hookType, payload).catch((e) =>
+                console.error("[webhook aprovar] falha:", e?.message || e)
+            );
+        } else {
+            console.warn("[webhook aprovar] tipo sem mapeamento:", item.tipo);
+        }
+
+        return res.json({ msg: "Requerimento aprovado", requerimento: item });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Erro ao aprovar requerimento" });
     }
-
-    const role = req.user?.role;
-
-    // ✅ Fluxo especial: Porte -> juiz/aprovação encaminha pra carimbo
-    // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
-    // O correto é:
-    const isJuizOuAdmin = role === "juiz" || role === "admin";
-
-    if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
-      const dadosAtual = item.dados || {};
-
-      item.status = "AGUARDANDO_CARIMBO";
-      item.dados = {
-        ...dadosAtual,
-        workflow: {
-          ...(dadosAtual.workflow || {}),
-          juiz: {
-            aprovado: true,
-            aprovadoPor: req.user?.id || null,
-            aprovadoPorNome: req.user?.username || null,
-            data: new Date().toISOString(),
-          },
-        },
-      };
-
-      await item.save();
-
-      // (Opcional) webhook de "encaminhado para carimbo" se você quiser criar um type específico.
-      // Por enquanto, não manda webhook final aqui.
-
-      return res.json({
-        msg: "Aprovado pelo Juiz. Encaminhado para Carimbo.",
-        requerimento: item,
-        next: { slug: "carimbo", numero: item.numero },
-      });
-    }
-
-    // ✅ Fluxo padrão: finaliza aprovação
-    item.status = "APROVADO";
-    await item.save();
-
-    // ✅ Decide qual webhook mandar
-    const hookType = webhookTypeByRequerimentoTipo(item.tipo);
-
-    if (hookType) {
-      const payload = buildWebhookPayload(item, req.user);
-      notifyDiscord(hookType, payload).catch((e) =>
-        console.error("[webhook aprovar] falha:", e?.message || e)
-      );
-    } else {
-      console.warn("[webhook aprovar] tipo sem mapeamento:", item.tipo);
-    }
-
-    return res.json({ msg: "Requerimento aprovado", requerimento: item });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ msg: "Erro ao aprovar requerimento" });
-  }
 });
 
 // PATCH /api/triagem/requerimentos/:numero/indeferir
