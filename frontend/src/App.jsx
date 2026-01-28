@@ -29,6 +29,7 @@ import TriagemRequerimentoDetalhes from './pages/Triagem/TriagemRequerimentoDeta
 import CodigoEticaJudiciario from './pages/CodigoEticaJudiciario';
 import ManualAdvogado from './pages/ManualAdvogado';
 import Arquivos from './pages/Arquivos';
+import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -149,6 +150,9 @@ function App() {
         }
       />
 
+
+
+
       <Route
         path="/paineis"
         element={
@@ -163,11 +167,24 @@ function App() {
       />
 
 
+      <Route path="/arquivos/consultar-cidadao"
+        element={<ProtectedRoute
+          allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
+          allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
+          deniedTo="/dashboard" // <- se negar acesso, volta pra home
+        >
+          <ConsultarCidadao />
+        </ProtectedRoute>
+        }
+      />
+
+
+
       <Route path="/codigo-etica" element={<CodigoEticaJudiciario />} />
       <Route path="/manual-advogado" element={<ManualAdvogado />} />
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
       <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
-<Route path="/arquivos" element={<Arquivos />} />
+      <Route path="/arquivos" element={<Arquivos />} />
 
 
       <Route path="/paineis/webhooks" element={<WebhookConfig />} />
@@ -182,7 +199,7 @@ function App() {
       <Route path="/requerimentos/:slug" element={<RequerimentoTipoList />} />
       <Route path="/constituicao" element={<ConstituicaoAtlanta />} />
 
-      
+
 
 
       {/* 404 */}
