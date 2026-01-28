@@ -1,6 +1,6 @@
 // frontend/src/pages/Dashboard.jsx
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Scale, FileText, Search, FileCheck, Briefcase, Calendar } from "lucide-react";
 
