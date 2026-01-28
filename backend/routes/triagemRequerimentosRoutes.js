@@ -85,7 +85,7 @@ function buildWebhookPayload(item, reqUser) {
 
 
         ...(isTroca ? {
-            novoNome: item?.data?.novoNome
+            novoNome: item?.dados?.novoNome
         } : {}),
 
         // dados específicos que você já usa em PORTE/REGISTRO
