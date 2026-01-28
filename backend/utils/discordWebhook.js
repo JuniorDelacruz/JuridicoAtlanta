@@ -86,6 +86,7 @@ function buildEmbed(type, data) {
     color: 0x2ecc71,
     thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
     timestamp: new Date().toISOString(),
+    author: { text: "Jurídico Atlanta RP", iconURL: "https://i.imgur.com/A22LhtG.png"},
     footer: { text: "Jurídico Atlanta RP" },
   };
 
