@@ -57,7 +57,7 @@ export default function Dashboard() {
     { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao", "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar",'juiz', "admin"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz', "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
   ];
 
@@ -131,7 +131,27 @@ export default function Dashboard() {
       </main>
 
       <footer className="bg-gray-900 text-gray-400 py-6 text-center mt-auto">
-        <p>© {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados</p>
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm mb-3">
+            <Link to="/codigo-etica" className="hover:text-white underline-offset-4 hover:underline">
+              Código de Ética
+            </Link>
+            <Link to="/manual-advogado" className="hover:text-white underline-offset-4 hover:underline">
+              Manual do Advogado
+            </Link>
+            <Link to="/diretrizes-tribunal" className="hover:text-white underline-offset-4 hover:underline">
+              Diretrizes do Tribunal
+            </Link>
+            <Link to="/codigo-penal" className="hover:text-white underline-offset-4 hover:underline">
+              Código Penal
+            </Link>
+          </div>
+
+
+          <p className="text-sm">
+            © {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados
+          </p>
+        </div>
       </footer>
     </div>
   );

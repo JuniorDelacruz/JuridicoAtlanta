@@ -164,6 +164,10 @@ function App() {
 
       <Route path="/codigo-etica" element={<CodigoEticaJudiciario />} />
       <Route path="/manual-advogado" element={<ManualAdvogado />} />
+      <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
+      <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
+
+
 
       <Route path="/paineis/webhooks" element={<WebhookConfig />} />
       <Route path="/triagem/cadastro" element={<TriagemCadastro />} />
@@ -177,8 +181,7 @@ function App() {
       <Route path="/requerimentos/:slug" element={<RequerimentoTipoList />} />
       <Route path="/constituicao" element={<ConstituicaoAtlanta />} />
 
-      <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
-      <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
+      
 
 
       {/* 404 */}
