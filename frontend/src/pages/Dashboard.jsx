@@ -57,7 +57,7 @@ export default function Dashboard() {
     { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao", "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", "admin"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar",'juiz', "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
   ];
 

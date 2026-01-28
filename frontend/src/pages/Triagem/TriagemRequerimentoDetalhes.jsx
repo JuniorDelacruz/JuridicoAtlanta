@@ -43,7 +43,7 @@ export default function TriagemRequerimentoDetalhes() {
   const navigate = useNavigate();
 
   const isEquipeJuridica = user?.subRole === "equipejuridico";
-  const allowedTriagemRoles = ["juiz", "promotor", "promotorchefe", "tabeliao", "escrivao", "admin"];
+  const allowedTriagemRoles = ["juiz", "promotor", "promotor Chefe", "tabeliao", "escrivao", "admin"];
 
   const permitido = useMemo(() => {
     return allowedTriagemRoles.includes(user?.role) || isEquipeJuridica;
