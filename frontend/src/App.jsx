@@ -25,6 +25,7 @@ import RequerimentoHub from './pages/Requerimentos';
 import RequerimentoTipoList from './pages/Requerimentos/RequerimentoTipoList';
 import RequerimentoNovo from './pages/Requerimentos/RequerimentoNovo';
 import TriagemRequerimentosTipo from './pages/Triagem/TriagemRequerimentosTipo';
+import TriagemRequerimentoDetalhes from './pages/Triagem/TriagemRequerimentoDetalhes';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -162,6 +163,7 @@ function App() {
       <Route path="/cartorio" element={<Cartorio />} />
       <Route path="/triagem" element={<Triagem />} />
       <Route path="/triagem/:slug" element={<TriagemRequerimentosTipo />} />
+      <Route path="/triagem/:slug/detalhes/:numero" element={<TriagemRequerimentoDetalhes />} />
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
       <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
