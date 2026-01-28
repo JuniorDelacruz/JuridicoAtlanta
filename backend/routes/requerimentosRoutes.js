@@ -5,7 +5,7 @@ import { Sequelize } from "sequelize";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
-const { Requerimento, User } = db;
+const { Requerimento, User , CadastroCidadao} = db;
 
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
