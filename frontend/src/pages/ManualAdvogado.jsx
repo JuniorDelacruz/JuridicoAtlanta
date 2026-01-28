@@ -71,12 +71,6 @@ function ManualAdvogado() {
               <ArrowLeft className="h-5 w-5" />
               Voltar ao Dashboard
             </button>
-            <button
-              onClick={logout}
-              className="px-5 py-2 bg-red-700 hover:bg-red-800 rounded-lg text-sm font-medium transition"
-            >
-              Sair
-            </button>
           </div>
         </div>
       </header>
