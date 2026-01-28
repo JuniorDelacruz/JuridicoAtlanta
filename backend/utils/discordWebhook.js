@@ -26,7 +26,7 @@ export const WEBHOOK_TYPES = {
 const safe = (val) =>
   val === undefined || val === null || val === "" ? "—" : String(val);
 
-const safeJoin = (val, sep = ", ") => {
+const safeJoin = (val, sep = `,\n`) => {
   if (val === undefined || val === null) return "—";
 
 
