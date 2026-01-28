@@ -59,7 +59,9 @@ function buildWebhookPayload(item, reqUser) {
 
 
 
-    console.log(item.dados + item.dados.cidadao + item.dados.workflow.juiz)
+    console.log(item?.dados)
+    console.log(item?.dados?.cidadao)
+    console.log(item?.dados?.workflow?.juiz)
 
 
     return {
