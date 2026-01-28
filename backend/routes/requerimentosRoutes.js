@@ -1,6 +1,7 @@
 // backend/routes/requerimentosRoutes.js
 import express from "express";
 import db from "../models/index.js";
+import { Sequelize } from "sequelize";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
