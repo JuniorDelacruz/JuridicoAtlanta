@@ -25,6 +25,7 @@ function Triagem() {
     renovacaoAlvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz','admin'], // + equipejuridico
     limpezaFicha: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
     recolhimentoLimpeza: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
+    carimboPorteArma: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
   };
 
   // Verifica se o usuário tem permissão para um tipo específico
