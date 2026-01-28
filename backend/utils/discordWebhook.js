@@ -115,7 +115,7 @@ function buildEmbed(type, data) {
         title: "CADASTRO DE CIDADÃO",
         description: `CADASTRO DE CIDADÃO Nº ${safe(data?.id)}`,
         fields: [
-          { name: "Nome Completo", value: safe(data?.nomeCompleto), inline: false },
+          { name: "Nome Completo", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
           { name: "Pombo", value: safe(data?.pombo), inline: false },
           { name: "Identidade", value: safe(data?.identidade), inline: false },
           { name: "Profissão", value: safe(data?.profissao), inline: false },
