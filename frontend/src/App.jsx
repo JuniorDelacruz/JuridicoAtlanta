@@ -28,6 +28,7 @@ import TriagemRequerimentosTipo from './pages/Triagem/TriagemRequerimentosTipo';
 import TriagemRequerimentoDetalhes from './pages/Triagem/TriagemRequerimentoDetalhes';
 import CodigoEticaJudiciario from './pages/CodigoEticaJudiciario';
 import ManualAdvogado from './pages/ManualAdvogado';
+import Arquivos from './pages/Arquivos';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -166,7 +167,7 @@ function App() {
       <Route path="/manual-advogado" element={<ManualAdvogado />} />
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
       <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
-
+<Route path="/arquivos" element={<Arquivos />} />
 
 
       <Route path="/paineis/webhooks" element={<WebhookConfig />} />
