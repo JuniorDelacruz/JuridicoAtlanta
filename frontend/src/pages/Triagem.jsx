@@ -106,6 +106,14 @@ function Triagem() {
       permitido: podeAcessar('recolhimentoLimpeza'),
       desc: 'Registro de pagamento para limpeza de ficha.',
     },
+    {
+      nome: 'Carimbo Porte de Arma',
+      path: '/triagem/carimbo',
+      icon: FileCheck,
+      color: 'orange',
+      permitido: podeAcessar('carimboPorteArma'),
+      desc: 'Registro de pagamento para limpeza de ficha.',
+    },
   ];
 
   return (
