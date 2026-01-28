@@ -50,12 +50,20 @@ function classifyRequerimento(req) {
 
 function mapPorte(req) {
     const d = req.dados || {};
+
+    const validade =
+        d?.workflow?.juiz?.validade ||
+        d.validade ||
+        d.dataValidade ||
+        d.vencimento ||
+        null;
+
     return {
         id: req.id ?? req.numero,
         numero: req.numero,
         status: req.status,
         // você decide seu campo real (validade / dataValidade / vencimento)
-        validade: d.validade || d.dataValidade || d.vencimento || null,
+        validade,
         arma: d.arma || d.armas || null,
         createdAt: req.createdAt,
     };
@@ -185,22 +193,22 @@ export async function getVinculosCidadao(req, res) {
             orJson.push(
                 ...buildJsonbEqualsAny(
                     [
-                        "dados.identidade",
-                        "dados.identidadeCartorio",
-                        "dados.cidadaoIdentidade",
-                        "dados.identidadeCidadao",
+                        "dados.cidadao.identidade",
+                        "dados.identidade", // deixa caso alguns antigos usem raiz
                     ],
                     ident
                 )
             );
         }
 
+
+        // discordId (string)
         if (disc) {
             orJson.push(
                 ...buildJsonbEqualsAny(
                     [
+                        "dados.cidadao.discordId",
                         "dados.discordId",
-                        "dados.cidadaoDiscordId",
                         "dados.discord_id",
                     ],
                     disc
@@ -211,14 +219,8 @@ export async function getVinculosCidadao(req, res) {
         if (idPk !== undefined && idPk !== null) {
             // às vezes você salva o id do cadastro dentro do JSON
             orJson.push(
-                ...buildJsonbEqualsAny(
-                    ["dados.cidadaoId", "dados.idCartorio", "dados.cartorioId"],
-                    idPk
-                ),
-                ...buildJsonbEqualsAny(
-                    ["dados.cidadaoId", "dados.idCartorio", "dados.cartorioId"],
-                    idPk
-                )
+                ...buildJsonbEqualsAny(["dados.cidadao.id"], idPk),
+                ...buildJsonbEqualsAny(["dados.numeroIdentificacao", "dados.numeroRegistro"], idPk)
             );
         }
 
