@@ -121,11 +121,15 @@ router.post("/", authMiddleware(), async (req, res) => {
         : null,
     };
 
+    const Solicitante = await CadastroCidadao.findOne({
+        where: { discordId: req.user.discordId}
+    })
+
     // 4) Cria o requerimento normalmente
     const novo = await Requerimento.create({
       tipo,
       dados: dadosComAnexo,
-      solicitante: req.user.username || "Usuário",
+      solicitante: Solicitante.nomeCompleto,
       status: "PENDENTE",
       userId: req.user.id,
     });
