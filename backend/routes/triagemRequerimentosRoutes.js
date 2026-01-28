@@ -8,20 +8,31 @@ const { Requerimento, User } = db;
 
 const allowedTriagemRoles = ["juiz", "promotor", "promotorchefe", "tabeliao", "escrivao", "admin"];
 
-// GET /api/triagem/requerimentos?tipo=Troca%20de%20Nome
 router.get("/", authMiddleware(allowedTriagemRoles), async (req, res) => {
     try {
-        const where = { status: "PENDENTE" };
         const { tipo } = req.query;
-        if (tipo) where.tipo = tipo;
 
-        const pendentes = await Requerimento.findAll({
+
+        const where = {};
+
+
+        if (tipo === "carimbo") {
+            where.status = "AGUARDANDO_CARIMBO";
+            where.tipo = "porte_de_armas"; // opcional: só porte de armas no carimbo
+        } else {
+            where.status = "PENDENTE";
+            if (tipo) where.tipo = tipo;
+        }
+
+
+        const itens = await Requerimento.findAll({
             where,
             include: [{ model: User, attributes: ["username"] }],
             order: [["createdAt", "ASC"]],
         });
 
-        res.json(pendentes);
+
+        res.json(itens);
     } catch (err) {
         console.error(err);
         res.status(500).json({ msg: "Erro ao carregar triagem" });
@@ -51,6 +62,38 @@ router.get("/:numero", authMiddleware(allowedTriagemRoles), async (req, res) => 
     }
 });
 
+// PATCH /api/triagem/requerimentos/:numero/carimbar
+router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (req, res) => {
+    try {
+        const numero = Number(req.params.numero);
+        if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
+
+
+        const item = await Requerimento.findOne({ where: { numero } });
+        if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
+
+
+        if (item.tipo !== "Porte de Armas") {
+            return res.status(400).json({ msg: "Somente Porte de Armas pode ser carimbado" });
+        }
+
+
+        if (item.status !== "AGUARDANDO_CARIMBO") {
+            return res.status(400).json({ msg: "Somente AGUARDANDO_CARIMBO pode ser carimbado" });
+        }
+
+
+        item.status = "APROVADO"; // ou "CARIMBADO" se quiser separar
+        await item.save();
+
+
+        res.json({ msg: "Requerimento carimbado", requerimento: item });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Erro ao carimbar requerimento" });
+    }
+});
+
 // PATCH /api/triagem/requerimentos/:numero/aprovar
 router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
     try {
@@ -71,8 +114,8 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
         // ✅ PORTE DE ARMAS: aprovação do juiz não finaliza, encaminha p/ carimbo
-        // Ajuste "porte_de_armas" conforme seu banco
-        if (item.tipo === "porte_de_armas" && role === "juiz" || "admin") {
+        // Ajuste "Porte de Armas" conforme seu banco
+        if (item.tipo === "Porte de Armas" && role === "juiz" || "admin") {
             const dadosAtual = item.dados || {};
 
 
