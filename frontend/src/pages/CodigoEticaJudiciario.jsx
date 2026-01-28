@@ -1,7 +1,7 @@
 // frontend/src/pages/CodigoEticaJudiciario.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scale, BookOpen, Search, ArrowLeft, Gavel, Balance } from 'lucide-react';
+import { Scale, BookOpen, Search, ArrowLeft, Gavel } from 'lucide-react';
 
 function CodigoEticaJudiciario() {
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ function CodigoEticaJudiciario() {
       <header className="bg-emerald-900 text-white py-6 px-6 shadow-lg">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <Balance className="h-10 w-10" />
+            <Scale className="h-10 w-10" />
             <h1 className="text-2xl md:text-3xl font-bold">Código de Ética do Judiciário</h1>
           </div>
 
