@@ -26,6 +26,8 @@ import RequerimentoTipoList from './pages/Requerimentos/RequerimentoTipoList';
 import RequerimentoNovo from './pages/Requerimentos/RequerimentoNovo';
 import TriagemRequerimentosTipo from './pages/Triagem/TriagemRequerimentosTipo';
 import TriagemRequerimentoDetalhes from './pages/Triagem/TriagemRequerimentoDetalhes';
+import CodigoEticaJudiciario from './pages/CodigoEticaJudiciario';
+import ManualAdvogado from './pages/ManualAdvogado';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -158,6 +160,11 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+
+      <Route path="/codigo-etica" element={<CodigoEticaJudiciario />} />
+      <Route path="/manual-advogado" element={<ManualAdvogado />} />
+
       <Route path="/paineis/webhooks" element={<WebhookConfig />} />
       <Route path="/triagem/cadastro" element={<TriagemCadastro />} />
       <Route path="/cartorio" element={<Cartorio />} />
