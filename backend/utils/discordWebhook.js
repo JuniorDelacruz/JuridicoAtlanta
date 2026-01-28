@@ -171,6 +171,7 @@ function buildEmbed(type, data) {
 
 
     case WEBHOOK_TYPES.TROCA_NOME: {
+      console.log(data)
       return {
         ...base,
         color: 0xf1c40f,
