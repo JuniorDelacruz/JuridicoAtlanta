@@ -39,7 +39,13 @@ roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 {
 slug: "recolhimento-limpeza-de-ficha",
 label: "Recolhimento Limpeza de Ficha",
-tipoDb: "Limpeza de Ficha",
+tipoDb: "Recolhimento Limpeza de Ficha",
+roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
+},
+{
+slug: "carimbo",
+label: "Carimbo Porte de Armas",
+tipoDb: "Carimbo Porte de Armas",
 roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 },
 ];
