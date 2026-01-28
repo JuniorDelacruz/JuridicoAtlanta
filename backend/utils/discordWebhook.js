@@ -1,6 +1,7 @@
 // backend/utils/discordWebhook.js
 import axios from "axios";
 import db from "../models/index.js";
+import { text } from "express";
 
 const { WebhookConfig } = db;
 
@@ -105,7 +106,7 @@ function buildEmbed(type, data) {
     thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
     timestamp: new Date().toISOString(),
     author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
-    footer: { text: "Jurídico Atlanta RP" },
+    
   };
 
   switch (type) {
@@ -148,6 +149,7 @@ function buildEmbed(type, data) {
         ...base,
         color: 0xf1c40f,
         title: "PORTE DE ARMA APROVADO",
+        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: ``},
         description: `
         Requerimento Nº ${safe(data?.id)}
 
@@ -160,7 +162,7 @@ function buildEmbed(type, data) {
           { name: "VALIDADE", value: `\`${safe(data?.validade)}\``, inline: false },
           { name: "ARMAMENTOS APROVADOS", value: `\`${safeJoin(data?.arma)}\``, inline: false },
           { name: "STATUS", value: "`APROVADO`", inline: true },
-          { name: "APROVADO POR", value: `\`${safe(data?.aprovadoPor)}\``, inline: false },
+          
         ],
       };
     }
