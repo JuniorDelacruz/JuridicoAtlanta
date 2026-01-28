@@ -169,6 +169,30 @@ function buildEmbed(type, data) {
       };
     }
 
+
+    case WEBHOOK_TYPES.TROCA_NOME: {
+      return {
+        ...base,
+        color: 0xf1c40f,
+        title: "REGISTRO DE NOME APROVADO",
+        description: `
+        **Requerimento Nº ${safe(data?.id)}**
+
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        `,
+        fields: [
+          { name: "NOME ANTERIOR", value: `${safe(data?.cidadao?.nomeCompleto)}`, inline: true },
+          { name: "REGISTRO CARTÓRIO", value: `\`${safe(data?.registro)}\``, inline: true },
+          { name: "POMBO", value: `\`${safe(data?.pombo)}\``, inline: false },
+          { name: "NOVO NOME", value: `${safe(data?.novoNome)}`, inline: false},
+          {
+            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*`, inline: true
+          },
+        ]
+
+      }
+    }
+
     // TODO: trocaNome, casamento, divorcio, limpezaFicha, porteSuspenso, alvara, carimboPorteArma
     default: {
       return {

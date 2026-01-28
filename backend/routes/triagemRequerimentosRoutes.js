@@ -3,9 +3,10 @@ import express from "express";
 import db from "../models/index.js";
 import authMiddleware from "../middleware/auth.js";
 import { notifyDiscord, WEBHOOK_TYPES } from "../utils/discordWebhook.js";
+import { where } from "sequelize";
 
 const router = express.Router();
-const { Requerimento, User , CadastroCidadao} = db;
+const { Requerimento, User, CadastroCidadao } = db;
 
 const allowedTriagemRoles = ["juiz", "promotor", "promotorchefe", "tabeliao", "escrivao", "admin"];
 
@@ -54,31 +55,23 @@ function webhookTypeByRequerimentoTipo(tipo) {
     }
 }
 
-function buildWebhookPayload(item, reqUser) {
-    const cid = item?.dados?.cidadao || {};
-    return {
-        id: item.numero,
-        status: item.status,
-        aprovadoPor: item?.dados?.workflow?.workflow.juiz.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
-
-
-        // dados comuns (se existir no seu schema)
-        nomeCompleto: cid?.nomeCompleto,
-        registro: cid?.id,
-        discordId: cid?.discordId,
-        pombo: cid?.pombo,
-        identidade: cid?.identidade,
-        profissao: cid?.profissao,
-        residencia: cid?.residencia,
-    };
+function isPortDeArmas(tipo) {
+    const t = String(tipo || "").toLowerCase();
+    return t.includes('porte') && (t.includes('arma') || t.includes('armas'));
+}
+function isTrocaDeNome(tipo) {
+    const t = String(tipo || "").toLowerCase();
+    return t.includes('troca') && (t.includes('nome') || t.includes('nomes'));
 }
 
-function buildWebhookPayloadPort(item, reqUser) {
+function buildWebhookPayload(item, reqUser) {
     const cid = item?.dados?.cidadao || {};
+    const isPorte = isPortDeArmas(item?.tipo)
+    const isTroca = isTrocaDeNome(item?.tipo)
     return {
         id: item.numero,
         status: item.status,
-        aprovadoPor: item?.dados?.workflow?.workflow.juiz.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
+        aprovadoPor: item?.dados?.workflow?.workflow.juizaprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
 
 
         // dados comuns (se existir no seu schema)
@@ -91,11 +84,16 @@ function buildWebhookPayloadPort(item, reqUser) {
         residencia: cid?.residencia,
 
 
+        ...(isTroca ? {
+            novoNome: item?.novoNome
+        } : {}),
+
         // dados específicos que você já usa em PORTE/REGISTRO
-        
-        validade: item?.dados?.workflow.juiz.validade,
-        arma: item?.dados?.arma,
-        serial: item?.dados?.numeroSerial,
+        ...(isPorte ? {
+            validade: item?.dados?.workflow.juiz.validade,
+            arma: item?.dados?.arma,
+            serial: item?.dados?.numeroSerial,
+        } : {}),
     };
 }
 
@@ -212,8 +210,8 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         // O correto é:
         const isJuizOuAdmin = role === "juiz" || role === "admin";
         const Solicitante = await CadastroCidadao.findOne({
-        where: { discordId: req.user.discordId}
-    })
+            where: { discordId: req.user.discordId }
+        })
 
         if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
             const dadosAtual = item.dados || {};
@@ -242,7 +240,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
             if (hookType) {
-                const payload = buildWebhookPayloadPort(item, req.user);
+                const payload = buildWebhookPayload(item, req.user);
                 notifyDiscord(hookType, payload).catch((e) =>
                     console.error("[webhook aprovar] falha:", e?.message || e)
                 );
@@ -258,8 +256,22 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                 next: { slug: "carimbo", numero: item.numero },
             });
 
+        }
 
+        if (item.tipo === "Troca de Nome") {
+            const discordId = item?.dados.cidadao.discordId;
+            const novoNome = item?.dados?.novoNome;
 
+            if (!discordId || !novoNome) {
+                throw new Error("Troca de Nome: discordId ou novoNome ausente no JSON dados.");
+            }
+            const cidadao = await CadastroCidadao.findOne({ where: { discordId }});
+
+            if (!cidadao) {
+                throw new Error(`Cidadão não encontrado no cartório para o discordId=${discordId}`)
+            }
+
+            await cidadao.update({ nomeCompleto: String(novoNome).trim() });
         }
 
         // ✅ Fluxo padrão: finaliza aprovação
