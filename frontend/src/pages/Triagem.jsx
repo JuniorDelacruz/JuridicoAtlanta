@@ -60,7 +60,7 @@ function Triagem() {
     },
     {
       nome: 'Troca de Nome',
-      path: '/triagem/troca-nome',
+      path: '/triagem/troca-de-nome',
       icon: FileText,
       color: 'indigo',
       permitido: podeAcessar('trocaDeNome'),
