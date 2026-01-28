@@ -154,7 +154,7 @@ function buildEmbed(type, data) {
         O excelentíssimo Senhor Dr. Sven Lundgren, Juíz Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
-          { name: "NOME COMPLETO", value: safe(data?.nomeCompleto), inline: true },
+          { name: "NOME COMPLETO", value: `\`${safe(data?.nomeCompleto)}\``, inline: true },
           { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
           { name: "POMBO", value: safe(data?.pombo), inline: false },
           { name: "VALIDADE", value: safe(data?.validade), inline: false },
