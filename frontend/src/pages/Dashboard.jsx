@@ -75,7 +75,6 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">Bem-vindo, {user?.username || "Usuário Discord"}</span>
             <span className="text-sm bg-blue-700 px-3 py-1 rounded">Cargo: {user?.role || "-"}</span>
-            <span className="text-sm bg-blue-700 px-3 py-1 rounded">Sub: {user?.subRole || "-"}</span>
 
             <button
               onClick={logout}
