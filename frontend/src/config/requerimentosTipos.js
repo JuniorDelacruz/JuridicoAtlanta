@@ -17,6 +17,7 @@ export const TIPOS_REQUERIMENTO = [
                 ]
             },
             { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroSerial", label: "Numero Serial", type: "text", required: true },
         ],
     },
     {

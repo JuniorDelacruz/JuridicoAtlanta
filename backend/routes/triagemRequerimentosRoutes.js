@@ -73,8 +73,7 @@ function buildWebhookPayload(item, reqUser) {
 
 
         // dados específicos que você já usa em PORTE/REGISTRO
-        categoria: item?.dados?.categoria,
-        validade: item?.dados?.validade,
+        validade: item?.dados?.workflow.validade,
         arma: item?.dados?.arma,
         serial: item?.dados?.serial,
     };
