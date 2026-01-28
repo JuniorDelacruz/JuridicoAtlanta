@@ -71,28 +71,71 @@ router.get("/", authMiddleware(), async (req, res) => {
     }
 });
 
-// POST /api/requerimentos
 router.post("/", authMiddleware(), async (req, res) => {
-    const { tipo, dados } = req.body;
+  const { tipo, dados } = req.body;
 
-    if (!tipo || !dados) {
-        return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
+  if (!tipo || !dados) {
+    return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
+  }
+
+  try {
+    // 1) Detecta o campo de "registro/identidade" dentro do JSON do requerimento
+    // Ajuste aqui conforme seus tipos:
+    const identidade =
+      dados.numeroIdentificacao ||
+      dados.numeroRegistro ||
+      dados.identidade ||
+      null;
+
+    let cidadao = null;
+
+    // 2) Se tiver identidade, busca no CadastroCidadao (cartório)
+    if (identidade) {
+      cidadao = await CadastroCidadao.findOne({
+        where: { id: String(identidade).trim() },
+      });
+
+      if (!cidadao) {
+        return res.status(400).json({ msg: "Registro do cartório não encontrado." });
+      }
+
+      // Se você quiser aceitar só APROVADO:
+      if (cidadao.status !== "APROVADO") {
+        return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
+      }
     }
 
-    try {
-        const novo = await Requerimento.create({
-            tipo,
-            dados,
-            solicitante: req.user.username || "Usuário",
-            status: "PENDENTE",
-            userId: req.user.id,
-        });
+    // 3) Injeta snapshot do cidadão no JSON do requerimento (ANEXO)
+    const dadosComAnexo = {
+      ...dados,
+      cidadao: cidadao
+        ? {
+            id: cidadao.id,
+            nomeCompleto: cidadao.nomeCompleto,
+            identidade: cidadao.identidade,
+            profissao: cidadao.profissao,
+            residencia: cidadao.residencia,
+            discordId: cidadao.discordId,
+            pombo: cidadao.pombo,
+            status: cidadao.status,
+          }
+        : null,
+    };
 
-        res.status(201).json(novo);
-    } catch (err) {
-        console.error("Erro ao criar requerimento:", err);
-        res.status(500).json({ msg: "Erro ao criar requerimento" });
-    }
+    // 4) Cria o requerimento normalmente
+    const novo = await Requerimento.create({
+      tipo,
+      dados: dadosComAnexo,
+      solicitante: req.user.username || "Usuário",
+      status: "PENDENTE",
+      userId: req.user.id,
+    });
+
+    res.status(201).json(novo);
+  } catch (err) {
+    console.error("Erro ao criar requerimento:", err);
+    res.status(500).json({ msg: "Erro ao criar requerimento" });
+  }
 });
 
 // GET /api/requerimentos/:numero  (NUMÉRICO)
