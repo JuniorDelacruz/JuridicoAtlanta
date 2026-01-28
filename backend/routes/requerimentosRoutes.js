@@ -129,7 +129,7 @@ router.post("/", authMiddleware(), async (req, res) => {
     const novo = await Requerimento.create({
       tipo,
       dados: dadosComAnexo,
-      solicitante: Solicitante.nomeCompleto,
+      solicitante: Solicitante.nomeCompleto || req.user?.username,
       status: "PENDENTE",
       userId: req.user.id,
     });

@@ -5,7 +5,7 @@ import authMiddleware from "../middleware/auth.js";
 import { notifyDiscord, WEBHOOK_TYPES } from "../utils/discordWebhook.js";
 
 const router = express.Router();
-const { Requerimento, User } = db;
+const { Requerimento, User , CadastroCidadao} = db;
 
 const allowedTriagemRoles = ["juiz", "promotor", "promotorchefe", "tabeliao", "escrivao", "admin"];
 
@@ -191,6 +191,9 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
         // O correto é:
         const isJuizOuAdmin = role === "juiz" || role === "admin";
+        const Solicitante = await CadastroCidadao.findOne({
+        where: { discordId: req.user.discordId}
+    })
 
         if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
             const dadosAtual = item.dados || {};
@@ -203,7 +206,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                     juiz: {
                         aprovado: true,
                         aprovadoPor: req.user?.id || null,
-                        aprovadoPorNome: req.user?.username || null,
+                        aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
                         validade: "90 dias",
                         data: new Date().toISOString(),
                     },
