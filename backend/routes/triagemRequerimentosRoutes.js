@@ -67,6 +67,7 @@ function buildWebhookPayload(item, reqUser) {
         // dados comuns (se existir no seu schema)
         nomeCompleto: cid?.nomeCompleto,
         discordId: cid?.discordId,
+        pomto: cid?.pombo,
         identidade: cid?.identidade,
         profissao: cid?.profissao,
         residencia: cid?.residencia,
@@ -75,7 +76,7 @@ function buildWebhookPayload(item, reqUser) {
         // dados específicos que você já usa em PORTE/REGISTRO
         validade: item?.dados?.workflow.validade,
         arma: item?.dados?.arma,
-        serial: item?.dados?.serial,
+        serial: item?.dados?.numeroSerial,
     };
 }
 
