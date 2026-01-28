@@ -70,11 +70,6 @@ function buildWebhookPayload(item, reqUser) {
         identidade: cid?.identidade,
         profissao: cid?.profissao,
         residencia: cid?.residencia,
-
-
-        // dados específicos que você já usa em PORTE/REGISTRO
-        arma: item?.dados?.arma,
-        serial: item?.dados?.numeroSerial,
     };
 }
 
