@@ -13,6 +13,7 @@ import cartorioRoutes from './routes/cartorioRoutes.js'
 import webhookConfigRoutes from "./routes/webhookConfigRoutes.js";
 import cadastroCidadaoRoutes from './routes/cadastroCidadaoRoutes.js'
 import triagemRequerimentosRoutes from './routes/triagemRequerimentosRoutes.js'
+import arquivosRoutes from './routes/arquivos.routes.js'
 
 dotenv.config();
 
@@ -85,6 +86,7 @@ app.use("/api/requerimentos", requerimentosRoutes);
 app.use("/api/triagem/requerimentos", triagemRequerimentosRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/cartorio', cartorioRoutes);
+app.use("/api/arquivos", arquivosRoutes);
 app.use("/api/cadastros", cadastroCidadaoRoutes);
 app.use("/api/webhooks", webhookConfigRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
