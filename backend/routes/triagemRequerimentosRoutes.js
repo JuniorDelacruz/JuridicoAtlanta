@@ -205,6 +205,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                         aprovado: true,
                         aprovadoPor: req.user?.id || null,
                         aprovadoPorNome: req.user?.username || null,
+                        validade: "90 dias",
                         data: new Date().toISOString(),
                     },
                 },
