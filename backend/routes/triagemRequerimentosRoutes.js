@@ -18,7 +18,7 @@ router.get("/", authMiddleware(allowedTriagemRoles), async (req, res) => {
 
         if (tipo === "carimbo") {
             where.status = "AGUARDANDO_CARIMBO";
-            where.tipo = "porte_de_armas"; // opcional: só porte de armas no carimbo
+            where.tipo = "Porte de Arma"; // opcional: só Porte de Arma no carimbo
         } else {
             where.status = "PENDENTE";
             if (tipo) where.tipo = tipo;
@@ -73,8 +73,8 @@ router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (re
         if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
 
 
-        if (item.tipo !== "Porte de Armas") {
-            return res.status(400).json({ msg: "Somente Porte de Armas pode ser carimbado" });
+        if (item.tipo !== "Porte de Arma") {
+            return res.status(400).json({ msg: "Somente Porte de Arma pode ser carimbado" });
         }
 
 
@@ -113,9 +113,9 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         const role = req.user?.role;
 
 
-        // ✅ PORTE DE ARMAS: aprovação do juiz não finaliza, encaminha p/ carimbo
-        // Ajuste "Porte de Armas" conforme seu banco
-        if (item.tipo === "Porte de Armas" && role === "juiz" || "admin") {
+        // ✅ Porte de Arma: aprovação do juiz não finaliza, encaminha p/ carimbo
+        // Ajuste "Porte de Arma" conforme seu banco
+        if (item.tipo === "Porte de Arma" && role === "juiz" || "admin") {
             const dadosAtual = item.dados || {};
 
 
