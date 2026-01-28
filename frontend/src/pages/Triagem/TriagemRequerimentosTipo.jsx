@@ -56,7 +56,7 @@ export default function TriagemRequerimentosTipo() {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get(`${API_URL}/api/requerimentos/triagem`, {
+        const res = await axios.get(`${API_URL}/api/triagem/requerimentos`, {
           headers: authHeaders(),
           params: { tipo: tipoCfg.tipoDb },
         });
@@ -90,7 +90,7 @@ export default function TriagemRequerimentosTipo() {
     if (!confirm(`Tem certeza que deseja APROVAR o requerimento #${numero}?`)) return;
 
     try {
-      await axios.patch(`${API_URL}/api/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
@@ -105,7 +105,7 @@ export default function TriagemRequerimentosTipo() {
     if (!confirm(`Tem certeza que deseja INDEFERIR o requerimento #${numero}?`)) return;
 
     try {
-      await axios.patch(`${API_URL}/api/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));

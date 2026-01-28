@@ -24,7 +24,7 @@ import WebhookConfig from './pages/Paineis/ConfigWebHook';
 import RequerimentoHub from './pages/Requerimentos';
 import RequerimentoTipoList from './pages/Requerimentos/RequerimentoTipoList';
 import RequerimentoNovo from './pages/Requerimentos/RequerimentoNovo';
-import TriagemRequerimentosTipo from './pages/Requerimentos/TriagemRequerimentosTipo';
+import TriagemRequerimentosTipo from './pages/Triagem/TriagemRequerimentosTipo';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
