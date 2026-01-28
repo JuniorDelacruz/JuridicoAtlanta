@@ -22,6 +22,133 @@ function initialValues(fields) {
   return obj;
 }
 
+function MultiSelectDropdown({ label, options = [], value = [], onChange, placeholder = "Selecione..." }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useMemo(() => ({ current: null }), []); // evita recriar ref em hot reload
+
+
+  const arr = Array.isArray(value) ? value : [];
+
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => String(o).toLowerCase().includes(q));
+  }, [options, query]);
+
+
+  // fecha ao clicar fora
+  useEffect(() => {
+    function onDocMouseDown(e) {
+      if (!open) return;
+      const el = ref.current;
+      if (el && !el.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [open, ref]);
+
+
+  function toggle(opt) {
+    const has = arr.includes(opt);
+    const next = has ? arr.filter((x) => x !== opt) : [...arr, opt];
+    onChange(next);
+  }
+
+
+  function clearAll() {
+    onChange([]);
+  }
+
+
+  const summary =
+    arr.length === 0
+      ? placeholder
+      : arr.length === 1
+        ? arr[0]
+        : `${arr.length} selecionados`;
+
+
+  return (
+    <div className="relative" ref={(node) => (ref.current = node)}>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full border border-gray-300 rounded-md p-2 bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between gap-3"
+      >
+        <span className={arr.length ? "text-gray-900" : "text-gray-500"}>{summary}</span>
+        <span className="text-gray-400">▾</span>
+      </button>
+
+
+      {open && (
+        <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+          <div className="p-2 border-b bg-gray-50">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Buscar ${label?.toLowerCase?.() || "opções"}...`}
+              className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+              <span>{arr.length} selecionado(s)</span>
+              <button type="button" onClick={clearAll} className="text-red-600 hover:text-red-700">
+                Limpar
+              </button>
+            </div>
+          </div>
+
+
+          <div className="max-h-60 overflow-auto p-2">
+            {filtered.length === 0 ? (
+              <div className="text-sm text-gray-500 p-2">Nenhuma opção encontrada.</div>
+            ) : (
+              filtered.map((opt) => {
+                const checked = arr.includes(opt);
+                return (
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggle(opt)}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm text-gray-800">{opt}</span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+
+
+          {arr.length > 0 && (
+            <div className="p-2 border-t bg-gray-50">
+              <div className="flex flex-wrap gap-2">
+                {arr.slice(0, 6).map((v) => (
+                  <span
+                    key={v}
+                    className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-1 rounded-full"
+                    title={v}
+                  >
+                    {v}
+                  </span>
+                ))}
+                {arr.length > 6 && (
+                  <span className="text-xs text-gray-600">+{arr.length - 6}…</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function validate(fields, values) {
   const errors = {};
   for (const f of fields || []) {
@@ -259,18 +386,28 @@ export default function RequerimentoNovo() {
                 </label>
 
                 {f.type === "select" ? (
-                  <select
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione...</option>
-                    {(f.options || []).map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
+                  f.multiple ? (
+                    <MultiSelectDropdown
+                      label={f.label}
+                      options={f.options || []}
+                      value={Array.isArray(values[f.name]) ? values[f.name] : []}
+                      onChange={(arr) => setField(f.name, arr)}
+                      placeholder="Selecione..."
+                    />
+                  ) : (
+                    <select
+                      value={values[f.name] || ""}
+                      onChange={(e) => setField(f.name, e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione...</option>
+                      {(f.options || []).map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  )
                 ) : f.type === "textarea" ? (
                   <textarea
                     value={values[f.name] || ""}

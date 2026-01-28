@@ -86,7 +86,7 @@ function buildEmbed(type, data) {
     color: 0x2ecc71,
     thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
     timestamp: new Date().toISOString(),
-    author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png"},
+    author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
     footer: { text: "Jurídico Atlanta RP" },
   };
 
@@ -138,9 +138,10 @@ function buildEmbed(type, data) {
         fields: [
           { name: "NOME COMPLETO", value: safe(data?.nomeCompleto), inline: true },
           { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
-          { name: "POMBO", value: safe(data?.pombo), inline: false},
+          { name: "POMBO", value: safe(data?.pombo), inline: false },
           { name: "VALIDADE", value: safe(data?.validade), inline: false },
-          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false},
+          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false },
+          { name: "STATUS", value: "`APROVADO`", inline: true },
           { name: "APROVADO POR", value: safe(data?.aprovadoPor), inline: false },
         ],
       };

@@ -56,14 +56,6 @@ function webhookTypeByRequerimentoTipo(tipo) {
 
 function buildWebhookPayload(item, reqUser) {
     const cid = item?.dados?.cidadao || {};
-
-
-
-    console.log("dados:", item?.dados)
-    console.log("cidadao:", item?.dados?.cidadao)
-    console.log("Workflow", item?.dados?.workflow?.juiz)
-
-
     return {
         id: item.numero,
         status: item.status,
