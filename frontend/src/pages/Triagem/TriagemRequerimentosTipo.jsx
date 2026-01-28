@@ -30,6 +30,8 @@ export default function TriagemRequerimentosTipo() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
+  const isCarimbo = slug === "carimbo"; // ✅ ponto central
+
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
     return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
@@ -56,9 +58,12 @@ export default function TriagemRequerimentosTipo() {
       setLoading(true);
       setError(null);
       try {
+        // ✅ Backend espera "carimbo" no query param para aplicar o filtro AGUARDANDO_CARIMBO
+        const tipoParam = isCarimbo ? "carimbo" : tipoCfg.tipoDb;
+
         const res = await axios.get(`${API_URL}/api/triagem/requerimentos`, {
           headers: authHeaders(),
-          params: { tipo: tipoCfg.tipoDb },
+          params: { tipo: tipoParam },
         });
 
         setPendentes(res.data || []);
@@ -86,6 +91,7 @@ export default function TriagemRequerimentosTipo() {
     setFiltered(result);
   }, [search, pendentes]);
 
+  // ✅ Aprovar só faz sentido quando é PENDENTE (triagem normal)
   const handleAprovar = async (numero) => {
     if (!confirm(`Tem certeza que deseja APROVAR o requerimento #${numero}?`)) return;
 
@@ -101,6 +107,7 @@ export default function TriagemRequerimentosTipo() {
     }
   };
 
+  // ✅ Indeferir pode existir em ambos fluxos (depende do teu backend; se bloquear, ajuste lá)
   const handleIndeferir = async (numero) => {
     if (!confirm(`Tem certeza que deseja INDEFERIR o requerimento #${numero}?`)) return;
 
@@ -116,8 +123,24 @@ export default function TriagemRequerimentosTipo() {
     }
   };
 
+  // ✅ Carimbar: endpoint próprio (crie no backend)
+  const handleCarimbar = async (numero) => {
+    if (!confirm(`Confirmar CARIMBO do requerimento #${numero}?`)) return;
+
+    try {
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/carimbar`, {}, { headers: authHeaders() });
+
+      setPendentes((prev) => prev.filter((r) => r.numero !== numero));
+      setFiltered((prev) => prev.filter((r) => r.numero !== numero));
+
+      alert("Requerimento carimbado!");
+    } catch (err) {
+      alert("Erro ao carimbar: " + (err.response?.data?.msg || err.message));
+    }
+  };
+
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Carregando pendentes...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
   if (error) {
     return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
@@ -157,7 +180,9 @@ export default function TriagemRequerimentosTipo() {
       {/* Conteúdo */}
       <main className="flex-grow max-w-7xl mx-auto py-8 px-6">
         <div className="flex justify-between items-center mb-6 gap-4 flex-col md:flex-row">
-          <h2 className="text-3xl font-bold text-gray-800">Pendentes — {tipoCfg?.label}</h2>
+          <h2 className="text-3xl font-bold text-gray-800">
+            {isCarimbo ? "Aguardando Carimbo" : "Pendentes"} — {tipoCfg?.label}
+          </h2>
 
           <div className="relative w-full md:w-72">
             <input
@@ -173,47 +198,49 @@ export default function TriagemRequerimentosTipo() {
 
         <div className="bg-white rounded-xl shadow overflow-hidden">
           {filtered.length === 0 ? (
-            <div className="text-center py-12 text-gray-600">Nenhum pendente no momento.</div>
+            <div className="text-center py-12 text-gray-600">
+              {isCarimbo ? "Nenhum requerimento aguardando carimbo." : "Nenhum pendente no momento."}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Número
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Solicitante
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
 
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filtered.map((r) => (
                     <tr key={r.numero} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{r.numero}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {r.solicitante}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{r.numero}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.solicitante}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(r.createdAt).toLocaleDateString("pt-BR")}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
-                        <button
-                          onClick={() => handleAprovar(r.numero)}
-                          className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Aprovar
-                        </button>
+                        {/* ✅ Ação principal muda dependendo da triagem */}
+                        {isCarimbo ? (
+                          <button
+                            onClick={() => handleCarimbar(r.numero)}
+                            className="flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Carimbar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleAprovar(r.numero)}
+                            className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Aprovar
+                          </button>
+                        )}
 
                         <button
                           onClick={() => handleIndeferir(r.numero)}
@@ -233,7 +260,6 @@ export default function TriagemRequerimentosTipo() {
                     </tr>
                   ))}
                 </tbody>
-
               </table>
             </div>
           )}

@@ -45,7 +45,7 @@ roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 {
 slug: "carimbo",
 label: "Carimbo Porte de Armas",
-tipoDb: "Carimbo Porte de Armas",
+tipoDb: "carimbo",
 roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 },
 ];
