@@ -17,14 +17,14 @@ function Triagem() {
   // Permissões por tipo (roles que podem ver/acessar cada card)
   const permissoes = {
     cadastro: ['escrivao', 'admin'], // + equipejuridico
-    porteDeArma: ['juiz'], // + equipejuridico
-    registroDeArma: ['juiz'], // + equipejuridico
-    trocaDeNome: ['juiz'], // + equipejuridico
-    casamento: ['escrivao', 'juiz'], // + equipejuridico
-    alvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz'], // + equipejuridico
-    renovacaoAlvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz'], // + equipejuridico
-    limpezaFicha: ['promotor', 'promotor Chefe', 'juiz'], // + equipejuridico
-    recolhimentoLimpeza: ['promotor', 'promotor Chefe', 'juiz'], // + equipejuridico
+    porteDeArma: ['juiz', 'admin'], // + equipejuridico
+    registroDeArma: ['juiz', 'admin'], // + equipejuridico
+    trocaDeNome: ['juiz', 'admin'], // + equipejuridico
+    casamento: ['escrivao', 'juiz', 'admin'], // + equipejuridico
+    alvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
+    renovacaoAlvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz','admin'], // + equipejuridico
+    limpezaFicha: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
+    recolhimentoLimpeza: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
   };
 
   // Verifica se o usuário tem permissão para um tipo específico
