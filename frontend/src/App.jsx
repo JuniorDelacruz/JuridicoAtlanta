@@ -24,6 +24,7 @@ import WebhookConfig from './pages/Paineis/ConfigWebHook';
 import RequerimentoHub from './pages/Requerimentos';
 import RequerimentoTipoList from './pages/Requerimentos/RequerimentoTipoList';
 import RequerimentoNovo from './pages/Requerimentos/RequerimentoNovo';
+import TriagemRequerimentosTipo from './pages/Requerimentos/TriagemRequerimentosTipo';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -160,7 +161,7 @@ function App() {
       <Route path="/triagem/cadastro" element={<TriagemCadastro />} />
       <Route path="/cartorio" element={<Cartorio />} />
       <Route path="/triagem" element={<Triagem />} />
-
+      <Route path="/triagem/:slug" element={<TriagemRequerimentosTipo />} />
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
       <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
