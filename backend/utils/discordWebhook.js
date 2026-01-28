@@ -106,7 +106,7 @@ function buildEmbed(type, data) {
     thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
     timestamp: new Date().toISOString(),
     author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
-    
+
   };
 
   switch (type) {
@@ -149,11 +149,11 @@ function buildEmbed(type, data) {
         ...base,
         color: 0xf1c40f,
         title: "PORTE DE ARMA APROVADO",
-        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: ``},
+        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: `` },
         description: `
-        Requerimento Nº ${safe(data?.id)}
+        **Requerimento Nº ${safe(data?.id)}**
 
-        O excelentíssimo Senhor Dr. Sven Lundgren, Juíz Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
           { name: "NOME COMPLETO", value: `\`${safe(data?.nomeCompleto)}\``, inline: true },
@@ -161,8 +161,10 @@ function buildEmbed(type, data) {
           { name: "POMBO", value: `\`${safe(data?.pombo)}\``, inline: false },
           { name: "VALIDADE", value: `\`${safe(data?.validade)}\``, inline: false },
           { name: "ARMAMENTOS APROVADOS", value: `\`${safeJoin(data?.arma)}\``, inline: false },
-          { name: "STATUS", value: "`APROVADO`", inline: true },
-          
+          {
+            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*`, inline: true
+          },
+
         ],
       };
     }
