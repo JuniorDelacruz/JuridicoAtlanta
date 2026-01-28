@@ -92,7 +92,7 @@ function Triagem() {
     },
     {
       nome: 'Limpeza de Ficha',
-      path: '/triagem/limpeza-ficha',
+      path: '/triagem/limpeza-de-ficha',
       icon: Search,
       color: 'amber',
       permitido: podeAcessar('limpezaFicha'),
@@ -100,7 +100,7 @@ function Triagem() {
     },
     {
       nome: 'Recolhimento Limpeza Ficha',
-      path: '/triagem/recolhimento-limpeza',
+      path: '/triagem/recolhimento-limpeza-de-ficha',
       icon: FileCheck,
       color: 'orange',
       permitido: podeAcessar('recolhimentoLimpeza'),

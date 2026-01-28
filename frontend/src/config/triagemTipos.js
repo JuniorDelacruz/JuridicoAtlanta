@@ -31,8 +31,14 @@ tipoDb: "Alvará",
 roles: ["tabeliao", "escrivao", "promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 },
 {
-slug: "limpeza-ficha",
+slug: "limpeza-de-ficha",
 label: "Limpeza de Ficha",
+tipoDb: "Limpeza de Ficha",
+roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
+},
+{
+slug: "recolhimento-limpeza-de-ficha",
+label: "Recolhimento Limpeza de Ficha",
 tipoDb: "Limpeza de Ficha",
 roles: ["promotor", "promotorchefe", "juiz", "admin"], // + equipejuridico
 },
