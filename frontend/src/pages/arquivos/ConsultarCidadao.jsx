@@ -63,7 +63,7 @@ export default function ConsultarCidadao() {
   const [cidadao, setCidadao] = useState(null);
   const [vinculos, setVinculos] = useState(null); // { portes, trocasNome, ... }
 
-  const canSearch = useMemo(() => String(query || "").trim().length >= 2, [query]);
+  const canSearch = useMemo(() => String(query || "").trim().length >= 1, [query]);
 
   async function fetchCidadaoAndVinculos() {
     const q = String(query || "").trim();
