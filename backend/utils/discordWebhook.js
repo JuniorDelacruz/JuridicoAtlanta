@@ -126,7 +126,6 @@ function buildEmbed(type, data) {
     }
 
     case WEBHOOK_TYPES.PORTE_ARMA: {
-      console.log(data)
       return {
         ...base,
         color: 0xf1c40f,
@@ -138,7 +137,7 @@ function buildEmbed(type, data) {
         `,
         fields: [
           { name: "NOME COMPLETO", value: safe(data?.nomeCompleto), inline: true },
-          { name: "REGISTRO DE CIDADÃO", value: safe(data?.id), inline: true },
+          { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
           { name: "POMBO", value: safe(data?.pombo), inline: false},
           { name: "Categoria", value: safe(data?.categoria), inline: true },
           { name: "Validade", value: safe(data?.validade), inline: true },

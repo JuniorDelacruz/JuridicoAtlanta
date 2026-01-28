@@ -58,6 +58,10 @@ function buildWebhookPayload(item, reqUser) {
     const cid = item?.dados?.cidadao || {};
 
 
+
+    console.log(item)
+
+
     return {
         id: item.numero,
         status: item.status,
@@ -66,8 +70,9 @@ function buildWebhookPayload(item, reqUser) {
 
         // dados comuns (se existir no seu schema)
         nomeCompleto: cid?.nomeCompleto,
+        registro: cid?.id,
         discordId: cid?.discordId,
-        pomto: cid?.pombo,
+        pombo: cid?.pombo,
         identidade: cid?.identidade,
         profissao: cid?.profissao,
         residencia: cid?.residencia,
