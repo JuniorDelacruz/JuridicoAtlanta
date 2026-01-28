@@ -1,0 +1,77 @@
+// backend/routes/triagemRequerimentosRoutes.js
+import express from "express";
+import db from "../models/index.js";
+import authMiddleware from "../middleware/auth.js";
+
+const router = express.Router();
+const { Requerimento, User } = db;
+
+const allowedTriagemRoles = ["juiz", "promotor", "promotorchefe", "tabeliao", "escrivao", "admin"];
+
+// GET /api/triagem/requerimentos?tipo=Troca%20de%20Nome
+router.get("/", authMiddleware(allowedTriagemRoles), async (req, res) => {
+  try {
+    const where = { status: "PENDENTE" };
+    const { tipo } = req.query;
+    if (tipo) where.tipo = tipo;
+
+    const pendentes = await Requerimento.findAll({
+      where,
+      include: [{ model: User, attributes: ["username"] }],
+      order: [["createdAt", "ASC"]],
+    });
+
+    res.json(pendentes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Erro ao carregar triagem" });
+  }
+});
+
+// PATCH /api/triagem/requerimentos/:numero/aprovar
+router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
+  try {
+    const numero = Number(req.params.numero);
+    if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
+
+    const item = await Requerimento.findOne({ where: { numero } });
+    if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
+
+    if (item.status !== "PENDENTE") {
+      return res.status(400).json({ msg: "Somente PENDENTES podem ser aprovados" });
+    }
+
+    item.status = "APROVADO";
+    await item.save();
+
+    res.json({ msg: "Requerimento aprovado", requerimento: item });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Erro ao aprovar requerimento" });
+  }
+});
+
+// PATCH /api/triagem/requerimentos/:numero/indeferir
+router.patch("/:numero/indeferir", authMiddleware(allowedTriagemRoles), async (req, res) => {
+  try {
+    const numero = Number(req.params.numero);
+    if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
+
+    const item = await Requerimento.findOne({ where: { numero } });
+    if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
+
+    if (item.status !== "PENDENTE") {
+      return res.status(400).json({ msg: "Somente PENDENTES podem ser indeferidos" });
+    }
+
+    item.status = "INDEFERIDO";
+    await item.save();
+
+    res.json({ msg: "Requerimento indeferido", requerimento: item });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Erro ao indeferir requerimento" });
+  }
+});
+
+export default router;

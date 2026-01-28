@@ -12,6 +12,7 @@ import requerimentosRoutes from './routes/requerimentosRoutes.js'
 import cartorioRoutes from './routes/cartorioRoutes.js'
 import webhookConfigRoutes from "./routes/webhookConfigRoutes.js";
 import cadastroCidadaoRoutes from './routes/cadastroCidadaoRoutes.js'
+import triagemRequerimentosRoutes from './routes/triagemRequerimentosRoutes.js'
 
 dotenv.config();
 
@@ -80,8 +81,8 @@ try {
 
 
 app.use('/api/auth', authRoutes);
-app.use('/api/requerimentos', requerimentosRoutes);
-app.use('/api/triagem', requerimentosRoutes);
+app.use("/api/requerimentos", requerimentosRoutes);
+app.use("/api/triagem/requerimentos", triagemRequerimentosRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/cartorio', cartorioRoutes);
 app.use("/api/cadastros", cadastroCidadaoRoutes);
