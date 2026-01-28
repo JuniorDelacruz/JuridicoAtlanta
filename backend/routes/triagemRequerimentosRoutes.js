@@ -59,7 +59,7 @@ function buildWebhookPayload(item, reqUser) {
 
 
 
-    console.log(item)
+    console.log(item.dados + item.dados.cidadao + item.dados.workflow.juiz)
 
 
     return {
@@ -79,7 +79,7 @@ function buildWebhookPayload(item, reqUser) {
 
 
         // dados específicos que você já usa em PORTE/REGISTRO
-        validade: item?.dados?.workflow.validade,
+        validade: item?.dados?.workflow.juiz.validade,
         arma: item?.dados?.arma,
         serial: item?.dados?.numeroSerial,
     };

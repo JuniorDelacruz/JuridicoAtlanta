@@ -139,10 +139,9 @@ function buildEmbed(type, data) {
           { name: "NOME COMPLETO", value: safe(data?.nomeCompleto), inline: true },
           { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
           { name: "POMBO", value: safe(data?.pombo), inline: false},
-          { name: "Categoria", value: safe(data?.categoria), inline: true },
-          { name: "Validade", value: safe(data?.validade), inline: true },
-          { name: "Status", value: safe(data?.status), inline: true },
-          { name: "Aprovado por", value: safe(data?.aprovadoPor), inline: false },
+          { name: "VALIDADE", value: safe(data?.validade), inline: false },
+          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false}
+          { name: "APROVADO POR", value: safe(data?.aprovadoPor), inline: false },
         ],
       };
     }
