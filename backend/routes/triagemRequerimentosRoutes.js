@@ -59,7 +59,7 @@ function buildWebhookPayload(item, reqUser) {
     return {
         id: item.numero,
         status: item.status,
-        aprovadoPor: item?.dados?.workflow?.juiz?.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
+        aprovadoPor: item?.dados?.workflow?.workflow.juiz.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
 
 
         // dados comuns (se existir no seu schema)
@@ -73,6 +73,31 @@ function buildWebhookPayload(item, reqUser) {
 
 
         // dados específicos que você já usa em PORTE/REGISTRO
+        arma: item?.dados?.arma,
+        serial: item?.dados?.numeroSerial,
+    };
+}
+
+function buildWebhookPayloadPort(item, reqUser) {
+    const cid = item?.dados?.cidadao || {};
+    return {
+        id: item.numero,
+        status: item.status,
+        aprovadoPor: item?.dados?.workflow?.workflow.juiz.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
+
+
+        // dados comuns (se existir no seu schema)
+        nomeCompleto: cid?.nomeCompleto,
+        registro: cid?.id,
+        discordId: cid?.discordId,
+        pombo: cid?.pombo,
+        identidade: cid?.identidade,
+        profissao: cid?.profissao,
+        residencia: cid?.residencia,
+
+
+        // dados específicos que você já usa em PORTE/REGISTRO
+        
         validade: item?.dados?.workflow.juiz.validade,
         arma: item?.dados?.arma,
         serial: item?.dados?.numeroSerial,
@@ -222,7 +247,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
             if (hookType) {
-                const payload = buildWebhookPayload(item, req.user);
+                const payload = buildWebhookPayloadPort(item, req.user);
                 notifyDiscord(hookType, payload).catch((e) =>
                     console.error("[webhook aprovar] falha:", e?.message || e)
                 );
