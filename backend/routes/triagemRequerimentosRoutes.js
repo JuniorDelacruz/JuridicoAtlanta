@@ -57,15 +57,55 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         const numero = Number(req.params.numero);
         if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
 
+
         const item = await Requerimento.findOne({ where: { numero } });
         if (!item) return res.status(404).json({ msg: "Requerimento não encontrado" });
+
 
         if (item.status !== "PENDENTE") {
             return res.status(400).json({ msg: "Somente PENDENTES podem ser aprovados" });
         }
 
+
+        const role = req.user?.role;
+
+
+        // ✅ PORTE DE ARMAS: aprovação do juiz não finaliza, encaminha p/ carimbo
+        // Ajuste "porte_de_armas" conforme seu banco
+        if (item.tipo === "porte_de_armas" && role === "juiz" || "admin") {
+            const dadosAtual = item.dados || {};
+
+
+            item.status = "AGUARDANDO_CARIMBO";
+            item.dados = {
+                ...dadosAtual,
+                workflow: {
+                    ...(dadosAtual.workflow || {}),
+                    juiz: {
+                        aprovado: true,
+                        aprovadoPor: req.user?.id || null,
+                        aprovadoPorNome: req.user?.username || null,
+                        data: new Date().toISOString(),
+                    },
+                },
+            };
+
+
+            await item.save();
+
+
+            return res.json({
+                msg: "Aprovado pelo Juiz. Encaminhado para Carimbo.",
+                requerimento: item,
+                next: { slug: "carimbo", numero: item.numero }, // útil pro front redirecionar
+            });
+        }
+
+
+        // ✅ fluxo padrão: aprova e finaliza
         item.status = "APROVADO";
         await item.save();
+
 
         res.json({ msg: "Requerimento aprovado", requerimento: item });
     } catch (err) {
