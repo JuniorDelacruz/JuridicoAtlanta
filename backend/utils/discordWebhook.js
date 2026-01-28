@@ -140,7 +140,7 @@ function buildEmbed(type, data) {
           { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
           { name: "POMBO", value: safe(data?.pombo), inline: false},
           { name: "VALIDADE", value: safe(data?.validade), inline: false },
-          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false}
+          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false},
           { name: "APROVADO POR", value: safe(data?.aprovadoPor), inline: false },
         ],
       };
