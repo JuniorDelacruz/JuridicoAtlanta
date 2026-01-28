@@ -18,14 +18,7 @@ function authHeaders() {
 
 function initialValues(fields) {
   const obj = {};
-  for (const f of fields || []) {
-    // ✅ se for multi-select, o valor default precisa ser array
-    if (f.type === "select" && f.multiple) {
-      obj[f.name] = Array.isArray(f.defaultValue) ? f.defaultValue : [];
-    } else {
-      obj[f.name] = f.defaultValue ?? "";
-    }
-  }
+  for (const f of fields || []) obj[f.name] = f.defaultValue ?? "";
   return obj;
 }
 
@@ -34,13 +27,7 @@ function validate(fields, values) {
   for (const f of fields || []) {
     if (f.required) {
       const v = values[f.name];
-
-      // ✅ trata array (multi-select) como obrigatório também
-      const empty =
-        v === null ||
-        v === undefined ||
-        (Array.isArray(v) ? v.length === 0 : String(v).trim() === "");
-
+      const empty = v === null || v === undefined || String(v).trim() === "";
       if (empty) errors[f.name] = "Campo obrigatório";
     }
   }
@@ -57,7 +44,9 @@ export default function RequerimentoNovo() {
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
+    return (
+      tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin"
+    );
   }, [tipoCfg, user?.role, isEquipeJuridica]);
 
   const [values, setValues] = useState(() => initialValues(tipoCfg?.fields));
@@ -258,7 +247,9 @@ export default function RequerimentoNovo() {
 
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{tipoCfg.label}</h2>
-          <p className="text-gray-600 mb-6">Preencha os campos abaixo para abrir o requerimento.</p>
+          <p className="text-gray-600 mb-6">
+            Preencha os campos abaixo para abrir o requerimento.
+          </p>
 
           <form onSubmit={onSubmit} className="space-y-4">
             {tipoCfg.fields.map((f) => (
@@ -269,23 +260,11 @@ export default function RequerimentoNovo() {
 
                 {f.type === "select" ? (
                   <select
-                    multiple={!!f.multiple}
-                    value={
-                      f.multiple
-                        ? (Array.isArray(values[f.name]) ? values[f.name] : [])
-                        : (values[f.name] || "")
-                    }
-                    onChange={(e) => {
-                      if (f.multiple) {
-                        const arr = Array.from(e.target.selectedOptions).map((o) => o.value);
-                        setField(f.name, arr);
-                      } else {
-                        setField(f.name, e.target.value);
-                      }
-                    }}
+                    value={values[f.name] || ""}
+                    onChange={(e) => setField(f.name, e.target.value)}
                     className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {!f.multiple && <option value="">Selecione...</option>}
+                    <option value="">Selecione...</option>
                     {(f.options || []).map((opt) => (
                       <option key={opt} value={opt}>
                         {opt}
@@ -318,8 +297,8 @@ export default function RequerimentoNovo() {
                     ) : verif.status === "ok" ? (
                       <span className="inline-flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1 rounded-full">
                         <CheckCircle2 className="h-4 w-4" />
-                        Encontrado: <b>{verif.cidadao?.nomeCompleto || "Cidadão"}</b> (
-                        {verif.cidadao?.status})
+                        Encontrado: <b>{verif.cidadao?.nomeCompleto || "Cidadão"}</b>{" "}
+                        ({verif.cidadao?.status})
                       </span>
                     ) : verif.status === "fail" ? (
                       <span className="inline-flex items-center gap-2 text-red-700 bg-red-50 px-3 py-1 rounded-full">
@@ -331,7 +310,9 @@ export default function RequerimentoNovo() {
                   </div>
                 )}
 
-                {errors[f.name] && <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>}
+                {errors[f.name] && (
+                  <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>
+                )}
               </div>
             ))}
 
