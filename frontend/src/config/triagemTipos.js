@@ -1,7 +1,7 @@
 // frontend/src/config/triagemTipos.js
 export const TRIAGEM_TIPOS = [
 {
-slug: "troca-nome",
+slug: "troca-de-nome",
 label: "Troca de Nome",
 tipoDb: "Troca de Nome",
 roles: ["juiz", "admin"], // + equipejuridico

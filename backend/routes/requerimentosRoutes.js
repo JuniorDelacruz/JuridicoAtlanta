@@ -117,7 +117,6 @@ router.post("/", authMiddleware(), async (req, res) => {
             residencia: cidadao.residencia,
             discordId: cidadao.discordId,
             pombo: cidadao.pombo,
-            status: cidadao.status,
           }
         : null,
     };
