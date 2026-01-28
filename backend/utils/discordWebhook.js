@@ -26,6 +26,24 @@ export const WEBHOOK_TYPES = {
 const safe = (val) =>
   val === undefined || val === null || val === "" ? "—" : String(val);
 
+const safeJoin = (val, sep = ", ") => {
+  if (val === undefined || val === null) return "—";
+
+
+  // array (multi-select)
+  if (Array.isArray(val)) {
+    return val.length ? val.join(sep) : "—";
+  }
+
+
+  const s = String(val).trim();
+  if (!s) return "—";
+
+
+  // se já vier como string "A,B,C", padroniza pra "A, B, C"
+  return s.replace(/,\s*/g, sep);
+};
+
 const mentionUser = (discordId) => {
   const id = String(discordId ?? "").trim();
   // ID discord geralmente é só dígitos; evita <@—> e similares
@@ -140,7 +158,7 @@ function buildEmbed(type, data) {
           { name: "REGISTRO DE CIDADÃO", value: safe(data?.registro), inline: true },
           { name: "POMBO", value: safe(data?.pombo), inline: false },
           { name: "VALIDADE", value: safe(data?.validade), inline: false },
-          { name: "ARMAMENTOS APROVADOS", value: safe(data?.arma), inline: false },
+          { name: "ARMAMENTOS APROVADOS", value: safeJoin(data?.arma), inline: false },
           { name: "STATUS", value: "`APROVADO`", inline: true },
           { name: "APROVADO POR", value: safe(data?.aprovadoPor), inline: false },
         ],
