@@ -5,6 +5,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Porte de Arma",
         label: "Porte de Arma",
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             {
                 name: "arma", label: "Qual a arma?", type: "select", required: true, options: [
@@ -23,6 +24,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Troca de Nome",
         label: "Troca de Nome",
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
             { name: "novoNome", label: "Novo Nome Desejado", type: "text", required: true },
@@ -34,6 +36,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Casamento",
         label: "Casamento",
         roles: ["tabeliao", "escrivao", "juiz", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
         ]
@@ -43,6 +46,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Limpeza de Ficha",
         label: "Limpeza de Ficha",
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
         ]
@@ -52,6 +56,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Emitir Alvará",
         label: "Emitir Alvará",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
         ]
@@ -61,6 +66,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Renovação de Alvará",
         label: "Renovação de Alvará",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
         ]
