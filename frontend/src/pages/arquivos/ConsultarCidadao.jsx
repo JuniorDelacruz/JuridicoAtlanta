@@ -222,9 +222,6 @@ export default function ConsultarCidadao() {
                   <div>
                     <span className="text-gray-500">Pombo:</span> <b>{safe(cidadao.pombo)}</b>
                   </div>
-                  <div>
-                    <span className="text-gray-500">Nascimento:</span> <b>{safe(cidadao.nascimento)}</b>
-                  </div>
                 </div>
               </div>
             </div>
