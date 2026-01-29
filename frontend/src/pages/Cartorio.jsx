@@ -502,7 +502,26 @@ function Cartorio() {
                                                     </>
                                                 )}
                                             </div>
+                                            <div className="mt-8 flex justify-end gap-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={fecharFormulario}
+                                                    className="px-6 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRegistrar}
+                                                    disabled={enviando}
+                                                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                                                >
+                                                    {enviando ? 'Enviando...' : 'Enviar para Triagem'}
+                                                </button>
+                                            </div>
                                         </div>
+
+
                                     </form>
                                 ) : (
                                     <div className="text-center py-10 text-gray-600">
