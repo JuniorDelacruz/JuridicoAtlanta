@@ -431,8 +431,8 @@ function Cartorio() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Numero de Cidadão (Cartório)</label>
                                             <input
                                                 type="text"
-                                                value={formDados.discordId || ''}
-                                                onChange={(e) => setFormDados({ ...formDados, discordId: e.target.value })}
+                                                value={armaForm.cidadaoId || ''}
+                                                onChange={(e) => setArmaForm({ ...armaForm, cidadaoId: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: 123456789012345678"
                                                 required
@@ -442,8 +442,8 @@ function Cartorio() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Numero do Porte</label>
                                             <input
                                                 type="text"
-                                                value={armaForm.cidadaoId || ''}
-                                                onChange={(e) => setArmaForm({ ...armaForm, cidadaoId: e.target.value })}
+                                                value={armaForm.porteNumero}
+                                                onChange={(e) => setArmaForm({ ...armaForm, porteNumero: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: 123456789012345678"
                                                 onBlur={checarPorte}
@@ -454,11 +454,10 @@ function Cartorio() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Numero de Série</label>
                                             <input
                                                 type="text"
-                                                value={armaForm.porteNumero}
-                                                onChange={(e) => setArmaForm({ ...armaForm, porteNumero: e.target.value })}
+                                                value={armaForm.numeroSerial}
+                                                onChange={(e) => setArmaForm({ ...armaForm, numeroSerial: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: 123456789012345678"
-                                                onBlur={checarPorte}
                                                 required
                                             />
                                         </div>
