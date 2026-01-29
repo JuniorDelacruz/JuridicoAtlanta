@@ -5,10 +5,7 @@ import axios from "axios";
 
 const AuthContext = createContext();
 
-const API_URL =
-  import.meta?.env?.VITE_API_URL ||
-  import.meta?.env?.VITE_API_BASE_URL ||
-  "https://apijuridico.starkstore.dev.br";
+const API_URL = "https://apijuridico.starkstore.dev.br";
 
 function authHeaders() {
   const token = localStorage.getItem("token");
