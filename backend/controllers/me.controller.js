@@ -12,6 +12,8 @@ export async function getMeuCidadao(req, res) {
       order: [["updatedAt", "DESC"]],
     });
 
+    console.log(cidadao)
+
     return res.json({
       cidadao: cidadao
         ? { id: cidadao.id, nomeCompleto: cidadao.nomeCompleto, discordId: cidadao.discordId }
