@@ -25,7 +25,7 @@ const canAccess = (user, module) => {
 };
 
 export default function Dashboard() {
-  const { user, logout, isAuthenticated, cidadao } = useAuth();
+  const { user, cidadao, logout, isAuthenticated,  } = useAuth();
   const navigate = useNavigate();
   console.log(cidadao)
 
