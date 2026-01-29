@@ -32,14 +32,9 @@ passport.use(
                         subRole: null
                     });
                 }
+  
 
-                const dbCidadao = await CadastroCidadao.findOne({ where: { discordId: profile.id }})
-
-                if (!dbCidadao) return done(null, user)
-
-                const cidadao = dbCidadao.nomeCompleto
-
-                return done(null, user, cidadao);
+                return done(null, user, );
             } catch (err) {
                 return done(err);
             }
