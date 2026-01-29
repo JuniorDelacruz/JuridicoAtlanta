@@ -4,7 +4,7 @@ const { CadastroCidadao } = db;
 
 export async function getMeuCidadao(req, res) {
   try {
-    const discordId = String(req.user?.id || "").trim(); // seu JWT precisa ter id=DiscordId
+    const discordId = String(req.user?.discordId || "").trim(); // seu JWT precisa ter id=DiscordId
     if (!discordId) return res.status(400).json({ message: "Token sem id." });
 
     const cidadao = await CadastroCidadao.findOne({
