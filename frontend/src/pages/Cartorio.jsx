@@ -161,10 +161,12 @@ function Cartorio() {
         formData.append('discordId', formDados.discordId);
         formData.append('imagemIdentidade', imagemFile); // arquivo real
 
+
+
         try {
             const token = localStorage.getItem('token');
             const response = await axios.post(
-                'https://apijuridico.starkstore.dev.br//api/cartorio/cadastro',
+                'https://apijuridico.starkstore.dev.br/api/cartorio/cadastro',
                 formData,
                 {
                     headers: {
