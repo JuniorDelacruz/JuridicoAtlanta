@@ -1,9 +1,9 @@
 // backend/routes/me.routes.js
 import { Router } from "express";
-import { requireAuth } from "../middlewares/requireAuth.js";
+import authMiddleware from '../middleware/auth.js';
 import { getMeuCidadao } from "../controllers/me.controller.js";
 
 const r = Router();
-r.get("/cidadao", requireAuth, getMeuCidadao);
+r.get("/cidadao", authMiddleware, getMeuCidadao);
 
 export default r;
