@@ -2,8 +2,9 @@
 import passport from 'passport';
 import { Strategy as DiscordStrategy } from 'passport-discord';
 import db from '../models/index.js'; 
-const { User } = db;
+const { User, CadastroCidadao } = db;
 import dotenv from 'dotenv';
+import { where } from 'sequelize';
 dotenv.config();
 passport.use(
 
@@ -32,7 +33,13 @@ passport.use(
                     });
                 }
 
-                return done(null, user);
+                const dbCidadao = await CadastroCidadao.findOne({ where: { discordId: profile.id }})
+
+                if (!dbCidadao) return done(null, user)
+
+                const cidadao = dbCidadao.nomeCompleto
+
+                return done(null, user, cidadao);
             } catch (err) {
                 return done(err);
             }

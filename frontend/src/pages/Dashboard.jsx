@@ -25,8 +25,9 @@ const canAccess = (user, module) => {
 };
 
 export default function Dashboard() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, cidadao } = useAuth();
   const navigate = useNavigate();
+  console.log(cidadao)
 
   // 1) Redirect SEM side-effect no render
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Bem-vindo, {user?.username || "Usuário Discord"}</span>
+            <span className="text-sm font-medium">Bem-vindo, {cidadao || user?.username || "Usuário Discord"}</span>
             <span className="text-sm bg-blue-700 px-3 py-1 rounded">Cargo: {user?.role || "-"}</span>
 
             <button
