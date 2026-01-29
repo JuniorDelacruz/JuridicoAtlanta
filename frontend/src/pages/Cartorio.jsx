@@ -140,6 +140,7 @@ function Cartorio() {
         );
 
         alert("Registro de arma enviado para triagem!");
+        fecharFormulario();
     };
 
 
