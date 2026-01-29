@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [cidadao] = useState(null)
+  const [cidadao, setNomeCompleto] = useState(null)
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +56,15 @@ export function AuthProvider({ children }) {
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
+
+
+  try {
+    setNomeCompleto(cidadao?.nomeCompleto)
+  } catch {
+    setNomeCompleto(null);
+  }
+
+  
 
   return (
     <AuthContext.Provider value={{ user, logout, isAuthenticated: !!user , cidadao }}>
