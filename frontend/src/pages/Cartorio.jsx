@@ -118,6 +118,29 @@ function Cartorio() {
     };
 
 
+    const handleRegistroArma = async () => {
+        if (!porteOk) return alert("Valide o porte antes de prosseguir.");
+        if (!armaForm.cidadaoId || !armaForm.porteNumero || !armaForm.numeroSerial || !imagemFile) {
+            return alert("Preencha tudo e envie a imagem.");
+        }
+
+        const formData = new FormData();
+        formData.append("cidadaoId", armaForm.cidadaoId);
+        formData.append("porteNumero", armaForm.porteNumero);
+        formData.append("numeroSerial", armaForm.numeroSerial);
+        formData.append("imagemIdentidade", imagemFile);
+
+        const token = localStorage.getItem("token");
+        await axios.post(
+            "https://apijuridico.starkstore.dev.br/api/cartorio/arma/registro",
+            formData,
+            { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
+        );
+
+        alert("Registro de arma enviado para triagem!");
+    };
+
+
 
 
     const handleRegistrar = async () => {
