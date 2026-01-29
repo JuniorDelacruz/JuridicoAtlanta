@@ -71,7 +71,7 @@ function buildWebhookPayload(item, reqUser) {
     return {
         id: item.numero,
         status: item.status,
-        aprovadoPor: item?.dados?.workflow?.workflow.juiz?.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
+        aprovadoPor: item?.dados?.workflow?.juiz?.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
 
 
         // dados comuns (se existir no seu schema)
