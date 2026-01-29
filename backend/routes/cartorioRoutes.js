@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path'
 import authMiddleware from '../middleware/auth.js';
 import notifyDiscordBot from '../utils/discordWebhook.js';
+import { criarRegistroArma, validarPorte } from '../controllers/cartorio.controller.js';
 dotenv.config();
 const router = express.Router();
 
@@ -47,6 +48,8 @@ router.get('/pendentes', authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'ju
         res.status(500).json({ msg: 'Erro ao listar pendentes' });
     }
 });
+
+router.post("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte);
 
 router.post('/cadastro',
     authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'juiz', 'admin']),
@@ -94,6 +97,13 @@ router.post('/cadastro',
             res.status(500).json({ msg: 'Erro interno ao criar cadastro' });
         }
     }
+);
+
+router.post(
+  "/arma/registro",
+  authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]),
+  upload.single("imagemIdentidade"),
+  criarRegistroArma
 );
 
 router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res) => {

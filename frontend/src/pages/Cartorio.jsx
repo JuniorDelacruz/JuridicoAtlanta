@@ -5,6 +5,38 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Scale, UserPlus, Shield, FileCheck, ArrowLeft, Upload, X } from 'lucide-react';
 
+
+async function checarPorte() {
+    setPorteOk(false);
+    setPorteMsg("");
+
+    const porteNumero = armaForm.porteNumero.trim();
+    const cidadaoId = armaForm.cidadaoId.trim();
+
+    if (!porteNumero || !cidadaoId) return;
+
+    try {
+        const token = localStorage.getItem("token");
+        const res = await axios.post(
+            "https://apijuridico.starkstore.dev.br/api/cartorio/porte/validar",
+            { porteNumero, cidadaoId },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (res.data?.ok) {
+            setPorteOk(true);
+            setPorteMsg("Porte validado ✅");
+        } else {
+            setPorteOk(false);
+            setPorteMsg(res.data?.message || "Falha ao validar porte.");
+        }
+    } catch (e) {
+        setPorteOk(false);
+        setPorteMsg(e.response?.data?.message || "Falha ao validar porte.");
+    }
+}
+
+
 function Cartorio() {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -13,6 +45,15 @@ function Cartorio() {
     const [enviando, setEnviando] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
+
+    const [armaForm, setArmaForm] = useState({
+        cidadaoId: "",
+        porteNumero: "",
+        numeroSerial: "",
+    });
+
+    const [porteOk, setPorteOk] = useState(false);
+    const [porteMsg, setPorteMsg] = useState("");
 
     // Verifica permissão para acessar a página
     useEffect(() => {
@@ -374,10 +415,11 @@ function Cartorio() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Numero do Porte</label>
                                             <input
                                                 type="text"
-                                                value={formDados.discordId || ''}
-                                                onChange={(e) => setFormDados({ ...formDados, discordId: e.target.value })}
+                                                value={armaForm.cidadaoId || ''}
+                                                onChange={(e) => setArmaForm({ ...armaForm, cidadaoId: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: 123456789012345678"
+                                                onBlur={checarPorte}
                                                 required
                                             />
                                         </div>
@@ -385,10 +427,11 @@ function Cartorio() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Numero de Série</label>
                                             <input
                                                 type="text"
-                                                value={formDados.discordId || ''}
-                                                onChange={(e) => setFormDados({ ...formDados, discordId: e.target.value })}
+                                                value={armaForm.porteNumero}
+                                                onChange={(e) => setArmaForm({ ...armaForm, porteNumero: e.target.value })}
                                                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: 123456789012345678"
+                                                onBlur={checarPorte}
                                                 required
                                             />
                                         </div>
