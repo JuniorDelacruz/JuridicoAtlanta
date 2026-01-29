@@ -357,51 +357,64 @@ function Cartorio() {
                                         </div>
                                     </form>
                                 ) : showForm === 'arma' ? (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Imagem da Identidade</label>
-                                        <div
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                const file = e.dataTransfer.files[0];
-                                                if (file) handleImageLocal(file);
-                                            }}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
-                                        >
-                                            {previewImage ? (
-                                                <div className="relative">
-                                                    <img
-                                                        src={previewImage}
-                                                        alt="Pré-visualização"
-                                                        className="max-h-48 mx-auto rounded-md"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={removerImagem}
-                                                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <Upload className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-                                                    <p className="text-gray-600">Arraste a imagem aqui ou</p>
-                                                    <label className="text-blue-600 hover:underline cursor-pointer">
-                                                        clique para selecionar
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            onChange={(e) => {
-                                                                if (e.target.files[0]) handleImageLocal(e.target.files[0]);
-                                                            }}
-                                                            className="hidden"
-                                                        />
-                                                    </label>
-                                                </>
-                                            )}
+                                    <form className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">ID Discord do Cidadão</label>
+                                            <input
+                                                type="text"
+                                                value={formDados.discordId || ''}
+                                                onChange={(e) => setFormDados({ ...formDados, discordId: e.target.value })}
+                                                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Ex: 123456789012345678"
+                                                required
+                                            />
                                         </div>
-                                    </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem da Identidade</label>
+                                            <div
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    const file = e.dataTransfer.files[0];
+                                                    if (file) handleImageLocal(file);
+                                                }}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
+                                            >
+                                                {previewImage ? (
+                                                    <div className="relative">
+                                                        <img
+                                                            src={previewImage}
+                                                            alt="Pré-visualização"
+                                                            className="max-h-48 mx-auto rounded-md"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={removerImagem}
+                                                            className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <Upload className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                                                        <p className="text-gray-600">Arraste a imagem aqui ou</p>
+                                                        <label className="text-blue-600 hover:underline cursor-pointer">
+                                                            clique para selecionar
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={(e) => {
+                                                                    if (e.target.files[0]) handleImageLocal(e.target.files[0]);
+                                                                }}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </form>
                                 ) : (
                                     <div className="text-center py-10 text-gray-600">
                                         Formulário de Recolhimentos em desenvolvimento...
