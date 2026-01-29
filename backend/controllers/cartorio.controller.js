@@ -1,6 +1,7 @@
 // backend/controllers/cartorio.controller.js (ou um novo controller)
+import { where } from "sequelize";
 import db from "../models/index.js";
-const { Requerimento } = db;
+const { Requerimento, CadastroCidadao } = db;
 
 function isPorteDeArmas(tipo) {
     const t = String(tipo || "").toLowerCase();
@@ -73,9 +74,12 @@ export async function criarRegistroArma(req, res) {
             return res.status(400).json({ ok: false, message: "Envie a imagem." });
         }
 
+
+        const cidadao = await CadastroCidadao.findOne({ where: { numero: cidadaoId } })
+        const dysplayName = await CadastroCidadao.findOne({ where: { discordId: req.user?.id}})
+        
         // 3) cria Requerimento "Registro de Arma"
-        const solicitante =
-            req.user?.username || req.user?.name || String(req.user?.id || "Sistema");
+        const solicitante = dysplayName?.nomeCompleto || req.user?.username || req.user?.name || String(req.user?.id || "Sistema");
 
         const novo = await Requerimento.create({
             tipo: "Registro de Arma",
@@ -83,7 +87,15 @@ export async function criarRegistroArma(req, res) {
             solicitante,
             userId: req.user.id, // PK do user no seu sistema
             dados: {
-                cidadao: { id: String(cidadaoId) },
+                cidadao: {
+                    id: cidadao.id,
+                    nomeCompleto: cidadao.nomeCompleto,
+                    identidade: cidadao.identidade,
+                    profissao: cidadao.profissao,
+                    residencia: cidadao.residencia,
+                    discordId: cidadao.discordId,
+                    pombo: cidadao.pombo,
+                },
                 porteNumero: Number(porteNumero),
                 numeroSerial: String(numeroSerial || "").trim(),
                 imagemIdentidadeUrl: `https://apijuridico.starkstore.dev.br/uploads/${req.file.filename}`, // adapte ao seu path real
