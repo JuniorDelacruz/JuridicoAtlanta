@@ -49,7 +49,14 @@ router.get('/pendentes', authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'ju
     }
 });
 
-router.post("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte);
+router.post("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte,
+
+    async (req, res) => {
+        res.status(201).json({
+            msg: 'Cadastro criado com sucesso! Aguarde aprovação na triagem.',
+            cadastro: novo
+        })
+    });
 
 router.post(
     "/arma/registro",
