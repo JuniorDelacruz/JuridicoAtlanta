@@ -11,9 +11,6 @@ export async function getMeuCidadao(req, res) {
       where: { discordId },
       order: [["updatedAt", "DESC"]],
     });
-    console.log("REQ.USER:", req.user);
-    console.log(cidadao)
-
     return res.json({
       cidadao: cidadao
         ? { id: cidadao.id, nomeCompleto: cidadao.nomeCompleto, discordId: cidadao.discordId }
