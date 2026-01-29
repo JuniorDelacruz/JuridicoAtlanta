@@ -9,10 +9,13 @@ export default defineConfig({
     tailwindcss(),   // <- Isso ativa o Tailwind v4 automaticamente
   ],
   server: {
-    allowedHosts: [
-      'subterete-chronometrical-haven.ngrok-free.dev',
-      'juridicoatlanta.starkstore.dev.br'
-    ],
-    port: 3000, // opcional, como falamos antes
-  },
+    host: true,
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      protocol: "wss",
+      host: "juridicoatlanta.starkstore.dev.br",
+      clientPort: 443,
+    }
+  }
 })
