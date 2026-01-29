@@ -7,17 +7,16 @@ export const TIPOS_REQUERIMENTO = [
         roles: ["auxiliar", "advogado", "juiz", "promotor", "promotorchefe", "admin"],
         subRole: ['equipejuridico'],
         fields: [
+            { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true, verifyCadastro: true, },
             {
                 name: "arma", label: "Qual a arma?", type: "select", required: true, multiple: true,options: [
                     "Revolver Lemat", "Revolver Navy Crossover", "Revolver Navy", "Pistol M1899", "Pistol Mauser",
                     "Carabine Repeater", "Evans Repeater", "Winchester Repeater", "Boltaction Rifle", "Springfield Rifle",
                     "Elephant Rifle", "Varmint Rifle", "Rolling Block Rifle", "Carcano Rifle",
                     "Semi-Auto Shotgun", "Repeating Shotgun", "Double Barrel Shotgun", "Double Barrel Exotic Shotgun",
-                    "Pump Shotgun", "Sawedoff Shotgun", "Metralhadora Thompson", "Todos os armamentos"
+                    "Pump Shotgun", "Sawedoff Shotgun", "Metralhadora Thompson"
                 ]
             },
-            { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true, verifyCadastro: true, },
-            { name: "numeroSerial", label: "Numero Serial", type: "text", required: true },
         ],
     },
     {
