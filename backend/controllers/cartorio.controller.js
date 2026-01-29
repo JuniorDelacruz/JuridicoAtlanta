@@ -64,28 +64,45 @@ export async function validarPorte(req, res) {
 
 export async function criarRegistroArma(req, res) {
     try {
-        const { cidadaoId, porteNumero, numeroSerial } = req.body;
+        const cidadaoId = Number(req.body?.cidadaoId);
+        const porteNumero = Number(req.body?.porteNumero);
+        const numeroSerial = String(req.body?.numeroSerial || "").trim();
 
-        // 1) valida porte chamando a mesma lógica (ou duplicando aqui)
-        // aqui eu chamaria validarPorte() em função interna pra não repetir código
+        if (!Number.isInteger(cidadaoId)) {
+            return res.status(400).json({ ok: false, message: "cidadaoId inválido." });
+        }
+        if (!Number.isInteger(porteNumero)) {
+            return res.status(400).json({ ok: false, message: "porteNumero inválido." });
+        }
+        if (!numeroSerial) {
+            return res.status(400).json({ ok: false, message: "numeroSerial é obrigatório." });
+        }
 
-        // 2) garante que veio imagem
         if (!req.file) {
             return res.status(400).json({ ok: false, message: "Envie a imagem." });
         }
 
+        const cidadao = await CadastroCidadao.findOne({ where: { id: cidadaoId } });
+        if (!cidadao) {
+            return res.status(404).json({ ok: false, message: "Cidadão não encontrado." });
+        }
 
-        const cidadao = await CadastroCidadao.findOne({ where: { id: cidadaoId } })
-        const dysplayName = await CadastroCidadao.findOne({ where: { discordId: req.user?.id}})
-        
-        // 3) cria Requerimento "Registro de Arma"
-        const solicitante = dysplayName?.nomeCompleto || req.user?.username || req.user?.name || String(req.user?.id || "Sistema");
+        // discordId SEMPRE string
+        const discordId = String(req.user?.id || "").trim();
+        const displayRow = await CadastroCidadao.findOne({ where: { discordId } });
+
+        const solicitante =
+            displayRow?.nomeCompleto ||
+            req.user?.username ||
+            req.user?.name ||
+            discordId ||
+            "Sistema";
 
         const novo = await Requerimento.create({
             tipo: "Registro de Arma",
             status: "PENDENTE",
             solicitante,
-            userId: req.user.id, // PK do user no seu sistema
+            userId: req.user.id, // aqui ok se seu JWT tem o PK do User; se não tiver, tem que ajustar
             dados: {
                 cidadao: {
                     id: cidadao.id,
@@ -96,9 +113,9 @@ export async function criarRegistroArma(req, res) {
                     discordId: cidadao.discordId,
                     pombo: cidadao.pombo,
                 },
-                porteNumero: porteNumero,
-                numeroSerial: numeroSerial ,
-                imagemIdentidadeUrl: `https://apijuridico.starkstore.dev.br/uploads/${req.file.filename}`, // adapte ao seu path real
+                porteNumero,
+                numeroSerial,
+                imagemIdentidadeUrl: `https://apijuridico.starkstore.dev.br/uploads/${req.file.filename}`,
             },
         });
 
