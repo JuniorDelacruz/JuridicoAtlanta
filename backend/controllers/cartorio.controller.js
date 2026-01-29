@@ -96,8 +96,8 @@ export async function criarRegistroArma(req, res) {
                     discordId: cidadao.discordId,
                     pombo: cidadao.pombo,
                 },
-                porteNumero: Number(porteNumero),
-                numeroSerial: String(numeroSerial || "").trim(),
+                porteNumero: porteNumero,
+                numeroSerial: numeroSerial ,
                 imagemIdentidadeUrl: `https://apijuridico.starkstore.dev.br/uploads/${req.file.filename}`, // adapte ao seu path real
             },
         });
