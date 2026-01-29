@@ -51,6 +51,13 @@ router.get('/pendentes', authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'ju
 
 router.post("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte);
 
+router.post(
+    "/arma/registro",
+    authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]),
+    upload.single("imagemIdentidade"),
+    criarRegistroArma
+);
+
 router.post('/cadastro',
     authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'juiz', 'admin']),
     upload.single('imagemIdentidade'), // nome do campo no form
@@ -99,12 +106,7 @@ router.post('/cadastro',
     }
 );
 
-router.post(
-  "/arma/registro",
-  authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]),
-  upload.single("imagemIdentidade"),
-  criarRegistroArma
-);
+
 
 router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res) => {
     try {
