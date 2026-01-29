@@ -80,7 +80,7 @@ function Cartorio() {
             const res = await axios.post(
                 "https://apijuridico.starkstore.dev.br/api/cartorio/porte/validar",
                 { porteNumero, cidadaoId },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", } }
             );
 
             if (res.data?.ok) {

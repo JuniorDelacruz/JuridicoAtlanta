@@ -49,7 +49,7 @@ router.get('/pendentes', authMiddleware(['auxiliar', 'tabeliao', 'escrivao', 'ju
     }
 });
 
-router.get("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte,
+router.post("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]), validarPorte,
 
     async (req, res) => {
         res.status(201).json({
@@ -58,8 +58,7 @@ router.get("/porte/validar", authMiddleware(["tabeliao", "escrivao", "juiz", "ad
         })
     });
 
-router.post(
-    "/arma/registro",
+router.post("/arma/registro",
     authMiddleware(["tabeliao", "escrivao", "juiz", "admin"]),
     upload.single("imagemIdentidade"),
     criarRegistroArma
