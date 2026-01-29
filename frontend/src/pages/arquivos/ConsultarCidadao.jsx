@@ -220,7 +220,7 @@ export default function ConsultarCidadao() {
                     <span className="text-gray-500">Discord ID:</span> <b>{safe(cidadao.discordId)}</b>
                   </div>
                   <div>
-                    <span className="text-gray-500">Telefone:</span> <b>{safe(cidadao.telefone)}</b>
+                    <span className="text-gray-500">Pombo:</span> <b>{safe(cidadao.pombo)}</b>
                   </div>
                   <div>
                     <span className="text-gray-500">Nascimento:</span> <b>{safe(cidadao.nascimento)}</b>
