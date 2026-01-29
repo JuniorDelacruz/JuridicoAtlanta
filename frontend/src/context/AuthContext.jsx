@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
   
 
   return (
-    <AuthContext.Provider value={{ user, logout, isAuthenticated: !!user , cidadao }}>
+    <AuthContext.Provider value={{ user, cidadao, logout, isAuthenticated: !!user ,  }}>
       {children}
     </AuthContext.Provider>
   );
