@@ -92,7 +92,6 @@ function buildWebhookPayload(item, reqUser) {
         ...(isPorte ? {
             validade: item?.dados?.workflow.juiz.validade,
             arma: item?.dados?.arma,
-            serial: item?.dados?.numeroSerial,
         } : {}),
     };
 }
