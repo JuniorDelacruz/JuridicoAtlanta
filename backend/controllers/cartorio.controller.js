@@ -75,7 +75,7 @@ export async function criarRegistroArma(req, res) {
         }
 
 
-        const cidadao = await CadastroCidadao.findOne({ where: { numero: cidadaoId } })
+        const cidadao = await CadastroCidadao.findOne({ where: { id: cidadaoId } })
         const dysplayName = await CadastroCidadao.findOne({ where: { discordId: req.user?.id}})
         
         // 3) cria Requerimento "Registro de Arma"
