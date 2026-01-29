@@ -6,35 +6,7 @@ import axios from 'axios';
 import { Scale, UserPlus, Shield, FileCheck, ArrowLeft, Upload, X } from 'lucide-react';
 
 
-async function checarPorte() {
-    setPorteOk(false);
-    setPorteMsg("");
 
-    const porteNumero = armaForm.porteNumero.trim();
-    const cidadaoId = armaForm.cidadaoId.trim();
-
-    if (!porteNumero || !cidadaoId) return;
-
-    try {
-        const token = localStorage.getItem("token");
-        const res = await axios.post(
-            "https://apijuridico.starkstore.dev.br/api/cartorio/porte/validar",
-            { porteNumero, cidadaoId },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (res.data?.ok) {
-            setPorteOk(true);
-            setPorteMsg("Porte validado ✅");
-        } else {
-            setPorteOk(false);
-            setPorteMsg(res.data?.message || "Falha ao validar porte.");
-        }
-    } catch (e) {
-        setPorteOk(false);
-        setPorteMsg(e.response?.data?.message || "Falha ao validar porte.");
-    }
-}
 
 
 function Cartorio() {
@@ -93,6 +65,36 @@ function Cartorio() {
 
     const [imagemFile, setImagemFile] = useState(null);
 
+
+    async function checarPorte() {
+        setPorteOk(false);
+        setPorteMsg("");
+
+        const porteNumero = armaForm.porteNumero.trim();
+        const cidadaoId = armaForm.cidadaoId.trim();
+
+        if (!porteNumero || !cidadaoId) return;
+
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.post(
+                "https://apijuridico.starkstore.dev.br/api/cartorio/porte/validar",
+                { porteNumero, cidadaoId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data?.ok) {
+                setPorteOk(true);
+                setPorteMsg("Porte validado ✅");
+            } else {
+                setPorteOk(false);
+                setPorteMsg(res.data?.message || "Falha ao validar porte.");
+            }
+        } catch (e) {
+            setPorteOk(false);
+            setPorteMsg(e.response?.data?.message || "Falha ao validar porte.");
+        }
+    }
 
     const handleImageLocal = (file) => {
         if (!file || !file.type.startsWith('image/')) {
