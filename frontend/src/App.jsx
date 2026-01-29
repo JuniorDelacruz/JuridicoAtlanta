@@ -30,6 +30,7 @@ import CodigoEticaJudiciario from './pages/CodigoEticaJudiciario';
 import ManualAdvogado from './pages/ManualAdvogado';
 import Arquivos from './pages/Arquivos';
 import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
+import Valores from './pages/valores/Valores';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -179,7 +180,7 @@ function App() {
       />
 
 
-
+      <Route path="/valores" element={<Valores />} />
       <Route path="/codigo-etica" element={<CodigoEticaJudiciario />} />
       <Route path="/manual-advogado" element={<ManualAdvogado />} />
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
