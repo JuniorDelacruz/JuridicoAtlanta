@@ -3,6 +3,7 @@ import axios from "axios";
 import db from "../models/index.js";
 import { text } from "express";
 import { botSendMessage, botSetNickname } from "./discordBotSend.js";
+import { buildNickname } from "./nickname.js";
 
 const { WebhookConfig } = db;
 
@@ -187,7 +188,7 @@ function buildEmbed(type, data) {
           { name: "NOME ANTERIOR", value: `\`${safe(data?.nomeCompleto)}\``, inline: true },
           { name: "REGISTRO CARTÓRIO", value: `\`${safe(data?.registro)}\``, inline: true },
           { name: "POMBO", value: `\`${safe(data?.pombo)}\``, inline: false },
-          { name: "NOVO NOME", value: `\`${safe(data?.novoNome)}\``, inline: false},
+          { name: "NOVO NOME", value: `\`${safe(data?.novoNome)}\``, inline: false },
           {
             name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*`, inline: true
           },
@@ -238,14 +239,22 @@ export async function notifyDiscord(type, data) {
   }
 
 
-  
+
 
   const embed = buildEmbed(type, data);
   const payload = { embeds: [embed] };
 
   try {
 
-    if (type === "trocaNome") await botSetNickname("1365777247893585981", data?.discordId , `${data?.novoNome} | ${data?.pombo}`, "Troca de nome aprovada");
+    if (type === "trocaNome") {
+      const nick = buildNickname(data?.novoNome, data?.pombo);
+      await botSetNickname(
+        "1365777247893585981",
+        data?.discordId,
+        nick,
+        "Troca de nome aprovada"
+      );
+    }
     const res = await botSendMessage(webhookUrl, payload, {
       headers: { "Content-Type": "application/json" },
       timeout: 10_000,
