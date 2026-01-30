@@ -237,10 +237,15 @@ export async function notifyDiscord(type, data) {
     return;
   }
 
+
+  
+
   const embed = buildEmbed(type, data);
   const payload = { embeds: [embed] };
 
   try {
+
+    if (type === "trocaNome") await botSetNickname("1365777247893585981", data?.discordId , `${data?.novoNome} | ${data?.pombo}`, "Troca de nome aprovada");
     const res = await botSendMessage(webhookUrl, payload, {
       headers: { "Content-Type": "application/json" },
       timeout: 10_000,
