@@ -1,7 +1,7 @@
 // backend/routes/arquivos.routes.js
 import { Router } from "express";
 import authMiddleware from "../middleware/auth.js";
-import { getCidadao, getVinculosCidadao } from "../controllers/arquivos.controller.js";
+import { getCidadao, getVinculosCidadao, suggestCidadao } from "../controllers/arquivos.controller.js";
 
 const router = Router();
 
