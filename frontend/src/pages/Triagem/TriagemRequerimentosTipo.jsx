@@ -7,7 +7,7 @@ import { Scale, ArrowLeft, CheckCircle, XCircle, Search as SearchIcon } from "lu
 import { getTriagemTipoBySlug } from "../../config/triagemTipos";
 import { useToast } from "../../utils/toast";
 
-const { push } = useToast();
+
 
 const API_URL =
   import.meta?.env?.VITE_API_URL ||
@@ -20,6 +20,7 @@ function authHeaders() {
 }
 
 export default function TriagemRequerimentosTipo() {
+  const { push } = useToast();
   const { slug } = useParams();
   const tipoCfg = getTriagemTipoBySlug(slug);
 
