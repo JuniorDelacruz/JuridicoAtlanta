@@ -174,7 +174,6 @@ function buildEmbed(type, data) {
 
 
     case WEBHOOK_TYPES.TROCA_NOME: {
-      console.log(data)
       return {
         ...base,
         color: 0xf1c40f,
@@ -194,6 +193,23 @@ function buildEmbed(type, data) {
           },
         ]
 
+      }
+    }
+
+    case WEBHOOK_TYPES.CASAMENTO: {
+      console.log(data)
+      return {
+        ...base,
+        color: 0xf1c40f,
+        title: `REGISTRO DE CASAMENTO APROVADO`,
+        description: `
+        **Requerimento Nº ${safe(data?.id)}**
+
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        `,
+        fields: [
+          { name: "NOIVO", value: data?.noivo?.nomeCompleto}
+        ]
       }
     }
 
