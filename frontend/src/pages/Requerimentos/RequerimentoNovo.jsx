@@ -22,14 +22,18 @@ function initialValues(fields) {
   return obj;
 }
 
-function MultiSelectDropdown({ label, options = [], value = [], onChange, placeholder = "Selecione..." }) {
+function MultiSelectDropdown({
+  label,
+  options = [],
+  value = [],
+  onChange,
+  placeholder = "Selecione...",
+}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const ref = useMemo(() => ({ current: null }), []); // evita recriar ref em hot reload
-
+  const ref = useMemo(() => ({ current: null }), []);
 
   const arr = Array.isArray(value) ? value : [];
-
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -37,8 +41,6 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
     return options.filter((o) => String(o).toLowerCase().includes(q));
   }, [options, query]);
 
-
-  // fecha ao clicar fora
   useEffect(() => {
     function onDocMouseDown(e) {
       if (!open) return;
@@ -49,26 +51,18 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [open, ref]);
 
-
   function toggle(opt) {
     const has = arr.includes(opt);
     const next = has ? arr.filter((x) => x !== opt) : [...arr, opt];
     onChange(next);
   }
 
-
   function clearAll() {
     onChange([]);
   }
 
-
   const summary =
-    arr.length === 0
-      ? placeholder
-      : arr.length === 1
-        ? arr[0]
-        : `${arr.length} selecionados`;
-
+    arr.length === 0 ? placeholder : arr.length === 1 ? arr[0] : `${arr.length} selecionados`;
 
   return (
     <div className="relative" ref={(node) => (ref.current = node)}>
@@ -80,7 +74,6 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
         <span className={arr.length ? "text-gray-900" : "text-gray-500"}>{summary}</span>
         <span className="text-gray-400">▾</span>
       </button>
-
 
       {open && (
         <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
@@ -99,7 +92,6 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
             </div>
           </div>
 
-
           <div className="max-h-60 overflow-auto p-2">
             {filtered.length === 0 ? (
               <div className="text-sm text-gray-500 p-2">Nenhuma opção encontrada.</div>
@@ -107,10 +99,7 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
               filtered.map((opt) => {
                 const checked = arr.includes(opt);
                 return (
-                  <label
-                    key={opt}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
-                  >
+                  <label key={opt} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={checked}
@@ -124,7 +113,6 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
             )}
           </div>
 
-
           {arr.length > 0 && (
             <div className="p-2 border-t bg-gray-50">
               <div className="flex flex-wrap gap-2">
@@ -137,9 +125,7 @@ function MultiSelectDropdown({ label, options = [], value = [], onChange, placeh
                     {v}
                   </span>
                 ))}
-                {arr.length > 6 && (
-                  <span className="text-xs text-gray-600">+{arr.length - 6}…</span>
-                )}
+                {arr.length > 6 && <span className="text-xs text-gray-600">+{arr.length - 6}…</span>}
               </div>
             </div>
           )}
@@ -171,9 +157,7 @@ export default function RequerimentoNovo() {
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return (
-      tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin"
-    );
+    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
   }, [tipoCfg, user?.role, isEquipeJuridica]);
 
   const [values, setValues] = useState(() => initialValues(tipoCfg?.fields));
@@ -181,17 +165,13 @@ export default function RequerimentoNovo() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // ====== verificação de cadastro (identidade/cartório) ======
-  const [verif, setVerif] = useState({
-    status: "idle", // idle | checking | ok | fail
-    identidade: "",
-    cidadao: null,
-    error: null,
-  });
+  // ✅ verificação por campo (map)
+  // { [fieldName]: { status: "checking"|"ok"|"fail", identidade, cidadao, error } }
+  const [verifMap, setVerifMap] = useState({});
 
-  // pega 1 campo que tenha verifyCadastro: true
-  const verifyField = useMemo(() => {
-    return (tipoCfg?.fields || []).find((f) => f.verifyCadastro) || null;
+  // ✅ pega TODOS os campos com verifyCadastro:true
+  const verifyFields = useMemo(() => {
+    return (tipoCfg?.fields || []).filter((f) => f.verifyCadastro);
   }, [tipoCfg]);
 
   useEffect(() => {
@@ -211,7 +191,7 @@ export default function RequerimentoNovo() {
 
     setValues(initialValues(tipoCfg.fields));
     setErrors({});
-    setVerif({ status: "idle", identidade: "", cidadao: null, error: null });
+    setVerifMap({}); // ✅ reseta mapa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, isAuthenticated]);
 
@@ -219,93 +199,133 @@ export default function RequerimentoNovo() {
     setValues((p) => ({ ...p, [name]: value }));
   }
 
-  // debounce + verificação no backend
+  // ✅ debounce + verificação no backend POR CAMPO
   useEffect(() => {
-    if (!verifyField) return;
+    if (!verifyFields.length) return;
 
-    const identidade = String(values[verifyField.name] || "").trim();
+    const timers = [];
 
-    if (!identidade) {
-      setVerif({ status: "idle", identidade: "", cidadao: null, error: null });
-      return;
-    }
+    verifyFields.forEach((f) => {
+      const identidade = String(values[f.name] || "").trim();
 
-    setVerif((p) => ({ ...p, status: "checking", identidade, error: null }));
-
-    const t = setTimeout(async () => {
-      try {
-        // BACKEND deve ter: GET /api/cadastros/existe?identidade=XXX
-        const res = await axios.get(`${API_URL}/api/cadastros/existe`, {
-          headers: authHeaders(),
-          params: { identidade },
+      // se vazio, remove do mapa
+      if (!identidade) {
+        setVerifMap((prev) => {
+          if (!prev[f.name]) return prev;
+          const next = { ...prev };
+          delete next[f.name];
+          return next;
         });
-
-        if (res.data?.exists) {
-          setVerif({
-            status: "ok",
-            identidade,
-            cidadao: res.data.cidadao || null,
-            error: null,
-          });
-        } else {
-          setVerif({
-            status: "fail",
-            identidade,
-            cidadao: null,
-            error: null,
-          });
-        }
-      } catch (err) {
-        setVerif({
-          status: "fail",
-          identidade,
-          cidadao: null,
-          error: err.response?.data?.msg || err.response?.data?.message || err.message,
-        });
+        return;
       }
-    }, 500);
 
-    return () => clearTimeout(t);
-  }, [values, verifyField]);
+      // marca como checking se mudou
+      setVerifMap((prev) => {
+        const current = prev[f.name];
+        if (current?.status === "checking" && current?.identidade === identidade) return prev;
+        return {
+          ...prev,
+          [f.name]: { status: "checking", identidade, cidadao: null, error: null },
+        };
+      });
 
+      const t = setTimeout(async () => {
+        try {
+          const res = await axios.get(`${API_URL}/api/cadastros/existe`, {
+            headers: authHeaders(),
+            params: { identidade },
+          });
+
+          if (res.data?.exists) {
+            setVerifMap((prev) => ({
+              ...prev,
+              [f.name]: {
+                status: "ok",
+                identidade,
+                cidadao: res.data.cidadao || null,
+                error: null,
+              },
+            }));
+          } else {
+            setVerifMap((prev) => ({
+              ...prev,
+              [f.name]: {
+                status: "fail",
+                identidade,
+                cidadao: null,
+                error: null,
+              },
+            }));
+          }
+        } catch (err) {
+          setVerifMap((prev) => ({
+            ...prev,
+            [f.name]: {
+              status: "fail",
+              identidade,
+              cidadao: null,
+              error: err.response?.data?.msg || err.response?.data?.message || err.message,
+            },
+          }));
+        }
+      }, 500);
+
+      timers.push(t);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [values, verifyFields]);
+
+  // ✅ bloqueia submit até TODOS verifyCadastro estarem OK e batendo com valor atual
   const submitDisabled = useMemo(() => {
     if (saving) return true;
-    if (!verifyField) return false;
+    if (!verifyFields.length) return false;
 
-    const identidade = String(values[verifyField.name] || "").trim();
-    if (!identidade) return true;
+    for (const f of verifyFields) {
+      const identidade = String(values[f.name] || "").trim();
+      if (!identidade) return true;
 
-    // precisa estar ok e ser exatamente a identidade atual
-    return verif.status !== "ok" || verif.identidade !== identidade;
-  }, [saving, verifyField, values, verif.status, verif.identidade]);
+      const v = verifMap[f.name];
+      if (!v) return true;
+      if (v.status !== "ok") return true;
+      if (v.identidade !== identidade) return true;
+    }
+
+    return false;
+  }, [saving, verifyFields, values, verifMap]);
 
   async function onSubmit(e) {
     e.preventDefault();
     if (!tipoCfg) return;
 
-    // valida required
     const v = validate(tipoCfg.fields, values);
     setErrors(v);
     if (Object.keys(v).length) return;
 
-    // trava submit se o campo de cartório existe e não validou
-    if (verifyField) {
-      const identidade = String(values[verifyField.name] || "").trim();
-      if (!identidade) {
-        setErrors((p) => ({ ...p, [verifyField.name]: "Campo obrigatório" }));
-        return;
-      }
-      if (verif.status !== "ok" || verif.identidade !== identidade) {
-        setToast({
-          type: "err",
-          text: "Identidade do cartório não encontrada (ou ainda verificando).",
-        });
-        return;
+    // ✅ valida todos verifyCadastro
+    if (verifyFields.length) {
+      for (const f of verifyFields) {
+        const identidade = String(values[f.name] || "").trim();
+
+        if (!identidade) {
+          setErrors((p) => ({ ...p, [f.name]: "Campo obrigatório" }));
+          return;
+        }
+
+        const ver = verifMap[f.name];
+        if (!ver || ver.status !== "ok" || ver.identidade !== identidade) {
+          setToast({
+            type: "err",
+            text: `Identidade do cartório não encontrada (ou ainda verificando) em: ${f.label}`,
+          });
+          return;
+        }
       }
     }
 
     setSaving(true);
     setToast(null);
+
     try {
       const payload = {
         tipo: tipoCfg.tipoDb,
@@ -313,12 +333,10 @@ export default function RequerimentoNovo() {
         solicitante: user?.username || "Usuário",
       };
 
-      await axios.post(`${API_URL}/api/requerimentos`, payload, {
-        headers: authHeaders(),
-      });
+      await axios.post(`${API_URL}/api/requerimentos`, payload, { headers: authHeaders() });
 
       setToast({ type: "ok", text: "Requerimento criado com sucesso!" });
-      navigate(`/requerimentos/${slug}`); // volta pra lista do tipo
+      navigate(`/requerimentos/${slug}`);
     } catch (err) {
       setToast({
         type: "err",
@@ -374,84 +392,82 @@ export default function RequerimentoNovo() {
 
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{tipoCfg.label}</h2>
-          <p className="text-gray-600 mb-6">
-            Preencha os campos abaixo para abrir o requerimento.
-          </p>
+          <p className="text-gray-600 mb-6">Preencha os campos abaixo para abrir o requerimento.</p>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {tipoCfg.fields.map((f) => (
-              <div key={f.name}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {f.label} {f.required ? <span className="text-red-600">*</span> : null}
-                </label>
+            {tipoCfg.fields.map((f) => {
+              const ver = f.verifyCadastro ? verifMap[f.name] : null;
 
-                {f.type === "select" ? (
-                  f.multiple ? (
-                    <MultiSelectDropdown
-                      label={f.label}
-                      options={f.options || []}
-                      value={Array.isArray(values[f.name]) ? values[f.name] : []}
-                      onChange={(arr) => setField(f.name, arr)}
-                      placeholder="Selecione..."
+              return (
+                <div key={f.name}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {f.label} {f.required ? <span className="text-red-600">*</span> : null}
+                  </label>
+
+                  {f.type === "select" ? (
+                    f.multiple ? (
+                      <MultiSelectDropdown
+                        label={f.label}
+                        options={f.options || []}
+                        value={Array.isArray(values[f.name]) ? values[f.name] : []}
+                        onChange={(arr) => setField(f.name, arr)}
+                        placeholder="Selecione..."
+                      />
+                    ) : (
+                      <select
+                        value={values[f.name] || ""}
+                        onChange={(e) => setField(f.name, e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Selecione...</option>
+                        {(f.options || []).map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    )
+                  ) : f.type === "textarea" ? (
+                    <textarea
+                      value={values[f.name] || ""}
+                      onChange={(e) => setField(f.name, e.target.value)}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (
-                    <select
+                    <input
+                      type={f.type || "text"}
                       value={values[f.name] || ""}
                       onChange={(e) => setField(f.name, e.target.value)}
                       className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Selecione...</option>
-                      {(f.options || []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  )
-                ) : f.type === "textarea" ? (
-                  <textarea
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <input
-                    type={f.type || "text"}
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
+                    />
+                  )}
 
-                {/* status de verificação do cartório (se esse campo estiver marcado) */}
-                {f.verifyCadastro && (
-                  <div className="mt-2 text-sm">
-                    {verif.status === "checking" ? (
-                      <span className="inline-flex items-center gap-2 text-gray-600">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Verificando no cartório...
-                      </span>
-                    ) : verif.status === "ok" ? (
-                      <span className="inline-flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1 rounded-full">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Encontrado: <b>{verif.cidadao?.nomeCompleto || "Cidadão"}</b>{" "}
-                        ({verif.cidadao?.status})
-                      </span>
-                    ) : verif.status === "fail" ? (
-                      <span className="inline-flex items-center gap-2 text-red-700 bg-red-50 px-3 py-1 rounded-full">
-                        <XCircle className="h-4 w-4" />
-                        Não encontrado no banco do cartório
-                        {verif.error ? `: ${verif.error}` : "."}
-                      </span>
-                    ) : null}
-                  </div>
-                )}
+                  {/* ✅ status de verificação POR CAMPO */}
+                  {f.verifyCadastro && ver && (
+                    <div className="mt-2 text-sm">
+                      {ver.status === "checking" ? (
+                        <span className="inline-flex items-center gap-2 text-gray-600">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Verificando no cartório...
+                        </span>
+                      ) : ver.status === "ok" ? (
+                        <span className="inline-flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Encontrado: <b>{ver.cidadao?.nomeCompleto || "Cidadão"}</b> ({ver.cidadao?.status})
+                        </span>
+                      ) : ver.status === "fail" ? (
+                        <span className="inline-flex items-center gap-2 text-red-700 bg-red-50 px-3 py-1 rounded-full">
+                          <XCircle className="h-4 w-4" />
+                          Não encontrado no banco do cartório{ver.error ? `: ${ver.error}` : "."}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
 
-                {errors[f.name] && (
-                  <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>
-                )}
-              </div>
-            ))}
+                  {errors[f.name] && <p className="text-xs text-red-700 mt-1">{errors[f.name]}</p>}
+                </div>
+              );
+            })}
 
             <div className="pt-4 flex justify-end">
               <button
@@ -465,9 +481,9 @@ export default function RequerimentoNovo() {
             </div>
 
             {/* dica rápida pra dev */}
-            {verifyField && verif.status !== "ok" && (
+            {verifyFields.length > 0 && (
               <p className="text-xs text-gray-500">
-                * Este tipo exige validação do cartório antes de enviar.
+                * Este tipo exige validação do cartório antes de enviar (todos os campos marcados).
               </p>
             )}
           </form>
