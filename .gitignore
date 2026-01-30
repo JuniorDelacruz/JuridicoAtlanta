@@ -23,6 +23,7 @@ backend/public/
 .env.*
 !.env.example
 *.local
+config.json
 
 
 # =========================
