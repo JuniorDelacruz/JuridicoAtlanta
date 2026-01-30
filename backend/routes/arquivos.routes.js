@@ -7,6 +7,7 @@ const router = Router();
 
 // ✅ protegido por token (se quiser, depois você adiciona RBAC aqui também)
 router.get("/cidadao", authMiddleware(), getCidadao);
+router.get("/cidadao/suggest", authMiddleware(), suggestCidadao); // ✅ NOVO
 router.get("/cidadao/vinculos", authMiddleware(), getVinculosCidadao);
 
 export default router;

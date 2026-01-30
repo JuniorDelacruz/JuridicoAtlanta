@@ -259,3 +259,33 @@ export async function getVinculosCidadao(req, res) {
         return res.status(500).json({ message: err.message });
     }
 }
+
+
+
+export async function suggestCidadao(req, res) {
+  try {
+    const q = normalize(req.query.q);
+    let limit = Number(req.query.limit || 8);
+
+    if (!q || q.length < 2) return res.json({ items: [] });
+
+    // trava pra não explodir
+    if (!Number.isFinite(limit) || limit < 1) limit = 8;
+    if (limit > 15) limit = 15;
+
+    // se o cara digitou número, não sugere (provavelmente id/identidade)
+    if (isNumeric(q)) return res.json({ items: [] });
+
+    const rows = await CadastroCidadao.findAll({
+      where: {
+        nomeCompleto: { [Op.iLike]: `%${q}%` },
+      },
+      order: [["updatedAt", "DESC"]],
+      limit,
+    });
+
+    return res.json({ items: rows.map(safeCidadao) });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+}
