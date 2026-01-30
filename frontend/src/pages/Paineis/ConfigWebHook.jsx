@@ -43,7 +43,7 @@ function isValidWebhookUrl(url) {
     const u = new URL(url);
     return u.protocol === "https:" || u.protocol === "http:";
   } catch {
-    return false;
+    return true;
   }
 }
 
