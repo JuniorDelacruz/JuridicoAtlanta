@@ -184,6 +184,7 @@ export default function ConsultarCidadao() {
   // ===== Busca do cônjuge quando cidadao mudar =====
   useEffect(() => {
     const conjId = cidadao?.conjuge;
+    console.log(cidadao)
 
     // se não tem cidadão ou não tem conj => solteiro
     if (!cidadao) {
