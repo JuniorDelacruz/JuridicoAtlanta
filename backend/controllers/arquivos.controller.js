@@ -19,7 +19,7 @@ function safeCidadao(c) {
         profissao: c.profissao,
         residencia: c.residencia,
 
-        conjuge: c.conjugê ?? null,
+        conjuge: c.conjuge ?? null,
         // imagemIdentidade: c.imagemIdentidade, // ⚠️ recomendo NÃO enviar por padrão (privacidade). Libera se quiser.
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
