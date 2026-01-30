@@ -15,6 +15,7 @@ import cadastroCidadaoRoutes from './routes/cadastroCidadaoRoutes.js'
 import triagemRequerimentosRoutes from './routes/triagemRequerimentosRoutes.js'
 import arquivosRoutes from './routes/arquivos.routes.js'
 import meRoutes from "./routes/me.routes.js";
+import { bootstrap } from './bot/index.js';
 
 dotenv.config();
 
@@ -106,6 +107,8 @@ if (process.env.NODE_ENV === 'production') {
         res.sendFile(path.join(process.cwd(), '../frontend/dist', 'index.html'));
     });
 }
+
+await bootstrap();
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT} → http://localhost:${PORT}`);

@@ -134,7 +134,7 @@ function buildEmbed(type, data) {
         title: "REGISTRO DE ARMA",
         description: `REGISTRO Nº ${safe(data?.id)}`,
         fields: [
-          { name: "Cidadão", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
+          { name: "NOM DO PORTADOR", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
           { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
           { name: "Arma", value: safe(data?.arma), inline: true },
           { name: "Serial", value: safe(data?.serial), inline: true },
