@@ -37,6 +37,11 @@ function isLikelyIdCartorio(q) {
   return false;
 }
 
+function isNumeric(v) {
+  const s = String(v ?? "").trim();
+  return /^\d+$/.test(s);
+}
+
 export default function ConsultarCidadao() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -61,19 +66,28 @@ export default function ConsultarCidadao() {
   const [suggestItems, setSuggestItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  async function fetchCidadaoAndVinculos() {
-    const q = String(query || "").trim();
-    if (!q) return;
+  // ===== Cônjuge =====
+  const [conjuge, setConjuge] = useState(null);
+  const [conjugeLoading, setConjugeLoading] = useState(false);
+  const [conjugeErr, setConjugeErr] = useState(null);
+
+  async function fetchCidadaoAndVinculosByQuery(q) {
+    const qq = String(q || "").trim();
+    if (!qq) return;
 
     setLoading(true);
     setErr(null);
     setCidadao(null);
     setVinculos(null);
 
+    // reseta conj ao iniciar busca principal
+    setConjuge(null);
+    setConjugeErr(null);
+
     try {
       const res = await axios.get(`${API_URL}/api/arquivos/cidadao`, {
         headers: authHeaders(),
-        params: { query: q, mode: isLikelyIdCartorio(q) ? "id" : "nome" },
+        params: { query: qq, mode: isLikelyIdCartorio(qq) ? "id" : "nome" },
       });
 
       const c = res.data?.cidadao || null;
@@ -82,6 +96,7 @@ export default function ConsultarCidadao() {
         setVinculos(null);
         return;
       }
+
       setCidadao(c);
 
       const cidadaoId = c.id || c.cidadaoId || c.cartorioId;
@@ -103,62 +118,30 @@ export default function ConsultarCidadao() {
     }
   }
 
-  async function fetchCidadaoAndVinculosById(cidadaoId, identidade) {
-    if (!cidadaoId && !identidade) return;
-
-    setLoading(true);
-    setErr(null);
-    setCidadao(null);
-    setVinculos(null);
-
-    try {
-      // Ajuste aqui conforme seu backend aceitar:
-      // - se não aceitar cidadaoId/identidade separados, troca por query/mode.
-      const res = await axios.get(`${API_URL}/api/arquivos/cidadao`, {
-        headers: authHeaders(),
-        params: {
-          cidadaoId: cidadaoId || undefined,
-          identidade: identidade || undefined,
-        },
-      });
-
-      const c = res.data?.cidadao || null;
-      if (!c) {
-        setCidadao(null);
-        setVinculos(null);
-        return;
-      }
-      setCidadao(c);
-
-      const res2 = await axios.get(`${API_URL}/api/arquivos/cidadao/vinculos`, {
-        headers: authHeaders(),
-        params: {
-          cidadaoId: c.id || cidadaoId || undefined,
-          identidade: c.identidade || identidade || undefined,
-        },
-      });
-
-      setVinculos(res2.data || {});
-    } catch (e) {
-      setErr(e.response?.data?.msg || e.response?.data?.message || e.message);
-    } finally {
-      setLoading(false);
-    }
+  // ✅ CORRIGIDO: teu backend NÃO aceita cidadaoId/identidade nesse endpoint
+  // então pra selecionar sugestão, a gente busca pelo ID via query/mode=id
+  async function fetchCidadaoAndVinculosById(cartorioId) {
+    if (cartorioId === undefined || cartorioId === null) return;
+    return fetchCidadaoAndVinculosByQuery(String(cartorioId));
   }
 
   function onSubmit(e) {
     e.preventDefault();
     if (!canSearch) return;
     setSuggestOpen(false);
-    fetchCidadaoAndVinculos();
+    fetchCidadaoAndVinculosByQuery(query);
   }
 
   function onSelectSuggestion(item) {
     setSuggestOpen(false);
     setSuggestItems([]);
     setActiveIndex(-1);
+
+    // mostra nome no input
     setQuery(item?.nomeCompleto || "");
-    fetchCidadaoAndVinculosById(item?.id, item?.identidade);
+
+    // busca pelo ID do cartório (compatível com backend)
+    fetchCidadaoAndVinculosById(item?.id);
   }
 
   // debounce do autocomplete
@@ -182,7 +165,7 @@ export default function ConsultarCidadao() {
           params: { q, limit: 8 },
         });
 
-        const items = res.data?.items || [];
+        const items = Array.isArray(res.data?.items) ? res.data.items : [];
         setSuggestItems(items);
         setSuggestOpen(items.length > 0);
         setActiveIndex(items.length ? 0 : -1);
@@ -198,7 +181,81 @@ export default function ConsultarCidadao() {
     return () => clearTimeout(t);
   }, [query]);
 
+  // ===== Busca do cônjuge quando cidadao mudar =====
+  useEffect(() => {
+    const conjId = cidadao?.conjuge;
+
+    // se não tem cidadão ou não tem conj => solteiro
+    if (!cidadao) {
+      setConjuge(null);
+      setConjugeErr(null);
+      setConjugeLoading(false);
+      return;
+    }
+
+    if (conjId === null || conjId === undefined || String(conjId).trim() === "") {
+      setConjuge(null);
+      setConjugeErr(null);
+      setConjugeLoading(false);
+      return;
+    }
+
+    // se veio algo que não é número, melhor só mostrar "Casado" sem lookup
+    if (!isNumeric(conjId)) {
+      setConjuge(null);
+      setConjugeErr("Cônjuge inválido no cadastro (não-numérico).");
+      setConjugeLoading(false);
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      setConjugeLoading(true);
+      setConjugeErr(null);
+      setConjuge(null);
+
+      try {
+        const res = await axios.get(`${API_URL}/api/arquivos/cidadao`, {
+          headers: authHeaders(),
+          params: { query: String(conjId), mode: "id" },
+        });
+
+        const c = res.data?.cidadao || null;
+        if (!alive) return;
+
+        if (!c) {
+          setConjuge(null);
+          setConjugeErr("Cônjuge não encontrado no cartório.");
+        } else {
+          setConjuge(c);
+        }
+      } catch (e) {
+        if (!alive) return;
+        setConjuge(null);
+        setConjugeErr(e.response?.data?.msg || e.response?.data?.message || e.message);
+      } finally {
+        if (!alive) return;
+        setConjugeLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [cidadao]);
+
   if (!isAuthenticated) return null;
+
+  const estadoCivilLabel = (() => {
+    if (!cidadao) return "—";
+    const conjId = cidadao?.conjuge;
+
+    if (conjId === null || conjId === undefined || String(conjId).trim() === "") {
+      return "Solteiro(a)";
+    }
+    return "Casado(a)";
+  })();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -242,7 +299,6 @@ export default function ConsultarCidadao() {
             <h2 className="text-lg font-bold text-gray-800">Busca</h2>
           </div>
 
-          {/* ✅ BUSCA COM AUTOCOMPLETE */}
           <form onSubmit={onSubmit} className="flex flex-col md:flex-row gap-3 relative">
             <div className="flex-1 relative">
               <input
@@ -252,12 +308,13 @@ export default function ConsultarCidadao() {
                   setCidadao(null);
                   setVinculos(null);
                   setErr(null);
+                  setConjuge(null);
+                  setConjugeErr(null);
                 }}
                 onFocus={() => {
                   if (suggestItems.length > 0) setSuggestOpen(true);
                 }}
                 onBlur={() => {
-                  // delay pra clicar na sugestão sem fechar antes
                   setTimeout(() => setSuggestOpen(false), 120);
                 }}
                 onKeyDown={(e) => {
@@ -285,7 +342,6 @@ export default function ConsultarCidadao() {
                 className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
-              {/* dropdown */}
               {suggestOpen && !isLikelyIdCartorio(query) && (
                 <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
                   <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b flex items-center justify-between">
@@ -303,7 +359,7 @@ export default function ConsultarCidadao() {
                           <button
                             type="button"
                             key={it.id || `${it.nomeCompleto}-${idx}`}
-                            onMouseDown={(ev) => ev.preventDefault()} // evita blur antes do click
+                            onMouseDown={(ev) => ev.preventDefault()}
                             onClick={() => onSelectSuggestion(it)}
                             className={`w-full text-left px-4 py-3 border-t hover:bg-gray-50 ${
                               active ? "bg-blue-50" : "bg-white"
@@ -358,10 +414,8 @@ export default function ConsultarCidadao() {
           )}
         </div>
 
-        {/* RESULTADOS */}
         {!loading && cidadao && (
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* DADOS DO CIDADÃO */}
             <div className="bg-white rounded-xl shadow p-6 lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <User className="h-5 w-5 text-blue-700" />
@@ -398,11 +452,49 @@ export default function ConsultarCidadao() {
                     <span className="text-gray-500">Pombo:</span>{" "}
                     <b>{safe(cidadao.pombo)}</b>
                   </div>
+
+                  {/* ✅ NOVO: ESTADO CIVIL */}
+                  <div className="mt-2">
+                    <span className="text-gray-500">Estado civil:</span>{" "}
+                    <b>{estadoCivilLabel}</b>
+
+                    {/* Se casado, mostra detalhes do cônjuge */}
+                    {estadoCivilLabel === "Casado(a)" && (
+                      <div className="mt-2 text-xs text-gray-700 border border-gray-200 bg-gray-50 rounded-lg p-3">
+                        {conjugeLoading ? (
+                          <span className="inline-flex items-center gap-2 text-gray-600">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Buscando cônjuge...
+                          </span>
+                        ) : conjuge ? (
+                          <div className="space-y-1">
+                            <div>
+                              <span className="text-gray-500">Cônjuge:</span>{" "}
+                              <b>{safe(conjuge.nomeCompleto)}</b>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Identidade:</span>{" "}
+                              <b>{safe(conjuge.identidade)}</b>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">ID Cartório:</span>{" "}
+                              <b>{safe(conjuge.id)}</b>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-red-700">
+                            {conjugeErr || "Não foi possível carregar o cônjuge."}
+                            <div className="text-gray-600 mt-1">
+                              ID no cadastro: <b>{safe(cidadao.conjuge)}</b>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* VÍNCULOS */}
             <div className="bg-white rounded-xl shadow p-6 lg:col-span-2">
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="h-5 w-5 text-blue-700" />
