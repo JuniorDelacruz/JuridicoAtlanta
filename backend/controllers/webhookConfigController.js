@@ -75,13 +75,13 @@ export async function updateWebhook(req, res) {
       row.tipo = cleanTipo;
     }
 
-    // if (url !== undefined) {
-    //   const cleanUrl = String(url).trim();
-    //   if (!cleanUrl || !isValidUrl(cleanUrl)) {
-    //     return res.status(400).json({ msg: "Campo 'url' inválido." });
-    //   }
-    //   row.url = cleanUrl;
-    // }
+    if (url !== undefined) {
+      const cleanUrl = String(url).trim();
+      // if (!cleanUrl || !isValidUrl(cleanUrl)) {
+      //   return res.status(400).json({ msg: "Campo 'url' inválido." });
+      // }
+      row.url = cleanUrl;
+    }
 
     if (enabled !== undefined) {
       row.enabled = Boolean(enabled);
