@@ -30,9 +30,6 @@ export async function createWebhook(req, res) {
     if (!tipo || !String(tipo).trim()) {
       return res.status(400).json({ msg: "Campo 'tipo' é obrigatório." });
     }
-    if (!url || !isValidUrl(url)) {
-      return res.status(400).json({ msg: "Campo 'url' inválido." });
-    }
 
     const cleanTipo = String(tipo).trim();
     const cleanUrl = String(url).trim();
