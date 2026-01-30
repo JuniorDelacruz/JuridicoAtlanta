@@ -82,6 +82,7 @@ export const TIPOS_REQUERIMENTO = [
         tipoDb: "Registro de Arma",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
         subRole: ['equipejuridico'],
+        disable: true,
         fields: [
             { name: "porteNumero", label: "Número do Porte" },
             { name: "numeroSerial", label: "Número de Série" },

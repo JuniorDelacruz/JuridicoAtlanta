@@ -30,13 +30,18 @@ export default function RequerimentoHub() {
   };
 
   const cards = useMemo(() => {
-    const pode = (t) => t.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-    return TIPOS_REQUERIMENTO.map((t) => ({
-      ...t,
-      permitido: pode(t),
-      counts: resumo[t.tipoDb] || { PENDENTE: 0, APROVADO: 0, INDEFERIDO: 0, TOTAL: 0 },
-      Icon: ICONS[t.slug] || FileText,
-    }));
+    const pode = (t) =>
+      t.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
+
+    return TIPOS_REQUERIMENTO
+      // ✅ não exibe se disable === true
+      .filter((t) => !t.disable)
+      .map((t) => ({
+        ...t,
+        permitido: pode(t),
+        counts: resumo[t.tipoDb] || { PENDENTE: 0, APROVADO: 0, INDEFERIDO: 0, TOTAL: 0 },
+        Icon: ICONS[t.slug] || FileText,
+      }));
   }, [user?.role, isEquipeJuridica, resumo]);
 
   useEffect(() => {
@@ -93,9 +98,8 @@ export default function RequerimentoHub() {
           {cards.map((c) => (
             <div
               key={c.slug}
-              className={`bg-white border ${
-                c.permitido ? "border-indigo-200 hover:shadow-lg hover:border-indigo-300" : "border-gray-200 opacity-60 cursor-not-allowed"
-              } rounded-xl p-6 transition`}
+              className={`bg-white border ${c.permitido ? "border-indigo-200 hover:shadow-lg hover:border-indigo-300" : "border-gray-200 opacity-60 cursor-not-allowed"
+                } rounded-xl p-6 transition`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <c.Icon className={`h-10 w-10 ${c.permitido ? "text-indigo-600" : "text-gray-400"}`} />
@@ -120,11 +124,10 @@ export default function RequerimentoHub() {
               <button
                 onClick={() => c.permitido && navigate(`/requerimentos/${c.slug}`)}
                 disabled={!c.permitido || loading}
-                className={`w-full px-6 py-2 rounded-md font-medium ${
-                  c.permitido && !loading
+                className={`w-full px-6 py-2 rounded-md font-medium ${c.permitido && !loading
                     ? "bg-indigo-600 text-white hover:bg-indigo-700"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 Acessar
               </button>
