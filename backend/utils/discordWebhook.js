@@ -202,6 +202,7 @@ function buildEmbed(type, data) {
         ...base,
         color: 0xf1c40f,
         title: `REGISTRO DE CASAMENTO APROVADO`,
+        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: `` },
         description: `
         **Requerimento Nº ${safe(data?.id)}**
 
