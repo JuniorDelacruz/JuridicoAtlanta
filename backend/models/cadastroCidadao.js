@@ -60,7 +60,7 @@ export default (sequelize) => {
       allowNull: true, // quem iniciou no site, se for via frontend
       references: { model: 'users', key: 'id' },
     },
-    conjugê: {
+    conjuge: {
       type: DataTypes.INTEGER, // URL da imagem (ex: link do Discord ou upload)
       allowNull: true,
     },
