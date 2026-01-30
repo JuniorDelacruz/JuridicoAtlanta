@@ -5,7 +5,7 @@ import { Sequelize } from "sequelize";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
-const { Requerimento, User , CadastroCidadao} = db;
+const { Requerimento, User, CadastroCidadao } = db;
 
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
@@ -72,73 +72,126 @@ router.get("/", authMiddleware(), async (req, res) => {
 });
 
 router.post("/", authMiddleware(), async (req, res) => {
-  const { tipo, dados } = req.body;
+    const { tipo, dados } = req.body;
 
-  if (!tipo || !dados) {
-    return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
-  }
-
-  try {
-    // 1) Detecta o campo de "registro/identidade" dentro do JSON do requerimento
-    // Ajuste aqui conforme seus tipos:
-    const identidade =
-      dados.numeroIdentificacao ||
-      dados.numeroRegistro ||
-      dados.identidade ||
-      null;
-
-    let cidadao = null;
-
-    // 2) Se tiver identidade, busca no CadastroCidadao (cartório)
-    if (identidade) {
-      cidadao = await CadastroCidadao.findOne({
-        where: { id: String(identidade).trim() },
-      });
-
-      if (!cidadao) {
-        return res.status(400).json({ msg: "Registro do cartório não encontrado." });
-      }
-
-      // Se você quiser aceitar só APROVADO:
-      if (cidadao.status !== "APROVADO") {
-        return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
-      }
+    if (!tipo || !dados) {
+        return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
     }
+    try {
+        // helper: cria snapshot padronizado
+        const snapCidadao = (c) => ({
+            id: c.id,
+            nomeCompleto: c.nomeCompleto,
+            identidade: c.identidade,
+            profissao: c.profissao,
+            residencia: c.residencia,
+            discordId: c.discordId,
+            pombo: c.pombo,
+            status: c.status, // opcional, mas útil
+        });
 
-    // 3) Injeta snapshot do cidadão no JSON do requerimento (ANEXO)
-    const dadosComAnexo = {
-      ...dados,
-      cidadao: cidadao
-        ? {
-            id: cidadao.id,
-            nomeCompleto: cidadao.nomeCompleto,
-            identidade: cidadao.identidade,
-            profissao: cidadao.profissao,
-            residencia: cidadao.residencia,
-            discordId: cidadao.discordId,
-            pombo: cidadao.pombo,
-          }
-        : null,
-    };
+        let dadosComAnexo = {};
 
-    const Solicitante = await CadastroCidadao.findOne({
-        where: { discordId: req.user.discordId}
-    })
+        if (tipo === "Casamento") {
+            // pega e valida os 5
+            const ids = {
+                noivo: String(dados?.numeroIdentificacaoNoivo || "").trim(),
+                noiva: String(dados?.numeroIdentificacaoNoiva || "").trim(),
+                test1: String(dados?.numeroIdentificacaoTest1 || "").trim(),
+                test2: String(dados?.numeroIdentificacaoTest2 || "").trim(),
+                test3: String(dados?.numeroIdentificacaoTest3 || "").trim(),
+            };
 
-    // 4) Cria o requerimento normalmente
-    const novo = await Requerimento.create({
-      tipo,
-      dados: dadosComAnexo,
-      solicitante: Solicitante.nomeCompleto || req.user?.username,
-      status: "PENDENTE",
-      userId: req.user.id,
-    });
+            // valida vazio
+            for (const [k, v] of Object.entries(ids)) {
+                if (!v) return res.status(400).json({ msg: `Campo obrigatório não informado: ${k}` });
+            }
 
-    res.status(201).json(novo);
-  } catch (err) {
-    console.error("Erro ao criar requerimento:", err);
-    res.status(500).json({ msg: "Erro ao criar requerimento" });
-  }
+            // busca (ajuste "id" se sua PK não for id)
+            const [cidadaoNoivo, cidadaoNoiva, cidadaoTest1, cidadaoTest2, cidadaoTest3] = await Promise.all([
+                CadastroCidadao.findOne({ where: { id: ids.noivo } }),
+                CadastroCidadao.findOne({ where: { id: ids.noiva } }),
+                CadastroCidadao.findOne({ where: { id: ids.test1 } }),
+                CadastroCidadao.findOne({ where: { id: ids.test2 } }),
+                CadastroCidadao.findOne({ where: { id: ids.test3 } }),
+            ]);
+
+            // valida se achou
+            if (!cidadaoNoivo) return res.status(400).json({ msg: "Cartório: noivo não encontrado." });
+            if (!cidadaoNoiva) return res.status(400).json({ msg: "Cartório: noiva não encontrada." });
+            if (!cidadaoTest1) return res.status(400).json({ msg: "Cartório: testemunha 1 não encontrada." });
+            if (!cidadaoTest2) return res.status(400).json({ msg: "Cartório: testemunha 2 não encontrada." });
+            if (!cidadaoTest3) return res.status(400).json({ msg: "Cartório: testemunha 3 não encontrada." });
+
+            // se exigir APROVADO
+            const mustAprovado = (c, label) => {
+                if (c.status !== "APROVADO") {
+                    return res.status(400).json({ msg: `Cadastro do(a) ${label} encontrado, porém está ${c.status}.` });
+                }
+            };
+            mustAprovado(cidadaoNoivo, "noivo");
+            mustAprovado(cidadaoNoiva, "noiva");
+            mustAprovado(cidadaoTest1, "testemunha 1");
+            mustAprovado(cidadaoTest2, "testemunha 2");
+            mustAprovado(cidadaoTest3, "testemunha 3");
+
+            // monta dados com anexo
+            dadosComAnexo = {
+                ...dados, // mantém os campos originais (numeros)
+                cidadaoNoivo: snapCidadao(cidadaoNoivo),
+                cidadaoNoiva: snapCidadao(cidadaoNoiva),
+                cidadaoTest1: snapCidadao(cidadaoTest1),
+                cidadaoTest2: snapCidadao(cidadaoTest2),
+                cidadaoTest3: snapCidadao(cidadaoTest3),
+            };
+        } else {
+            // ===== fluxo antigo (1 cadastro) =====
+            const identidade =
+                dados.numeroIdentificacao ||
+                dados.numeroRegistro ||
+                dados.identidade ||
+                null;
+
+            let cidadao = null;
+
+            if (identidade) {
+                cidadao = await CadastroCidadao.findOne({
+                    where: { id: String(identidade).trim() }, // ajuste se precisar
+                });
+
+                if (!cidadao) {
+                    return res.status(400).json({ msg: "Registro do cartório não encontrado." });
+                }
+
+                if (cidadao.status !== "APROVADO") {
+                    return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
+                }
+            }
+
+            dadosComAnexo = {
+                ...dados,
+                cidadao: cidadao ? snapCidadao(cidadao) : null,
+            };
+        }
+
+        // solicitante com safe optional chaining
+        const solicitanteRow = await CadastroCidadao.findOne({
+            where: { discordId: req.user.discordId },
+        });
+
+        const novo = await Requerimento.create({
+            tipo,
+            dados: dadosComAnexo,
+            solicitante: solicitanteRow?.nomeCompleto || req.user?.username,
+            status: "PENDENTE",
+            userId: req.user.id,
+        });
+
+        return res.status(201).json(novo);
+    } catch (err) {
+        console.error("Erro ao criar requerimento:", err);
+        res.status(500).json({ msg: "Erro ao criar requerimento" });
+    }
 });
 
 // GET /api/requerimentos/:numero  (NUMÉRICO)
