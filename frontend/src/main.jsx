@@ -6,11 +6,18 @@ import './index.css';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ToastProvider } from "./utils/toast.jsx";
+import { ConfirmProvider } from "./components/ui/confirm.jsx";
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ToastProvider position="top-right">
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

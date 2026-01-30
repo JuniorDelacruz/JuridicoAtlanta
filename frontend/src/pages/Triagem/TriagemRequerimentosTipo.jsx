@@ -5,6 +5,9 @@ import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { Scale, ArrowLeft, CheckCircle, XCircle, Search as SearchIcon } from "lucide-react";
 import { getTriagemTipoBySlug } from "../../config/triagemTipos";
+import { useToast } from "../../utils/toast";
+
+const { push } = useToast();
 
 const API_URL =
   import.meta?.env?.VITE_API_URL ||
@@ -101,7 +104,7 @@ export default function TriagemRequerimentosTipo() {
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      alert("Requerimento aprovado!");
+      push({ type: 'success', title: "Sucesso", message: "Requerimento Aprovado" })
     } catch (err) {
       alert("Erro ao aprovar: " + (err.response?.data?.msg || err.message));
     }
