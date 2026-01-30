@@ -61,7 +61,7 @@ export default (sequelize) => {
       references: { model: 'users', key: 'id' },
     },
     conjugê: {
-      type: DataTypes.STRING, // URL da imagem (ex: link do Discord ou upload)
+      type: DataTypes.INTEGER, // URL da imagem (ex: link do Discord ou upload)
       allowNull: true,
     },
   }, {
