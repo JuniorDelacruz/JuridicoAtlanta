@@ -23,30 +23,19 @@ function authHeaders() {
   return { Authorization: `Bearer ${token}` };
 }
 
-const safe = (v) => (v === undefined || v === null || String(v).trim() === "" ? "—" : String(v));
+const safe = (v) =>
+  v === undefined || v === null || String(v).trim() === "" ? "—" : String(v);
 
 function isLikelyIdCartorio(q) {
-  // ajuste conforme seu padrão real (numérico, uuid, etc)
-  // aqui: se for só dígitos OU uuid-like, tratamos como id
   const s = String(q || "").trim();
   if (!s) return false;
   if (/^\d+$/.test(s)) return true;
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+  )
+    return true;
   return false;
 }
-
-/**
- * Estrutura esperada (você ajusta conforme seu backend):
- * GET /api/arquivos/cidadao?query=...
- * -> { cidadao: {...} }
- *
- * GET /api/arquivos/cidadao/vinculos?cidadaoId=...   (ou identidade=...)
- * -> {
- *   portes: [...],
- *   trocasNome: [...],
- *   requerimentos: [...], // opcional: tudo junto
- * }
- */
 
 export default function ConsultarCidadao() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -61,9 +50,16 @@ export default function ConsultarCidadao() {
   const [err, setErr] = useState(null);
 
   const [cidadao, setCidadao] = useState(null);
-  const [vinculos, setVinculos] = useState(null); // { portes, trocasNome, ... }
+  const [vinculos, setVinculos] = useState(null);
 
+  // ✅ mantém “pelo menos 1 numero” => 1 char já libera buscar
   const canSearch = useMemo(() => String(query || "").trim().length >= 1, [query]);
+
+  // ===== Autocomplete =====
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestItems, setSuggestItems] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   async function fetchCidadaoAndVinculos() {
     const q = String(query || "").trim();
@@ -75,7 +71,6 @@ export default function ConsultarCidadao() {
     setVinculos(null);
 
     try {
-      // 1) busca cidadão por nome OU id cartório (você resolve no backend)
       const res = await axios.get(`${API_URL}/api/arquivos/cidadao`, {
         headers: authHeaders(),
         params: { query: q, mode: isLikelyIdCartorio(q) ? "id" : "nome" },
@@ -89,8 +84,6 @@ export default function ConsultarCidadao() {
       }
       setCidadao(c);
 
-      // 2) busca vínculos (portes / troca nome / outros)
-      // preferência: usar o id do cidadão do cartório
       const cidadaoId = c.id || c.cidadaoId || c.cartorioId;
       const identidade = c.identidade;
 
@@ -110,11 +103,100 @@ export default function ConsultarCidadao() {
     }
   }
 
+  async function fetchCidadaoAndVinculosById(cidadaoId, identidade) {
+    if (!cidadaoId && !identidade) return;
+
+    setLoading(true);
+    setErr(null);
+    setCidadao(null);
+    setVinculos(null);
+
+    try {
+      // Ajuste aqui conforme seu backend aceitar:
+      // - se não aceitar cidadaoId/identidade separados, troca por query/mode.
+      const res = await axios.get(`${API_URL}/api/arquivos/cidadao`, {
+        headers: authHeaders(),
+        params: {
+          cidadaoId: cidadaoId || undefined,
+          identidade: identidade || undefined,
+        },
+      });
+
+      const c = res.data?.cidadao || null;
+      if (!c) {
+        setCidadao(null);
+        setVinculos(null);
+        return;
+      }
+      setCidadao(c);
+
+      const res2 = await axios.get(`${API_URL}/api/arquivos/cidadao/vinculos`, {
+        headers: authHeaders(),
+        params: {
+          cidadaoId: c.id || cidadaoId || undefined,
+          identidade: c.identidade || identidade || undefined,
+        },
+      });
+
+      setVinculos(res2.data || {});
+    } catch (e) {
+      setErr(e.response?.data?.msg || e.response?.data?.message || e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function onSubmit(e) {
     e.preventDefault();
     if (!canSearch) return;
+    setSuggestOpen(false);
     fetchCidadaoAndVinculos();
   }
+
+  function onSelectSuggestion(item) {
+    setSuggestOpen(false);
+    setSuggestItems([]);
+    setActiveIndex(-1);
+    setQuery(item?.nomeCompleto || "");
+    fetchCidadaoAndVinculosById(item?.id, item?.identidade);
+  }
+
+  // debounce do autocomplete
+  useEffect(() => {
+    const q = String(query || "").trim();
+
+    // se for id, não sugere
+    if (!q || q.length < 2 || isLikelyIdCartorio(q)) {
+      setSuggestItems([]);
+      setSuggestOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    setSuggestLoading(true);
+
+    const t = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/arquivos/cidadao/suggest`, {
+          headers: authHeaders(),
+          params: { q, limit: 8 },
+        });
+
+        const items = res.data?.items || [];
+        setSuggestItems(items);
+        setSuggestOpen(items.length > 0);
+        setActiveIndex(items.length ? 0 : -1);
+      } catch {
+        setSuggestItems([]);
+        setSuggestOpen(false);
+        setActiveIndex(-1);
+      } finally {
+        setSuggestLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [query]);
 
   if (!isAuthenticated) return null;
 
@@ -136,8 +218,12 @@ export default function ConsultarCidadao() {
               Voltar
             </button>
 
-            <span className="text-sm font-medium">{user?.username || "Usuário Discord"}</span>
-            <span className="text-sm bg-blue-700 px-3 py-1 rounded">Cargo: {user?.role || "-"}</span>
+            <span className="text-sm font-medium">
+              {user?.username || "Usuário Discord"}
+            </span>
+            <span className="text-sm bg-blue-700 px-3 py-1 rounded">
+              Cargo: {user?.role || "-"}
+            </span>
 
             <button
               onClick={logout}
@@ -156,13 +242,96 @@ export default function ConsultarCidadao() {
             <h2 className="text-lg font-bold text-gray-800">Busca</h2>
           </div>
 
-          <form onSubmit={onSubmit} className="flex flex-col md:flex-row gap-3">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Digite o nome do cidadão ou o ID do cartório..."
-              className="flex-1 border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          {/* ✅ BUSCA COM AUTOCOMPLETE */}
+          <form onSubmit={onSubmit} className="flex flex-col md:flex-row gap-3 relative">
+            <div className="flex-1 relative">
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setCidadao(null);
+                  setVinculos(null);
+                  setErr(null);
+                }}
+                onFocus={() => {
+                  if (suggestItems.length > 0) setSuggestOpen(true);
+                }}
+                onBlur={() => {
+                  // delay pra clicar na sugestão sem fechar antes
+                  setTimeout(() => setSuggestOpen(false), 120);
+                }}
+                onKeyDown={(e) => {
+                  if (!suggestOpen || suggestItems.length === 0) return;
+
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveIndex((p) => Math.min(p + 1, suggestItems.length - 1));
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveIndex((p) => Math.max(p - 1, 0));
+                  }
+                  if (e.key === "Enter") {
+                    if (activeIndex >= 0 && suggestItems[activeIndex]) {
+                      e.preventDefault();
+                      onSelectSuggestion(suggestItems[activeIndex]);
+                    }
+                  }
+                  if (e.key === "Escape") {
+                    setSuggestOpen(false);
+                  }
+                }}
+                placeholder="Digite o nome do cidadão ou o ID do cartório..."
+                className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              {/* dropdown */}
+              {suggestOpen && !isLikelyIdCartorio(query) && (
+                <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                  <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b flex items-center justify-between">
+                    <span>Sugestões</span>
+                    {suggestLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  </div>
+
+                  {suggestItems.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-600">Nenhum resultado.</div>
+                  ) : (
+                    <div className="max-h-64 overflow-auto">
+                      {suggestItems.map((it, idx) => {
+                        const active = idx === activeIndex;
+                        return (
+                          <button
+                            type="button"
+                            key={it.id || `${it.nomeCompleto}-${idx}`}
+                            onMouseDown={(ev) => ev.preventDefault()} // evita blur antes do click
+                            onClick={() => onSelectSuggestion(it)}
+                            className={`w-full text-left px-4 py-3 border-t hover:bg-gray-50 ${
+                              active ? "bg-blue-50" : "bg-white"
+                            }`}
+                          >
+                            <div className="text-sm font-semibold text-gray-900">
+                              {safe(it.nomeCompleto)}
+                            </div>
+                            <div className="text-xs text-gray-600 flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                              <span>
+                                ID: <b>{safe(it.id)}</b>
+                              </span>
+                              <span>
+                                Identidade: <b>{safe(it.identidade)}</b>
+                              </span>
+                              <span>
+                                Status: <b>{safe(it.status)}</b>
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
               disabled={!canSearch || loading}
@@ -181,7 +350,10 @@ export default function ConsultarCidadao() {
 
           {!loading && !err && !cidadao && (
             <div className="mt-4 text-sm text-gray-600">
-              Digite ao menos <b>2 caracteres</b> para buscar.
+              Digite ao menos <b>1 caractere</b> para buscar.
+              <span className="block text-xs text-gray-500 mt-1">
+                (Se digitar pelo menos 2 letras no nome, aparecem sugestões.)
+              </span>
             </div>
           )}
         </div>
@@ -198,13 +370,16 @@ export default function ConsultarCidadao() {
 
               <div className="space-y-2 text-sm text-gray-700">
                 <div>
-                  <span className="text-gray-500">Nome:</span> <b>{safe(cidadao.nomeCompleto)}</b>
+                  <span className="text-gray-500">Nome:</span>{" "}
+                  <b>{safe(cidadao.nomeCompleto)}</b>
                 </div>
                 <div>
-                  <span className="text-gray-500">Identidade:</span> <b>{safe(cidadao.identidade)}</b>
+                  <span className="text-gray-500">Identidade:</span>{" "}
+                  <b>{safe(cidadao.identidade)}</b>
                 </div>
                 <div>
-                  <span className="text-gray-500">ID Cartório:</span> <b>{safe(cidadao.id)}</b>
+                  <span className="text-gray-500">ID Cartório:</span>{" "}
+                  <b>{safe(cidadao.id)}</b>
                 </div>
                 <div>
                   <span className="text-gray-500">Status:</span>{" "}
@@ -214,13 +389,14 @@ export default function ConsultarCidadao() {
                   </span>
                 </div>
 
-                {/* Campos extras se existir */}
                 <div className="pt-2 border-t mt-3">
                   <div>
-                    <span className="text-gray-500">Discord ID:</span> <b>{safe(cidadao.discordId)}</b>
+                    <span className="text-gray-500">Discord ID:</span>{" "}
+                    <b>{safe(cidadao.discordId)}</b>
                   </div>
                   <div>
-                    <span className="text-gray-500">Pombo:</span> <b>{safe(cidadao.pombo)}</b>
+                    <span className="text-gray-500">Pombo:</span>{" "}
+                    <b>{safe(cidadao.pombo)}</b>
                   </div>
                 </div>
               </div>
@@ -239,7 +415,6 @@ export default function ConsultarCidadao() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* PORTE DE ARMAS */}
                   <VinculoSection
                     title="Porte de Armas"
                     icon={ShieldCheck}
@@ -254,7 +429,6 @@ export default function ConsultarCidadao() {
                     )}
                   />
 
-                  {/* TROCA DE NOME */}
                   <VinculoSection
                     title="Troca de Nome"
                     icon={PenLine}
@@ -269,7 +443,6 @@ export default function ConsultarCidadao() {
                     )}
                   />
 
-                  {/* GENÉRICO: SE VOCÊ QUISER JOGAR TUDO JUNTO */}
                   {Array.isArray(vinculos.requerimentos) && (
                     <VinculoSection
                       title="Outros Requerimentos"
@@ -289,8 +462,7 @@ export default function ConsultarCidadao() {
               )}
 
               <div className="mt-6 text-xs text-gray-500">
-                * Dica: aqui é onde você vai plugar “tudo vinculado”, só adicionando novas sections
-                (ex: antecedentes, processos, multas, etc).
+                * Aqui você pluga novas sections (antecedentes, multas, processos, etc).
               </div>
             </div>
           </div>
@@ -306,10 +478,7 @@ export default function ConsultarCidadao() {
             <Link to="/manual-advogado" className="hover:text-white underline-offset-4 hover:underline">
               Manual do Advogado
             </Link>
-            <Link
-              to="/diretrizes-tribunal"
-              className="hover:text-white underline-offset-4 hover:underline"
-            >
+            <Link to="/diretrizes-tribunal" className="hover:text-white underline-offset-4 hover:underline">
               Diretrizes do Tribunal
             </Link>
             <Link to="/codigo-penal" className="hover:text-white underline-offset-4 hover:underline">
@@ -336,16 +505,18 @@ function VinculoSection({ title, icon: Icon, items, emptyText, renderItem }) {
       <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b">
         {Icon ? <Icon className="h-4 w-4 text-blue-700" /> : null}
         <div className="font-semibold text-gray-800">{title}</div>
-        <div className="ml-auto text-xs text-gray-500">
-          {arr.length} registro(s)
-        </div>
+        <div className="ml-auto text-xs text-gray-500">{arr.length} registro(s)</div>
       </div>
 
       <div className="p-4">
         {arr.length === 0 ? (
           <div className="text-sm text-gray-600">{emptyText}</div>
         ) : (
-          <div className="space-y-2">{arr.map((it, idx) => <div key={idx}>{renderItem(it)}</div>)}</div>
+          <div className="space-y-2">
+            {arr.map((it, idx) => (
+              <div key={idx}>{renderItem(it)}</div>
+            ))}
+          </div>
         )}
       </div>
     </div>
