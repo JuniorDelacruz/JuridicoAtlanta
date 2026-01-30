@@ -31,6 +31,7 @@ import ManualAdvogado from './pages/ManualAdvogado';
 import Arquivos from './pages/Arquivos';
 import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 import Valores from './pages/valores/Valores';
+import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequerimentoDetalhesCasamento';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -194,6 +195,7 @@ function App() {
       <Route path="/triagem" element={<Triagem />} />
       <Route path="/triagem/:slug" element={<TriagemRequerimentosTipo />} />
       <Route path="/triagem/:slug/detalhes/:numero" element={<TriagemRequerimentoDetalhes />} />
+      <Route path="/triagem/:slug/detalhe/:numero" element={<TriagemRequerimentoDetalhesCasamento />} />
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
       <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
