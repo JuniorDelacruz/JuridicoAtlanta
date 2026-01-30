@@ -1,30 +1,30 @@
 // backend/middleware/auth.js
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 const authMiddleware = (allowedRoles = []) => (req, res, next) => {
-  // Pega o token do header Authorization: Bearer <token>
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  console.log("AUTH HEADER RAW:", req.headers.authorization);
+  const authHeader = req.headers.authorization || req.header("Authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
   if (!token) {
-    return res.status(401).json({ msg: 'Acesso negado: token não fornecido' });
+    return res.status(401).json({ msg: "Acesso negado: token não fornecido" });
   }
 
   try {
-    // Verifica e decodifica o token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Coloca o usuário decodificado no req.user
     req.user = decoded;
 
-    // Se houver roles permitidos, verifica se o usuário tem um deles
-    if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
-      return res.status(403).json({ msg: 'Acesso negado: cargo insuficiente' });
+    const role = String(decoded.role || "").trim().toLowerCase();
+    const allowed = allowedRoles.map(r => String(r).trim().toLowerCase());
+
+    if (allowed.length > 0 && !allowed.includes(role)) {
+      return res.status(403).json({ msg: "Acesso negado: cargo insuficiente" });
     }
 
-    next(); // Prossegue para a rota
+    return next();
   } catch (err) {
-    console.error('Erro ao verificar token:', err.message);
-    res.status(401).json({ msg: 'Token inválido ou expirado' });
+    console.error("Erro ao verificar token:", err.message);
+    return res.status(401).json({ msg: "Token inválido ou expirado" });
   }
 };
 
