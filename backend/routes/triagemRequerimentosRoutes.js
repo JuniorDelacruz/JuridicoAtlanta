@@ -328,9 +328,9 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
             item.dados = {
-                ...dadosAtual,
+                ...dados,
                 workflow: {
-                    ...(dadosAtual.workflow || {}),
+                    ...(dados.workflow || {}),
                     juiz: {
                         aprovado: true,
                         aprovadoPor: req.user?.id || null,
