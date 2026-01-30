@@ -99,6 +99,8 @@ export default function ConsultarCidadao() {
 
       setCidadao(c);
 
+      console.log(c)
+
       const cidadaoId = c.id || c.cidadaoId || c.cartorioId;
       const identidade = c.identidade;
 
@@ -184,8 +186,6 @@ export default function ConsultarCidadao() {
   // ===== Busca do cônjuge quando cidadao mudar =====
   useEffect(() => {
     const conjId = cidadao?.conjuge;
-    console.log(cidadao)
-
     // se não tem cidadão ou não tem conj => solteiro
     if (!cidadao) {
       setConjuge(null);
