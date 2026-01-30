@@ -73,7 +73,7 @@ export const TIPOS_REQUERIMENTO = [
     },
 
     {
-        slug: "Registro de Arma",
+        slug: "registro-arma",
         label: "Registro de Arma",
         tipoDb: "Registro de Arma",
         fields: [
