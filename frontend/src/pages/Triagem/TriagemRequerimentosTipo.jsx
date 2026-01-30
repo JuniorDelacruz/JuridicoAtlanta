@@ -100,7 +100,9 @@ export default function TriagemRequerimentosTipo() {
 
   // ✅ Aprovar só faz sentido quando é PENDENTE (triagem normal)
   const handleAprovar = async (numero) => {
-    if (!confirm({ title: "Aprovar requerimento", message: `Tem certeza que deseja APROVAR o requerimento #${numero}?`, confirmText: 'Aprovar', cancelText: "Cancelar"})) return;
+    const ok = await confirm({ title: "Aprovar requerimento", message: `Tem certeza que deseja APROVAR o requerimento #${numero}?`, confirmText: 'Aprovar', cancelText: "Cancelar"})
+    
+    if (!ok) return;
 
     try {
       await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
