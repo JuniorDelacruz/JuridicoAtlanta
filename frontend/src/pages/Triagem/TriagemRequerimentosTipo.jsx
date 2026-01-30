@@ -8,9 +8,6 @@ import { getTriagemTipoBySlug } from "../../config/triagemTipos";
 import { useToast } from "../../utils/toast";
 import { useConfirm } from "../../components/ui/confirm.jsx";
 
-
-
-
 const API_URL =
   import.meta?.env?.VITE_API_URL ||
   import.meta?.env?.VITE_API_BASE_URL ||
@@ -24,6 +21,7 @@ function authHeaders() {
 export default function TriagemRequerimentosTipo() {
   const { push } = useToast();
   const { confirm } = useConfirm();
+
   const { slug } = useParams();
   const tipoCfg = getTriagemTipoBySlug(slug);
 
@@ -37,7 +35,7 @@ export default function TriagemRequerimentosTipo() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
-  const isCarimbo = slug === "carimbo"; // ✅ ponto central
+  const isCarimbo = slug === "carimbo";
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
@@ -56,7 +54,11 @@ export default function TriagemRequerimentosTipo() {
     }
 
     if (!permitido) {
-      alert("Acesso negado. Você não tem permissão para triar este tipo.");
+      push({
+        type: "error",
+        title: "Acesso negado",
+        message: "Você não tem permissão para triar este tipo.",
+      });
       navigate("/triagem");
       return;
     }
@@ -64,8 +66,9 @@ export default function TriagemRequerimentosTipo() {
     const fetchPendentes = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        // ✅ Backend espera "carimbo" no query param para aplicar o filtro AGUARDANDO_CARIMBO
+        // backend espera "carimbo" pra filtrar AGUARDANDO_CARIMBO
         const tipoParam = isCarimbo ? "carimbo" : tipoCfg.tipoDb;
 
         const res = await axios.get(`${API_URL}/api/triagem/requerimentos`, {
@@ -73,10 +76,18 @@ export default function TriagemRequerimentosTipo() {
           params: { tipo: tipoParam },
         });
 
-        setPendentes(res.data || []);
-        setFiltered(res.data || []);
+        const list = res.data || [];
+        setPendentes(list);
+        setFiltered(list);
       } catch (err) {
-        setError("Erro ao carregar pendentes: " + (err.response?.data?.msg || err.message));
+        const msg = "Erro ao carregar pendentes: " + (err.response?.data?.msg || err.message);
+        setError(msg);
+
+        push({
+          type: "error",
+          title: "Erro",
+          message: msg,
+        });
       } finally {
         setLoading(false);
       }
@@ -90,65 +101,115 @@ export default function TriagemRequerimentosTipo() {
     let result = pendentes;
     if (search.trim()) {
       const term = search.toLowerCase().trim();
-      result = result.filter((r) =>
-        String(r.numero || "").includes(term) ||
-        String(r.solicitante || "").toLowerCase().includes(term)
+      result = result.filter(
+        (r) =>
+          String(r.numero || "").includes(term) ||
+          String(r.solicitante || "").toLowerCase().includes(term)
       );
     }
     setFiltered(result);
   }, [search, pendentes]);
 
-  // ✅ Aprovar só faz sentido quando é PENDENTE (triagem normal)
   const handleAprovar = async (numero) => {
-    const ok = await confirm({ title: "Aprovar requerimento", message: `Tem certeza que deseja APROVAR o requerimento #${numero}?`, confirmText: 'Aprovar', cancelText: "Cancelar"})
+    const ok = await confirm({
+      title: "Aprovar requerimento",
+      message: `Tem certeza que deseja APROVAR o requerimento #${numero}?`,
+      confirmText: "Aprovar",
+      cancelText: "Cancelar",
+    });
 
     if (!ok) return;
 
     try {
-      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
+      await axios.patch(
+        `${API_URL}/api/triagem/requerimentos/${numero}/aprovar`,
+        {},
+        { headers: authHeaders() }
+      );
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      push({ type: 'success', title: "Sucesso", message: "Requerimento Aprovado" })
+      push({
+        type: "success",
+        title: "Aprovado",
+        message: `Requerimento #${numero} aprovado.`,
+      });
     } catch (err) {
-      alert("Erro ao aprovar: " + (err.response?.data?.msg || err.message));
+      push({
+        type: "error",
+        title: "Erro ao aprovar",
+        message: err.response?.data?.msg || err.message,
+      });
     }
   };
 
-  // ✅ Indeferir pode existir em ambos fluxos (depende do teu backend; se bloquear, ajuste lá)
   const handleIndeferir = async (numero) => {
-  const ok = await  confirm({ title: 'Indeferie Requerimento?', message: `Tem certeza que deseja INDEFERIR o requerimento #${numero}?`, confirmText: "Indeferir",
-    cancelText: "Cancelar",danger: true,})
+    const ok = await confirm({
+      title: "Indeferir requerimento",
+      message: `Tem certeza que deseja INDEFERIR o requerimento #${numero}?`,
+      confirmText: "Indeferir",
+      cancelText: "Cancelar",
+      danger: true,
+    });
+
     if (!ok) return;
 
     try {
-      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
+      await axios.patch(
+        `${API_URL}/api/triagem/requerimentos/${numero}/indeferir`,
+        {},
+        { headers: authHeaders() }
+      );
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-
-      push({ type: 'success', title: "Sucesso", message: "Requerimento Indeferido" })
-      
+      push({
+        type: "warning",
+        title: "Indeferido",
+        message: `Requerimento #${numero} indeferido.`,
+      });
     } catch (err) {
-      alert("Erro ao indeferir: " + (err.response?.data?.msg || err.message));
+      push({
+        type: "error",
+        title: "Erro ao indeferir",
+        message: err.response?.data?.msg || err.message,
+      });
     }
   };
 
-  // ✅ Carimbar: endpoint próprio (crie no backend)
   const handleCarimbar = async (numero) => {
-    if (!confirm(`Confirmar CARIMBO do requerimento #${numero}?`)) return;
+    const ok = await confirm({
+      title: "Confirmar carimbo",
+      message: `Confirmar CARIMBO do requerimento #${numero}?`,
+      confirmText: "Carimbar",
+      cancelText: "Cancelar",
+    });
+
+    if (!ok) return;
 
     try {
-      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/carimbar`, {}, { headers: authHeaders() });
+      await axios.patch(
+        `${API_URL}/api/triagem/requerimentos/${numero}/carimbar`,
+        {},
+        { headers: authHeaders() }
+      );
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      alert("Requerimento carimbado!");
+      push({
+        type: "success",
+        title: "Carimbado",
+        message: `Requerimento #${numero} carimbado com sucesso.`,
+      });
     } catch (err) {
-      alert("Erro ao carimbar: " + (err.response?.data?.msg || err.message));
+      push({
+        type: "error",
+        title: "Erro ao carimbar",
+        message: err.response?.data?.msg || err.message,
+      });
     }
   };
 
@@ -156,7 +217,11 @@ export default function TriagemRequerimentosTipo() {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
   if (error) {
-    return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-600">
+        {error}
+      </div>
+    );
   }
 
   return (
@@ -219,24 +284,35 @@ export default function TriagemRequerimentosTipo() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Número
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Solicitante
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filtered.map((r) => (
                     <tr key={r.numero} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{r.numero}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.solicitante}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #{r.numero}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {r.solicitante}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(r.createdAt).toLocaleDateString("pt-BR")}
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
-                        {/* ✅ Ação principal muda dependendo da triagem */}
                         {isCarimbo ? (
                           <button
                             onClick={() => handleCarimbar(r.numero)}

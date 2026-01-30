@@ -133,9 +133,10 @@ function buildEmbed(type, data) {
         ...base,
         color: 0x3498db,
         title: "REGISTRO DE ARMA",
+        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: `` },
         description: `REGISTRO Nº ${safe(data?.id)}`,
         fields: [
-          { name: "NOM DO PORTADOR", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
+          { name: "NOME DO PORTADOR", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
           { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
           { name: "Arma", value: safe(data?.arma), inline: true },
           { name: "Serial", value: safe(data?.serial), inline: true },
