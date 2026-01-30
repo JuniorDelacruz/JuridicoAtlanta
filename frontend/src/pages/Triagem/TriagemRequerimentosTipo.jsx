@@ -340,7 +340,7 @@ export default function TriagemRequerimentosTipo() {
                         </button>
 
                         <button
-                          onClick={() => navigate(slug === 'casamento' ? ` /triagem/${slug}/detalhe/${r.numero}` : ` /triagem/${slug}/detalhes/${r.numero})}
+                          onClick={() => navigate(slug === 'casamento' ? ` /triagem/${slug}/detalhe/${r.numero}` : `/triagem/${slug}/detalhes/${r.numero}`)}
                           className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"
                         >
                           Ver detalhes
