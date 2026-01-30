@@ -38,7 +38,11 @@ export const TIPOS_REQUERIMENTO = [
         roles: ["tabeliao", "escrivao", "juiz", "admin"],
         subRole: ['equipejuridico'],
         fields: [
-            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroIdentificacaoNoivo", label: "Numero Cidadão do Noivo", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroIdentificacaoNoiva", label: "Numero Cidadão da Noiva", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroIdentificacaoTest1", label: "Numero Cidadão da Testemunha 1", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroIdentificacaoTest2", label: "Numero Cidadão da Testemunha 2", type: "text", required: true, verifyCadastro: true, },
+            { name: "numeroIdentificacaoTest3", label: "Numero Cidadão da Testemunha 3", type: "text", required: true, verifyCadastro: true, },
         ]
     },
     {
