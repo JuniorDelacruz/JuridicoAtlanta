@@ -2,9 +2,10 @@
 import jwt from "jsonwebtoken";
 
 const authMiddleware = (allowedRoles = []) => (req, res, next) => {
-  if (req.method === "OPTIONS") return next();
-  console.log("AUTH HEADER RAW:", req.headers.authorization);
-  const authHeader = req.headers.authorization || req.header("Authorization") || "";
+  // ✅ libera preflight do CORS
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+
+  const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
   if (!token) {
@@ -18,7 +19,7 @@ const authMiddleware = (allowedRoles = []) => (req, res, next) => {
     const role = String(decoded.role || "").trim().toLowerCase();
     const allowed = allowedRoles.map(r => String(r).trim().toLowerCase());
 
-    if (allowed.length > 0 && !allowed.includes(role)) {
+    if (allowed.length && !allowed.includes(role)) {
       return res.status(403).json({ msg: "Acesso negado: cargo insuficiente" });
     }
 

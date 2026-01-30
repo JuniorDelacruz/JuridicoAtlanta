@@ -15,7 +15,7 @@ import cadastroCidadaoRoutes from './routes/cadastroCidadaoRoutes.js'
 import triagemRequerimentosRoutes from './routes/triagemRequerimentosRoutes.js'
 import arquivosRoutes from './routes/arquivos.routes.js'
 import meRoutes from "./routes/me.routes.js";
-import {  startBot } from './bot/index.js';
+import { startBot } from './bot/index.js';
 
 dotenv.config();
 
@@ -26,7 +26,16 @@ const __dirname = path.dirname(__filename);
 
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: [
+        "https://juridicoatlanta.starkstore.dev.br" // ajuste
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+app.options("*", cors());
 app.use(express.json());
 
 app.use(
