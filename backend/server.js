@@ -15,7 +15,7 @@ import cadastroCidadaoRoutes from './routes/cadastroCidadaoRoutes.js'
 import triagemRequerimentosRoutes from './routes/triagemRequerimentosRoutes.js'
 import arquivosRoutes from './routes/arquivos.routes.js'
 import meRoutes from "./routes/me.routes.js";
-import { bootstrap, startBot } from './bot/index.js';
+import {  startBot } from './bot/index.js';
 
 dotenv.config();
 
