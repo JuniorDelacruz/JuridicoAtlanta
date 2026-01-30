@@ -2,6 +2,7 @@
 import axios from "axios";
 import db from "../models/index.js";
 import { text } from "express";
+import { botSendMessage } from "./discordBotSend.js";
 
 const { WebhookConfig } = db;
 
@@ -239,7 +240,7 @@ export async function notifyDiscord(type, data) {
   const payload = { embeds: [embed] };
 
   try {
-    const res = await axios.post(webhookUrl, payload, {
+    const res = await botSendMessage(webhookUrl, payload, {
       headers: { "Content-Type": "application/json" },
       timeout: 10_000,
     });
