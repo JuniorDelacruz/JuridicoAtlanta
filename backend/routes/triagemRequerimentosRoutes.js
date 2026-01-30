@@ -324,6 +324,24 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
             await noivo.update({ conjuge: noivaId });
             await noiva.update({ conjuge: noivoId });
+
+
+
+            item.dados = {
+                ...dadosAtual,
+                workflow: {
+                    ...(dadosAtual.workflow || {}),
+                    juiz: {
+                        aprovado: true,
+                        aprovadoPor: req.user?.id || null,
+                        aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
+                        data: new Date().toISOString(),
+                    },
+                },
+            };
+
+            await item.save();
+
         }
 
         if (item.tipo === "Troca de Nome") {

@@ -212,7 +212,7 @@ function buildEmbed(type, data) {
           { name: "NOIVA", value: `${data?.noiva?.nomeCompleto} (CID: ${data?.noiva?.registro})` },
           { name: "TESTEMUNHA 1", value: `${data?.testemunhas[0]?.nomeCompleto} (CID: ${data?.testemunhas[0]?.registro})` },
           { name: "TESTEMUNHA 2", value: `${data?.testemunhas[1]?.nomeCompleto} (CID: ${data?.testemunhas[1]?.registro})` },
-          { name: "TESTEMUNHA 3", value: `${data?.testemunhas[2]?.nomeCompleto} (CID: ${data?.testemunhas[2]?.registro})` }
+          { name: "TESTEMUNHA 3", value: `${data?.testemunhas[2]?.nomeCompleto} (CID: ${data?.testemunhas[2]?.registro})\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*` }
         ]
       }
 
