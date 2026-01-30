@@ -208,10 +208,73 @@ function buildEmbed(type, data) {
         O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
-          { name: "NOIVO", value: data?.noivo?.nomeCompleto}
+          { name: "NOIVO", value: `${data?.noivo?.nomeCompleto} (CID: ${data?.noivo?.registro})` },
+          { name: "NOIVA", value: `${data?.noiva?.nomeCompleto} (CID: ${data?.noiva?.registro})` },
+          { name: "TESTEMUNHA 1", value: `${data?.testemunhas[0]?.nomeCompleto} (CID: ${data?.testemunhas[0]?.registro})` },
+          { name: "TESTEMUNHA 2", value: `${data?.testemunhas[1]?.nomeCompleto} (CID: ${data?.testemunhas[1]?.registro})` },
+          { name: "TESTEMUNHA 3", value: `${data?.testemunhas[2]?.nomeCompleto} (CID: ${data?.testemunhas[2]?.registro})` }
         ]
       }
-    }
+
+
+      {[
+        id, 11,
+          tipo, 'Casamento',
+            status, 'APROVADO',
+              aprovadoPor, 'junior.js',
+                noivo, {
+          nomeCompleto: 'Junior L. A. Delacruz',
+            registro: 10,
+              identidade: '56451',
+                discordId: '348874010341146625',
+                  pombo: '8974',
+                    profissao: 'Fazendeiro',
+                      residencia: 'Ambarino',
+                        status: 'APROVADO'
+        },
+        noiva, {
+          nomeCompleto: 'Lila L. Delacruz',
+            registro: 9,
+              identidade: '99646793',
+                discordId: '682347554494873642',
+                  pombo: '6656',
+                    profissao: 'Médica',
+                      residencia: 'Rancho Nifhel',
+                        status: 'APROVADO'
+        },]
+        testemunhas: [
+          {
+            nomeCompleto: 'Anna L. Delacruz',
+            registro: 7,
+            identidade: '5463546345',
+            discordId: '1215398895383875634',
+            pombo: '7040',
+            profissao: 'Médica',
+            residencia: 'Rancho Nifhel',
+            status: 'APROVADO'
+          },
+          {
+            nomeCompleto: 'Ryu Dimarolla Quebec',
+            registro: 11,
+            identidade: '00167803',
+            discordId: '246778550718431234',
+            pombo: '3793',
+            profissao: 'Empresario',
+            residencia: 'Fazenda Velarion - Ambarino',
+            status: 'APROVADO'
+          },
+          {
+            nomeCompleto: 'Sven Lundgren',
+            registro: 8,
+            identidade: '34985633',
+            discordId: '359427893354299412',
+            pombo: '2902',
+            profissao: 'Juiz Federal',
+            residencia: 'Rhodes',
+            status: 'APROVADO'
+          }
+        ]
+      }
 
     // TODO: trocaNome, casamento, divorcio, limpezaFicha, porteSuspenso, alvara, carimboPorteArma
     default: {
