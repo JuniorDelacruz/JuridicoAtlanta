@@ -156,7 +156,7 @@ function buildEmbed(type, data) {
         description: `
         **Requerimento Nº ${safe(data?.id)}**
 
-        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.aprovadoPor)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
           { name: "NOME COMPLETO", value: `\`${safe(data?.nomeCompleto)}\``, inline: true },
@@ -165,7 +165,7 @@ function buildEmbed(type, data) {
           { name: "VALIDADE", value: `\`${safe(data?.validade)}\``, inline: false },
           { name: "ARMAMENTOS APROVADOS", value: `\`${safeJoin(data?.arma)}\``, inline: false },
           {
-            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*`, inline: true
+            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.aprovadoPor)}**\n*Juíz(a) Federal*`, inline: true
           },
 
         ],
@@ -181,7 +181,7 @@ function buildEmbed(type, data) {
         description: `
         **Requerimento Nº ${safe(data?.id)}**
 
-        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.aprovadoPor)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
           { name: "NOME ANTERIOR", value: `\`${safe(data?.nomeCompleto)}\``, inline: true },
@@ -189,7 +189,7 @@ function buildEmbed(type, data) {
           { name: "POMBO", value: `\`${safe(data?.pombo)}\``, inline: false },
           { name: "NOVO NOME", value: `\`${safe(data?.novoNome)}\``, inline: false },
           {
-            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*`, inline: true
+            name: "STATUS", value: `\`APROVADO\`\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.aprovadoPor)}**\n*Juíz(a) Federal*`, inline: true
           },
         ]
 
@@ -205,14 +205,14 @@ function buildEmbed(type, data) {
         description: `
         **Requerimento Nº ${safe(data?.id)}**
 
-        O excelentíssimo Senhor Dr.(a) ${safe(data?.nomeCompleto)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
+        O excelentíssimo Senhor Dr.(a) ${safe(data?.aprovadoPor)}, Juíz(a) Federal da comarca de Blackwater, declara, para os devidos fins, que foi deferido o porte de arma de fogo ao cidadão identificado.
         `,
         fields: [
           { name: "NOIVO", value: `${data?.noivo?.nomeCompleto} (CID: ${data?.noivo?.registro})` },
           { name: "NOIVA", value: `${data?.noiva?.nomeCompleto} (CID: ${data?.noiva?.registro})` },
           { name: "TESTEMUNHA 1", value: `${data?.testemunhas[0]?.nomeCompleto} (CID: ${data?.testemunhas[0]?.registro})` },
           { name: "TESTEMUNHA 2", value: `${data?.testemunhas[1]?.nomeCompleto} (CID: ${data?.testemunhas[1]?.registro})` },
-          { name: "TESTEMUNHA 3", value: `${data?.testemunhas[2]?.nomeCompleto} (CID: ${data?.testemunhas[2]?.registro})\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.nomeCompleto)}**\n*Juíz(a) Federal*` }
+          { name: "TESTEMUNHA 3", value: `${data?.testemunhas[2]?.nomeCompleto} (CID: ${data?.testemunhas[2]?.registro})\n\nDeclaração válida enquanto mantidas as condições legais e o bom comportamento do portador.\n**Blackwater**,\n**Dr.(a) ${safe(data?.aprovadoPor)}**\n*Juíz(a) Federal*` }
         ]
       }
 
