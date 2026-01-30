@@ -304,6 +304,28 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         }
 
+
+        if (item.tipo === "Casamento") {
+            const dados = item.dados || {};
+
+            const noivoId = dados?.cidadaoNoivo?.id;
+            const noivaId = dados?.cidadaoNoiva?.id;
+
+            if (!noivoId || !noivaId) {
+                throw new Error("Casamento: cidadaoNoivo.id ou cidadaoNoiva.id ausente no JSON dados.");
+            }
+
+            const noivo = await CadastroCidadao.findOne({ where: { id: noivoId } });
+            const noiva = await CadastroCidadao.findOne({ where: { id: noivaId } });
+
+            if (!noivo || !noiva) {
+                throw new Error("Casamento: noivo ou noiva não encontrados no cartório.");
+            }
+
+            await noivo.update({ conjuge: noivaId });
+            await noiva.update({ conjuge: noivoId });
+        }
+
         if (item.tipo === "Troca de Nome") {
             const discordId = item?.dados.cidadao.discordId;
             const novoNome = item?.dados?.novoNome;
