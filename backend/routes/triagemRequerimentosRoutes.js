@@ -64,35 +64,82 @@ function isTrocaDeNome(tipo) {
     return t.includes('troca') && (t.includes('nome') || t.includes('nomes'));
 }
 
+function isCasamento(tipo) {
+    return String(tipo || "").toLowerCase().includes("casamento");
+}
+
+function mapPessoaCidadao(c) {
+    if (!c) return null;
+    return {
+        nomeCompleto: c.nomeCompleto,
+        registro: c.id,
+        identidade: c.identidade,
+        discordId: c.discordId,
+        pombo: c.pombo,
+        profissao: c.profissao,
+        residencia: c.residencia,
+        status: c.status,
+    };
+}
+
 function buildWebhookPayload(item, reqUser) {
-    const cid = item?.dados?.cidadao || {};
-    const isPorte = isPortDeArmas(item?.tipo)
-    const isTroca = isTrocaDeNome(item?.tipo)
+    const dados = item?.dados || {};
+
+    const isPorte = isPortDeArmas(item?.tipo);
+    const isTroca = isTrocaDeNome(item?.tipo);
+    const casamento = isCasamento(item?.tipo);
+
+    // padrão antigo (1 cidadao)
+    const cid = dados?.cidadao || {};
+
+    // casamento (vários cidadaos)
+    const noivo = dados?.cidadaoNoivo || null;
+    const noiva = dados?.cidadaoNoiva || null;
+
+    const testemunhas = [
+        dados?.cidadaoTest1,
+        dados?.cidadaoTest2,
+        dados?.cidadaoTest3,
+    ].filter(Boolean);
+
     return {
         id: item.numero,
+        tipo: item.tipo,
         status: item.status,
-        aprovadoPor: item?.dados?.workflow?.juiz?.aprovadoPorNome || reqUser?.username || String(reqUser?.id || "Sistema"),
 
+        aprovadoPor:
+            item?.dados?.workflow?.juiz?.aprovadoPorNome ||
+            reqUser?.username ||
+            String(reqUser?.id || "Sistema"),
 
-        // dados comuns (se existir no seu schema)
-        nomeCompleto: cid?.nomeCompleto,
-        registro: cid?.id,
-        discordId: cid?.discordId,
-        pombo: cid?.pombo,
-        identidade: cid?.identidade,
-        profissao: cid?.profissao,
-        residencia: cid?.residencia,
+        // ✅ CASAMENTO: payload específico
+        ...(casamento
+            ? {
+                noivo: mapPessoaCidadao(noivo),
+                noiva: mapPessoaCidadao(noiva),
+                testemunhas: testemunhas.map(mapPessoaCidadao),
+            }
+            : {
+                // ✅ payload padrão que você já tinha
+                nomeCompleto: cid?.nomeCompleto,
+                registro: cid?.id,
+                discordId: cid?.discordId,
+                pombo: cid?.pombo,
+                identidade: cid?.identidade,
+                profissao: cid?.profissao,
+                residencia: cid?.residencia,
+            }),
 
+        // troca nome
+        ...(isTroca ? { novoNome: dados?.novoNome } : {}),
 
-        ...(isTroca ? {
-            novoNome: item?.dados?.novoNome
-        } : {}),
-
-        // dados específicos que você já usa em PORTE/REGISTRO
-        ...(isPorte ? {
-            validade: item?.dados?.workflow.juiz.validade,
-            arma: item?.dados?.arma,
-        } : {}),
+        // porte
+        ...(isPorte
+            ? {
+                validade: dados?.workflow?.juiz?.validade || dados?.validade || null,
+                arma: dados?.arma || null,
+            }
+            : {}),
     };
 }
 
@@ -264,7 +311,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             if (!discordId || !novoNome) {
                 throw new Error("Troca de Nome: discordId ou novoNome ausente no JSON dados.");
             }
-            const cidadao = await CadastroCidadao.findOne({ where: { discordId }});
+            const cidadao = await CadastroCidadao.findOne({ where: { discordId } });
 
             if (!cidadao) {
                 throw new Error(`Cidadão não encontrado no cartório para o discordId=${discordId}`)
