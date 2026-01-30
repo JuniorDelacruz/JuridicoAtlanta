@@ -9,7 +9,7 @@ export const TIPOS_REQUERIMENTO = [
         fields: [
             { name: "numeroRegistro", label: "Número de Registro (Cartório)", type: "text", required: true, verifyCadastro: true, },
             {
-                name: "arma", label: "Qual a arma?", type: "select", required: true, multiple: true,options: [
+                name: "arma", label: "Qual a arma?", type: "select", required: true, multiple: true, options: [
                     "Revolver Lemat", "Revolver Navy Crossover", "Revolver Navy", "Pistol M1899", "Pistol Mauser",
                     "Carabine Repeater", "Evans Repeater", "Winchester Repeater", "Boltaction Rifle", "Springfield Rifle",
                     "Elephant Rifle", "Varmint Rifle", "Rolling Block Rifle", "Carcano Rifle",
@@ -70,6 +70,17 @@ export const TIPOS_REQUERIMENTO = [
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
         ]
+    },
+
+    {
+        slug: "Registro de Arma",
+        label: "Registro de Arma",
+        tipoDb: "Registro de Arma",
+        fields: [
+            { name: "porteNumero", label: "Número do Porte" },
+            { name: "numeroSerial", label: "Número de Série" },
+            { name: "imagemIdentidadeUrl", label: "Imagem da Identidade (URL)" },
+        ],
     },
 ];
 
