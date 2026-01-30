@@ -13,7 +13,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ToastProvider position="top-right">
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
