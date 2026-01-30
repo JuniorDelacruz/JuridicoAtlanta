@@ -118,8 +118,9 @@ export default function TriagemRequerimentosTipo() {
 
   // ✅ Indeferir pode existir em ambos fluxos (depende do teu backend; se bloquear, ajuste lá)
   const handleIndeferir = async (numero) => {
-    if (!confirm({ title: 'Indeferie Requerimento?', message: `Tem certeza que deseja INDEFERIR o requerimento #${numero}?`, confirmText: "Indeferir",
-    cancelText: "Cancelar",danger: true,})) return;
+  const ok = await  confirm({ title: 'Indeferie Requerimento?', message: `Tem certeza que deseja INDEFERIR o requerimento #${numero}?`, confirmText: "Indeferir",
+    cancelText: "Cancelar",danger: true,})
+    if (!ok) return;
 
     try {
       await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
