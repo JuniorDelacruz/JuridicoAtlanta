@@ -6,6 +6,8 @@ import axios from "axios";
 import { Scale, ArrowLeft, CheckCircle, XCircle, Search as SearchIcon } from "lucide-react";
 import { getTriagemTipoBySlug } from "../../config/triagemTipos";
 import { useToast } from "../../utils/toast";
+import { useConfirm } from "../components/ui/confirm.jsx";
+
 
 
 
@@ -21,6 +23,7 @@ function authHeaders() {
 
 export default function TriagemRequerimentosTipo() {
   const { push } = useToast();
+  const { confirm } = useConfirm();
   const { slug } = useParams();
   const tipoCfg = getTriagemTipoBySlug(slug);
 
