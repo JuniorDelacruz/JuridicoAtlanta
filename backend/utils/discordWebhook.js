@@ -2,7 +2,7 @@
 import axios from "axios";
 import db from "../models/index.js";
 import { text } from "express";
-import { botSendMessage } from "./discordBotSend.js";
+import { botSendMessage, botSetNickname } from "./discordBotSend.js";
 
 const { WebhookConfig } = db;
 
