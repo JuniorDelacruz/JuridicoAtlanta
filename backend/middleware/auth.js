@@ -7,8 +7,10 @@ const { User } = db;
 const authMiddleware = (allowedRoles = []) => async (req, res, next) => {
   if (req.method === "OPTIONS") return res.sendStatus(204);
 
-  const authHeader = req.headers.authorization || "";
+   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+
+  if (!token) return res.status(401).json({ msg: "Acesso negado: token não fornecido" });
 
   if (!token) {
     return res.status(401).json({ msg: "Acesso negado: token não fornecido" });
