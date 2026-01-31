@@ -259,6 +259,20 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             where: { discordId: req.user.discordId }
         })
 
+
+        const dadosJson = item.dados || {}
+
+        item.dados = {
+            ...dadosJson,
+            workflow: {
+                ...(dadosJson.workflow || {}),
+                juiz: {
+                    aprovadoPor: req.user?.id || null,
+                    aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
+                }
+            }
+        }
+
         if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
             const dadosAtual = item.dados || {};
 
@@ -269,8 +283,6 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                     ...(dadosAtual.workflow || {}),
                     juiz: {
                         aprovado: true,
-                        aprovadoPor: req.user?.id || null,
-                        aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
                         validade: "90 dias",
                         data: new Date().toISOString(),
                     },
@@ -333,8 +345,6 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                     ...(dados.workflow || {}),
                     juiz: {
                         aprovado: true,
-                        aprovadoPor: req.user?.id || null,
-                        aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
                         data: new Date().toISOString(),
                     },
                 },
