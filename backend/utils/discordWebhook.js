@@ -113,7 +113,6 @@ function buildEmbed(type, data) {
 
   switch (type) {
     case WEBHOOK_TYPES.CADASTRO_CIDADAO: {
-      console.log(data)
       return {
         ...base,
         title: "CADASTRO DE CIDADÃO",
