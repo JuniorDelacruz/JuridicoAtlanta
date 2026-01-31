@@ -119,6 +119,7 @@ function buildEmbed(type, data) {
         title: "CADASTRO DE CIDADÃO",
         footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: `` },
         description: `CADASTRO DE CIDADÃO Nº ${safe(data?.id)}`,
+        image: data?.imagemIdentidade,
         fields: [
           { name: "Nome Completo", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
           { name: "Pombo", value: safe(data?.pombo), inline: false },
