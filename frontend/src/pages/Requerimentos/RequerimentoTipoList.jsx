@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { getTipoBySlug } from "../../config/requerimentosTipos";
 import { ArrowLeft, Plus, Search as SearchIcon } from "lucide-react";
+import { api } from "../../services/api";
 
 const API_URL = import.meta?.env?.VITE_API_URL || "https://apijuridico.starkstore.dev.br";
 
@@ -54,7 +55,7 @@ export default function RequerimentoTipoList() {
         const params = { tipo: tipoCfg.tipoDb };
         if (statusFilter !== "todos") params.status = statusFilter;
 
-        const res = await axios.get(`${API_URL}/api/requerimentos`, {
+        const res = await api.get(`/api/requerimentos`, {
           headers: authHeaders(),
           params,
         });
