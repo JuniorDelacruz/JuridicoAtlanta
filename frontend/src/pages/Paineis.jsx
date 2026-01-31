@@ -4,10 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api"; // <- usa o axios instance com interceptor
 import { ArrowLeft, Scale, Search as SearchIcon, Webhook } from "lucide-react";
+import { useToast } from "../utils/toast";
+import { useConfirm } from "../components/ui/confirm";
 
 function Paineis() {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+
+    const { push } = useToast();
+    const { confirm } = useConfirm();
 
     const [usuarios, setUsuarios] = useState([]);
     const [filteredUsuarios, setFilteredUsuarios] = useState([]);
@@ -33,7 +38,7 @@ function Paineis() {
                 const status = err?.response?.status;
 
                 if (status === 403) {
-                    alert("Acesso negado. Você não tem permissão para gerenciar cargos.");
+                    push({type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos."});
                     navigate("/dashboard");
                     return;
                 }
