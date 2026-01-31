@@ -56,7 +56,6 @@ export default function RequerimentoTipoList() {
         if (statusFilter !== "todos") params.status = statusFilter;
 
         const res = await api.get(`/api/requerimentos`, {
-          headers: authHeaders(),
           params,
         });
 
