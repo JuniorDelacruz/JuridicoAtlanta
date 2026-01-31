@@ -50,6 +50,9 @@ function webhookTypeByRequerimentoTipo(tipo) {
             return WEBHOOK_TYPES.ALVARA;
 
 
+        case "Carimbo":
+            return WEBHOOK_TYPES.CARIMBO_PORTE_ARMA;
+
         default:
             return null;
     }
@@ -275,12 +278,15 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
         // O correto é:
         const isJuizOuAdmin = role === "juiz" || role === "admin";
+        const discordId = await User.findOne({ where: { id: req.user.id }})
+
+
         const Solicitante = await CadastroCidadao.findOne({
-            where: { discordId: req.user.discordId }
+            where: { discordId: discordId }
         })
 
 
-        const aprovadoPorNome = await resolveNomeAprovador(req.user, CadastroCidadao);
+        const aprovadoPorNome = Solicitante.nomeCompleto
         const dadosJson = item.dados || {};
 
         item.dados = {
