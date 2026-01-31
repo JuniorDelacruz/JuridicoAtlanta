@@ -50,7 +50,7 @@ api.interceptors.response.use(
         if (status === 403) {
             const { push } = useToast();
             const { confirm } = useConfirm();
-            push({ type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos." });
+            return push({ type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos." });
             // window.location.href = "/dashboard";
         }
 
