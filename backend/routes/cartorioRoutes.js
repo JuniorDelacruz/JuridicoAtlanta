@@ -125,12 +125,19 @@ router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res)
         const Aprovador = await CadastroCidadao.findOne({ where: { discordId: req.user?.discordId }})
 
         cadastro.status = 'APROVADO';
-        cadastro.aprovadoPor = Aprovador?.nomeCompleto || req.user.username || req.user.id;
+        cadastro.aprovadoPor = req.user.id;
         cadastro.dataAprovacao = new Date();
         await cadastro.save();
 
+
+        const CidadaoPayload = { 
+            status: "APROVADO",
+            aprovadoPor: Aprovador.nomeCompleto,
+            dados : cadastro
+        }
+
         // Chama o bot Discord para enviar mensagem (via webhook ou API interna)
-        await notifyDiscordBot("cadastroCidadao", cadastro);
+        await notifyDiscordBot("cadastroCidadao", CidadaoPayload);
 
         res.json({ msg: 'Cadastro aprovado e notificado no Discord', cadastro });
     } catch (err) {
