@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { TIPOS_REQUERIMENTO } from "../config/requerimentosTipos";
 import { FileText, Shield, Users, Search, FileCheck, Calendar, ArrowLeft } from "lucide-react";
+import { api } from "../services/api";
 
 const API_URL = import.meta?.env?.VITE_API_URL || "https://apijuridico.starkstore.dev.br";
 
@@ -53,7 +54,7 @@ export default function RequerimentoHub() {
     (async () => {
       setLoading(true);
       try {
-        const r = await axios.get(`${API_URL}/api/requerimentos/resumo`, { headers: authHeaders() });
+        const r = await api.get(`/api/requerimentos/resumo`,);
         setResumo(r.data || {});
       } catch {
         setResumo({});
