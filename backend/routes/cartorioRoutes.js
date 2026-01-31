@@ -120,8 +120,9 @@ router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res)
         const cadastro = await CadastroCidadao.findByPk(req.params.id);
         if (!cadastro || cadastro.status !== 'PENDENTE') return res.status(400).json({ msg: 'Cadastro inválido ou já processado' });
 
+        console.log(req.user)
 
-        const Aprovador = await CadastroCidadao.findOne({ where: { discordId: req.user?.discordId}})
+        const Aprovador = await CadastroCidadao.findOne({ where: { discordId: req.user?.discordId }})
 
         cadastro.status = 'APROVADO';
         cadastro.aprovadoPor = Aprovador?.nomeCompleto || req.user.username || req.user.id;
