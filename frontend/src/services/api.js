@@ -1,55 +1,59 @@
 import axios from "axios";
+import { useToast } from "../utils/toast";
+import { useConfirm } from "../components/ui/confirm";
 
 const API_URL =
-  import.meta?.env?.VITE_API_URL ||
-  import.meta?.env?.VITE_API_BASE_URL ||
-  "https://apijuridico.starkstore.dev.br";
+    import.meta?.env?.VITE_API_URL ||
+    import.meta?.env?.VITE_API_BASE_URL ||
+    "https://apijuridico.starkstore.dev.br";
 
 export const api = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
+    baseURL: API_URL,
+    timeout: 30000,
 });
 
 // ✅ sempre injeta Bearer token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    // axios v1 pode usar AxiosHeaders (tem .set)
-    if (config.headers && typeof config.headers.set === "function") {
-      config.headers.set("Authorization", `Bearer ${token}`);
-    } else {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+        // axios v1 pode usar AxiosHeaders (tem .set)
+        if (config.headers && typeof config.headers.set === "function") {
+            config.headers.set("Authorization", `Bearer ${token}`);
+        } else {
+            config.headers = config.headers ?? {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
     }
-  }
 
-  return config;
+    return config;
 });
 
 // ✅ trata 401/403 globalmente
 api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    const status = err?.response?.status;
+    (res) => res,
+    (err) => {
+        const status = err?.response?.status;
 
-    // token inválido/expirado
-    if (status === 401) {
-      localStorage.removeItem("token");
-      // se você tiver "user" salvo em storage, limpa tb
-      localStorage.removeItem("user");
+        // token inválido/expirado
+        if (status === 401) {
+            localStorage.removeItem("token");
+            // se você tiver "user" salvo em storage, limpa tb
+            localStorage.removeItem("user");
 
-      // manda pro login sem depender de useNavigate (funciona fora de componente)
-      window.location.href = "/login";
-      return; // encerra
+            // manda pro login sem depender de useNavigate (funciona fora de componente)
+            window.location.href = "/login";
+            return; // encerra
+        }
+
+        // sem permissão
+        if (status === 403) {
+            const { push } = useToast();
+            const { confirm } = useConfirm();
+            push({ type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos." });
+            // window.location.href = "/dashboard";
+        }
+
+        return Promise.reject(err);
     }
-
-    // sem permissão
-    if (status === 403) {
-      // opcional: mandar pra dashboard ou mostrar toast
-      // window.location.href = "/dashboard";
-    }
-
-    return Promise.reject(err);
-  }
 );
