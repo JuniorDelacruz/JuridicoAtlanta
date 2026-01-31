@@ -143,7 +143,7 @@ function App() {
         path="/dashboard"
         element={
           <ProtectedRoute
-            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
+            allowedRoles={["cidadao","auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
             allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
             deniedTo="/" // <- se negar acesso, volta pra home
           >
@@ -159,7 +159,7 @@ function App() {
         path="/paineis"
         element={
           <ProtectedRoute
-            allowedRoles={["cidadao","auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
+            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
             allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
             deniedTo="/dashboard" // <- se negar acesso, volta pra home
           >
