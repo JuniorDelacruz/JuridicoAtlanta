@@ -25,7 +25,7 @@ const canAccess = (user, module) => {
 };
 
 export default function Dashboard() {
-  const { user, displayName, logout, isAuthenticated,  } = useAuth();
+  const { user, displayName, logout, isAuthenticated, } = useAuth();
   const navigate = useNavigate();
 
   // 1) Redirect SEM side-effect no render
@@ -59,6 +59,7 @@ export default function Dashboard() {
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao", "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz', "admin"], allowedSubRoles: ["equipejuridico"] },
     { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Lançamentos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
   ];
 
   const modules = useMemo(() => allModules.filter((m) => canAccess(user, m)), [user]);
