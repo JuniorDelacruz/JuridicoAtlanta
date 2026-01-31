@@ -1,3 +1,4 @@
+// backend/middleware/auth.js
 import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 
@@ -9,36 +10,28 @@ const authMiddleware = (allowedRoles = []) => async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
-  if (!token) return res.status(401).json({ msg: "Acesso negado: token não fornecido" });
+  if (!token) {
+    return res.status(401).json({ msg: "Acesso negado: token não fornecido" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ pega o usuário REAL do banco (não confia no cargo do token)
-    // ajuste aqui conforme seu token tem os campos:
-    // ex: decoded.id = userId
-    const userId = decoded.id; 
-    if (!userId) return res.status(401).json({ msg: "Token inválido (sem id)." });
+    const userId = decoded?.id;
+    if (!userId) {
+      return res.status(401).json({ msg: "Token inválido (sem id)." });
+    }
 
+    // ✅ pega role real do banco
     const userDb = await User.findByPk(userId, {
-      attributes: ["id", "username", "discordId", "role", "subRole", "active", "tokenVersion"],
+      attributes: ["id", "username", "discordId", "role", "subRole"],
     });
 
-    if (!userDb) return res.status(401).json({ msg: "Usuário não existe mais." });
-
-    // opcional: se você tiver um campo pra banir/desativar
-    if (userDb.active === false) {
-      return res.status(401).json({ msg: "Usuário desativado." });
+    if (!userDb) {
+      return res.status(401).json({ msg: "Usuário não existe mais." });
     }
 
-    // ✅ tokenVersion (se quiser revogar tokens antigos)
-    // se você colocar tokenVersion no token quando gera:
-    // if ((decoded.tokenVersion ?? 0) !== (userDb.tokenVersion ?? 0)) ...
-    if ((decoded.tokenVersion ?? 0) !== (userDb.tokenVersion ?? 0)) {
-      return res.status(401).json({ msg: "Sessão expirada. Faça login novamente." });
-    }
-
-    // ✅ monta req.user confiável (com role do banco)
+    // ✅ req.user confiável (role do DB)
     req.user = {
       id: userDb.id,
       username: userDb.username,
@@ -47,8 +40,9 @@ const authMiddleware = (allowedRoles = []) => async (req, res, next) => {
       subRole: userDb.subRole,
     };
 
+    // ✅ checagem de role (se a rota exigir)
     const role = String(req.user.role || "").trim().toLowerCase();
-    const allowed = allowedRoles.map(r => String(r).trim().toLowerCase());
+    const allowed = allowedRoles.map((r) => String(r).trim().toLowerCase());
 
     if (allowed.length && !allowed.includes(role)) {
       return res.status(403).json({ msg: "Acesso negado: cargo insuficiente" });
