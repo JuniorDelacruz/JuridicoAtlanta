@@ -39,7 +39,7 @@ function Paineis() {
 
                 if (status === 403) {
                     push({type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos."});
-                    navigate("/dashboard");
+                    navigate("/login");
                     return;
                 }
 
