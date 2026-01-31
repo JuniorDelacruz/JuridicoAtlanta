@@ -123,10 +123,10 @@ function buildEmbed(type, data) {
         fields: [
           { name: "Nome Completo", value: `\`${safe(data?.dados?.nomeCompleto)}\``, inline: false },
           { name: "Pombo", value: safe(data?.pombo), inline: false },
-          { name: "Identidade", value: safe(data?.identidade), inline: false },
-          { name: "Profissão", value: safe(data?.profissao), inline: false },
-          { name: "Residência", value: safe(data?.residencia), inline: false },
-          { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
+          { name: "Identidade", value: safe(data?.dados?.identidade), inline: false },
+          { name: "Profissão", value: safe(data?.dados?.profissao), inline: false },
+          { name: "Residência", value: safe(data?.dados?.residencia), inline: false },
+          { name: "ID Discord", value: mentionUser(data?.dados?.discordId), inline: false },
         ],
       };
     }
