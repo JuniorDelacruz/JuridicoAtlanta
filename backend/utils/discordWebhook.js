@@ -113,9 +113,11 @@ function buildEmbed(type, data) {
 
   switch (type) {
     case WEBHOOK_TYPES.CADASTRO_CIDADAO: {
+      console.log(data)
       return {
         ...base,
         title: "CADASTRO DE CIDADÃO",
+        footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}`, icon_url: `` },
         description: `CADASTRO DE CIDADÃO Nº ${safe(data?.id)}`,
         fields: [
           { name: "Nome Completo", value: `\`${safe(data?.nomeCompleto)}\``, inline: false },
@@ -124,7 +126,6 @@ function buildEmbed(type, data) {
           { name: "Profissão", value: safe(data?.profissao), inline: false },
           { name: "Residência", value: safe(data?.residencia), inline: false },
           { name: "ID Discord", value: mentionUser(data?.discordId), inline: false },
-          { name: "Aprovado por", value: safe(data?.aprovadoPor), inline: false },
         ],
       };
     }
