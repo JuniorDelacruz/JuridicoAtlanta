@@ -253,18 +253,8 @@ router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (re
 
 
 router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
-    // ✅ CANARY: se isso aparecer na resposta, você tem certeza absoluta que esse arquivo tá rodando
-    res.setHeader("X-TRIAGEM-BUILD", "aprovar-v3-2026-01-31");
-    // (depois que confirmar, remove)
-    return res.status(200).json({
-        ok: true,
-        hit: "aprovar-handler",
-        build: "aprovar-v3-2026-01-31",
-        user: req.user,
-        numero: req.params.numero,
-    });
+    // ⚠️ fora do try também, pra logar até se estourar antes
     try {
-
         const numero = Number(req.params.numero);
         if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
 
@@ -277,7 +267,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         const role = req.user?.role;
 
-        console.log(item?.dados)
+      
 
 
 
@@ -333,10 +323,11 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             // Por enquanto, não manda webhook final aqui.
 
             // ✅ Decide qual webhook mandar
+            console.log(item)
             const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
             if (hookType) {
-                const payload = buildWebhookPayload(item, req.user);
+                const payload = await buildWebhookPayload(item, req.user);
                 notifyDiscord(hookType, payload).catch((e) =>
                     console.error("[webhook aprovar] falha:", e?.message || e)
                 );
