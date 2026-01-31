@@ -268,6 +268,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             workflow: {
                 ...(dadosJson.workflow || {}),
                 juiz: {
+                    ...(dadosJson.workflow?.juiz || {}),
                     aprovadoPor: req.user?.id || null,
                     aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
                 }
@@ -283,6 +284,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                 workflow: {
                     ...(dadosAtual.workflow || {}),
                     juiz: {
+                        ...(dadosAtual?.workflow?.juiz || {}),
                         aprovado: true,
                         validade: "90 dias",
                         data: new Date().toISOString(),
@@ -345,6 +347,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                 workflow: {
                     ...(dados.workflow || {}),
                     juiz: {
+                        ...(dados?.workflow?.juiz || {}),
                         aprovado: true,
                         data: new Date().toISOString(),
                     },
