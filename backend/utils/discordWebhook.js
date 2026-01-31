@@ -274,7 +274,7 @@ export async function notifyDiscord(type, data) {
     if (type === "trocaNome") {
       const nick = buildNickname(data?.novoNome, data?.pombo);
       await botSetNickname(
-        "1365777247893585981",
+        "1288884651422650478",
         data?.discordId,
         nick,
         "Troca de nome aprovada"
