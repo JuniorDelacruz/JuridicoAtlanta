@@ -300,6 +300,8 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             }
         }
 
+        await item.save();
+
         if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
             const dadosAtual = item.dados || {};
 
