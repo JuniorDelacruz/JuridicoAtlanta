@@ -251,12 +251,20 @@ router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (re
     }
 });
 
-router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
-    // ⚠️ fora do try também, pra logar até se estourar antes
-    
 
+router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
+    // ✅ CANARY: se isso aparecer na resposta, você tem certeza absoluta que esse arquivo tá rodando
+    res.setHeader("X-TRIAGEM-BUILD", "aprovar-v3-2026-01-31");
+    // (depois que confirmar, remove)
+    return res.status(200).json({
+        ok: true,
+        hit: "aprovar-handler",
+        build: "aprovar-v3-2026-01-31",
+        user: req.user,
+        numero: req.params.numero,
+    });
     try {
-     
+
         const numero = Number(req.params.numero);
         if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
 
@@ -269,7 +277,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         const role = req.user?.role;
 
-       console.log(item?.dados)
+        console.log(item?.dados)
 
 
 
@@ -277,7 +285,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
         // O correto é:
         const isJuizOuAdmin = role === "juiz" || role === "admin";
-        const discordId = await User.findOne({ where: { id: req.user.id }})
+        const discordId = await User.findOne({ where: { id: req.user.id } })
 
 
         const Solicitante = await CadastroCidadao.findOne({
