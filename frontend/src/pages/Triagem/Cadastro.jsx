@@ -33,7 +33,7 @@ function TriagemCadastro() {
     const fetchPendentes = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://apijuridico.starkstore.dev.br//api/cartorio/pendentes', {
+        const response = await axios.get('https://apijuridico.starkstore.dev.br/api/cartorio/pendentes', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPendentes(response.data);
@@ -68,7 +68,7 @@ function TriagemCadastro() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.patch(
-        `https://apijuridico.starkstore.dev.br//api/cartorio/${id}/aprovar`,
+        `https://apijuridico.starkstore.dev.br/api/cartorio/${id}/aprovar`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -89,7 +89,7 @@ function TriagemCadastro() {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `https://apijuridico.starkstore.dev.br//api/cartorio/${id}/indeferir`,
+        `https://apijuridico.starkstore.dev.br/api/cartorio/${id}/indeferir`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

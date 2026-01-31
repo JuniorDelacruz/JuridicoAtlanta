@@ -6,6 +6,7 @@ import path from 'path'
 import authMiddleware from '../middleware/auth.js';
 import notifyDiscordBot from '../utils/discordWebhook.js';
 import { criarRegistroArma, validarPorte } from '../controllers/cartorio.controller.js';
+import { where } from 'sequelize';
 dotenv.config();
 const router = express.Router();
 
@@ -119,8 +120,11 @@ router.patch('/:id/aprovar', authMiddleware(['juiz', 'admin']), async (req, res)
         const cadastro = await CadastroCidadao.findByPk(req.params.id);
         if (!cadastro || cadastro.status !== 'PENDENTE') return res.status(400).json({ msg: 'Cadastro inválido ou já processado' });
 
+
+        const Aprovador = await CadastroCidadao.findOne({ where: { discordId: req.user?.discordId}})
+
         cadastro.status = 'APROVADO';
-        cadastro.aprovadoPor = req.user.id;
+        cadastro.aprovadoPor = Aprovador?.nomeCompleto || req.user.username || req.user.id;
         cadastro.dataAprovacao = new Date();
         await cadastro.save();
 
