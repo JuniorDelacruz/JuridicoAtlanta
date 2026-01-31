@@ -1,53 +1,52 @@
 // frontend/src/pages/Paineis.jsx
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
-import { ArrowLeft, Scale, Search as SearchIcon, Webhook } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../services/api"; // <- usa o axios instance com interceptor
+import { ArrowLeft, Scale, Search as SearchIcon, Webhook } from "lucide-react";
 
 function Paineis() {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+
     const [usuarios, setUsuarios] = useState([]);
     const [filteredUsuarios, setFilteredUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState("");
 
-    // Verifica autenticação e permissão
     useEffect(() => {
         if (!isAuthenticated) {
-            navigate('/login');
+            navigate("/login");
             return;
         }
 
-        const allowedRoles = ['admin', 'conselheiro'];
-        if (!allowedRoles.includes(user.role)) {
-            alert('Acesso negado. Você não tem permissão para gerenciar cargos.');
-            navigate('/dashboard');
-            return;
-        }
-
-        // Carrega usuários
         const fetchUsuarios = async () => {
+            setLoading(true);
+            setError(null);
+
             try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get('https://apijuridico.starkstore.dev.br//api/users', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const response = await api.get("/api/users"); // ✅ backend decide permissão
                 setUsuarios(response.data);
                 setFilteredUsuarios(response.data);
             } catch (err) {
-                setError('Erro ao carregar usuários: ' + (err.response?.data?.msg || err.message));
+                const status = err?.response?.status;
+
+                if (status === 403) {
+                    alert("Acesso negado. Você não tem permissão para gerenciar cargos.");
+                    navigate("/dashboard");
+                    return;
+                }
+
+                setError("Erro ao carregar usuários: " + (err.response?.data?.msg || err.message));
             } finally {
                 setLoading(false);
             }
         };
 
         fetchUsuarios();
-    }, [isAuthenticated, user.role, navigate]);
+    }, [isAuthenticated, navigate]);
 
-    // Filtra usuários em tempo real
     useEffect(() => {
         if (!searchTerm.trim()) {
             setFilteredUsuarios(usuarios);
@@ -55,10 +54,11 @@ function Paineis() {
         }
 
         const term = searchTerm.toLowerCase().trim();
-        const filtered = usuarios.filter(u =>
-            (u.username?.toLowerCase().includes(term)) ||
-            (u.discordId?.toLowerCase().includes(term)) ||
-            (u.id.toString().includes(term))
+        const filtered = usuarios.filter(
+            (u) =>
+                u.username?.toLowerCase().includes(term) ||
+                u.discordId?.toLowerCase().includes(term) ||
+                String(u.id).includes(term)
         );
 
         setFilteredUsuarios(filtered);
@@ -66,24 +66,18 @@ function Paineis() {
 
     const handleRoleChange = async (userId, newRole, newSubRole) => {
         if (newRole && !confirm(`Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}?`)) return;
-        if (newSubRole !== undefined && !confirm(`Tem certeza que deseja ${newSubRole ? 'adicionar' : 'remover'} o status de Equipe Jurídica?`)) return;
+        if (newSubRole !== undefined && !confirm(`Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`)) return;
 
         try {
-            const token = localStorage.getItem('token');
             const payload = {};
             if (newRole !== undefined) payload.role = newRole;
             if (newSubRole !== undefined) payload.subRole = newSubRole;
 
-            await axios.patch(
-                `https://apijuridico.starkstore.dev.br//api/users/${userId}`,
-                payload,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api.patch(`/api/users/${userId}`, payload); // ✅ token automático no interceptor
 
-            setUsuarios(prev =>
-                prev.map(u => {
-                    if (u.id !== userId) return u; // <- NÃO mexe nos outros
-
+            setUsuarios((prev) =>
+                prev.map((u) => {
+                    if (u.id !== userId) return u;
                     return {
                         ...u,
                         ...(newRole !== undefined ? { role: newRole } : {}),
@@ -91,9 +85,17 @@ function Paineis() {
                     };
                 })
             );
-            alert('Atualização realizada com sucesso!');
+
+            alert("Atualização realizada com sucesso!");
         } catch (err) {
-            alert('Erro ao atualizar: ' + (err.response?.data?.msg || err.message));
+            const status = err?.response?.status;
+
+            if (status === 403) {
+                alert("Acesso negado: você não tem permissão para alterar cargos.");
+                return;
+            }
+
+            alert("Erro ao atualizar: " + (err.response?.data?.msg || err.message));
         }
     };
 
