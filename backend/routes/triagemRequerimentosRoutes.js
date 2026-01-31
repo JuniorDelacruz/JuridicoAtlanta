@@ -255,6 +255,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
         // O correto é:
         const isJuizOuAdmin = role === "juiz" || role === "admin";
+        console.log(req.user)
         const Solicitante = await CadastroCidadao.findOne({
             where: { discordId: req.user.discordId }
         })
