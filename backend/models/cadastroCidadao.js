@@ -34,7 +34,7 @@ export default (sequelize) => {
     discordId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
     },
     imagemIdentidade: {
       type: DataTypes.STRING, // URL da imagem (ex: link do Discord ou upload)
