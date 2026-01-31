@@ -274,8 +274,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             where: { discordId: req.user.discordId }
         })
         console.log("REQ.USER (token):", req.user);
-        console.log("ITEM.USERID (solicitante):", item.userId);
-        console.log("ITEM.SOLICITANTE:", item.solicitante);
+        console.log("DADOS ITEMS", item.dados)
 
         const aprovadoPorNome = await resolveNomeAprovador(req.user, CadastroCidadao);
         const dadosJson = item.dados || {};
