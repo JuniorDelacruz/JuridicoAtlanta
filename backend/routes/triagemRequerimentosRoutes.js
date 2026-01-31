@@ -249,7 +249,12 @@ router.patch("/:numero/carimbar", authMiddleware(allowedTriagemRoles), async (re
 });
 
 router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req, res) => {
+    // ⚠️ fora do try também, pra logar até se estourar antes
+    console.error("[APROVAR HIT] numero=", req.params.numero);
+
     try {
+        console.error("[APROVAR] req.user=", req.user);
+        console.error("[APROVAR] auth=", (req.headers.authorization || "").slice(0, 25), "...");
         const numero = Number(req.params.numero);
         if (!Number.isFinite(numero)) return res.status(400).json({ msg: "Número inválido" });
 
@@ -262,7 +267,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         const role = req.user?.role;
 
-
+        console.error("[APROVAR] item.tipo=", item.tipo, "status=", item.status);
 
 
 
@@ -273,8 +278,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         const Solicitante = await CadastroCidadao.findOne({
             where: { discordId: req.user.discordId }
         })
-        console.log("REQ.USER (token):", req.user);
-        console.log("DADOS ITEMS", item.dados)
+
 
         const aprovadoPorNome = await resolveNomeAprovador(req.user, CadastroCidadao);
         const dadosJson = item.dados || {};
