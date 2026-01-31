@@ -81,11 +81,15 @@ function Paineis() {
             );
 
             setUsuarios(prev =>
-                prev.map(u => ({
-                    ...u,
-                    ...(newRole !== undefined && { role: newRole }),
-                    ...(newSubRole !== undefined && { subRole: newSubRole })
-                }))
+                prev.map(u => {
+                    if (u.id !== userId) return u; // <- NÃO mexe nos outros
+
+                    return {
+                        ...u,
+                        ...(newRole !== undefined ? { role: newRole } : {}),
+                        ...(newSubRole !== undefined ? { subRole: newSubRole } : {}),
+                    };
+                })
             );
             alert('Atualização realizada com sucesso!');
         } catch (err) {
