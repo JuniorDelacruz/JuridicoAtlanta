@@ -143,6 +143,17 @@ function buildWebhookPayload(item, reqUser) {
     };
 }
 
+
+
+async function resolveNomeAprovador(reqUser, CadastroCidadao) {
+    if (reqUser?.discordId) {
+        const c = await CadastroCidadao.findOne({ where: { discordId: String(reqUser.discordId) } });
+        if (c?.nomeCompleto) return c.nomeCompleto;
+    }
+    return reqUser?.username || String(reqUser?.id || "Sistema");
+}
+
+
 router.get("/", authMiddleware(allowedTriagemRoles), async (req, res) => {
     try {
         const { tipo } = req.query;
@@ -251,6 +262,12 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         const role = req.user?.role;
 
+
+
+        console.log("REQ.USER (token):", req.user);
+        console.log("ITEM.USERID (solicitante):", item.userId);
+        console.log("ITEM.SOLICITANTE:", item.solicitante);
+
         // ✅ Fluxo especial: Porte -> juiz/aprovação encaminha pra carimbo
         // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
         // O correto é:
@@ -261,7 +278,8 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         })
 
 
-        const dadosJson = item.dados || {}
+        const aprovadoPorNome = await resolveNomeAprovador(req.user, CadastroCidadao);
+        const dadosJson = item.dados || {};
 
         item.dados = {
             ...dadosJson,
@@ -270,7 +288,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                 juiz: {
                     ...(dadosJson.workflow?.juiz || {}),
                     aprovadoPor: req.user?.id || null,
-                    aprovadoPorNome: Solicitante.nomeCompleto || req.user?.username,
+                    aprovadoPorNome
                 }
             }
         }
@@ -284,7 +302,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
                 workflow: {
                     ...(dadosAtual.workflow || {}),
                     juiz: {
-                        ...(dadosAtual?.workflow?.juiz || {}),
+                        ...(dadosAtual.workflow?.juiz || {}),
                         aprovado: true,
                         validade: "90 dias",
                         data: new Date().toISOString(),
