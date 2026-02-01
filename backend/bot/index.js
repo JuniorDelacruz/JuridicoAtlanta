@@ -53,7 +53,7 @@ async function loadCommands() {
 // Carrega eventos (como antes)
 async function loadEventFiles(directory) {
   try {
-    const items = await fs.promises.readdir(directory, { withFileTypes: true });
+    const items = await fs.readdir(directory, { withFileTypes: true });
 
     for (const item of items) {
       const itemPath = path.join(directory, item.name);
@@ -94,7 +94,7 @@ client.on(Events.ClientReady, async () => {
 
   try {
     // Para testes: registre APENAS no servidor de desenvolvimento
-    const testGuildId = "SEU_ID_DO_SERVIDOR_DE_TESTE_AQUI"; // ← coloque aqui
+    const testGuildId = "1288884651422650478"; // ← coloque aqui
     const guild = client.guilds.cache.get(testGuildId);
 
     if (guild) {
