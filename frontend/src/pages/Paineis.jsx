@@ -349,9 +349,9 @@ export default function Paineis() {
                                                     <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                                                         <span>{u.username}</span>
                                                         {u.subRole === "master" ? (
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                            <div className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <SubRoleBadge subRole={u.subRole} />
-                                                            </td>
+                                                            </div>
                                                         ) : null}
                                                     </div>
                                                     <div className="text-xs text-gray-500">ID: {u.id}</div>
