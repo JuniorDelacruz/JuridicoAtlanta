@@ -5,8 +5,35 @@ import authMiddleware from '../middleware/auth.js'; // seu middleware de auth
 const router = express.Router();
 
 const { User } = db;
+// roles do menor pro maior
+const ROLE_ORDER = [
+    "cidadao",
+    "auxiliar",
+    "advogado",
+    "tabeliao",
+    "escrivao",
+    "promotor",
+    "conselheiro",
+    "promotor chefe",
+    "juiz",
+    "desembargador",
+];
 
-const norm = (v) => String(v ?? "").trim().toLowerCase();
+// subRoles do menor pro maior
+const SUBROLE_ORDER = [
+    null,
+    "alteracaocargo",
+    "equipejuridico",
+    "responsaveljuridico",
+    "master",
+];
+
+const norm = (v) =>
+    v === null || v === undefined ? null : String(v).trim().toLowerCase();
+
+const roleRank = (role) => ROLE_ORDER.indexOf(norm(role));
+const subRank = (sub) => SUBROLE_ORDER.indexOf(norm(sub));
+
 
 router.get(
     "/",
