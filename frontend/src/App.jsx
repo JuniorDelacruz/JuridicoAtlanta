@@ -145,7 +145,7 @@ function App() {
           <ProtectedRoute
             allowedRoles={["cidadao","auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
             allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
-            deniedTo="/" // <- se negar acesso, volta pra home
+            deniedTo="/login" // <- se negar acesso, volta pra home
           >
             <Dashboard />
           </ProtectedRoute>
@@ -161,7 +161,7 @@ function App() {
           <ProtectedRoute
             allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", ]}
             allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
-            deniedTo="/dashboard" // <- se negar acesso, volta pra home
+            deniedTo="/login" // <- se negar acesso, volta pra home
           >
             <Paineis />
           </ProtectedRoute>
