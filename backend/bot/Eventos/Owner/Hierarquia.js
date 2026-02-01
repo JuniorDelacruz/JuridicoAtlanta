@@ -249,5 +249,3 @@ process.on("SIGTERM", () => {
   if (client.hierarquiaWatcher) clearInterval(client.hierarquiaWatcher); 
 });
 
-// Exporta a função principal para uso em outros arquivos
-export { runHierarchyForConfig };
