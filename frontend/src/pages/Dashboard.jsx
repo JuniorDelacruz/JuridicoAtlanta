@@ -53,13 +53,13 @@ export default function Dashboard() {
   };
 
   const allModules = [
-    { name: "Painéis", link: "/paineis", allowedRoles: ["juiz", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz', "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Lançamentos", link: "/processos", allowedRoles: ["advogado", "conselheiro", "admin"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Painéis", link: "/paineis", allowedRoles: ["juiz"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico"] },
+    { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Lançamentos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
   ];
 
   const modules = useMemo(() => allModules.filter((m) => canAccess(user, m)), [user]);

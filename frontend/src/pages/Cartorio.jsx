@@ -75,7 +75,7 @@ function Cartorio() {
       return;
     }
 
-    const allowedRoles = ['auxiliar', 'tabeliao', 'escrivao', 'juiz', 'advogado', 'promotor', 'promotor Chefe', 'admin'];
+    const allowedRoles = ['auxiliar', 'tabeliao', 'escrivao', 'juiz', 'advogado', 'promotor', 'promotor chefe', 'admin'];
     if (!allowedRoles.includes(user.role)) {
       alert('Acesso negado. Você não tem permissão para o Cartório.');
       navigate('/dashboard');
@@ -86,7 +86,7 @@ function Cartorio() {
   // Permissões por tipo de ação
   const podeCadastro = ['auxiliar', 'tabeliao', 'escrivao', 'juiz', 'admin'].includes(user.role);
   const podeRegistroArma = ['tabeliao', 'escrivao', 'juiz', 'admin'].includes(user.role);
-  const podeRecolhimento = ['advogado', 'juiz', 'promotor', 'escrivao', 'promotor Chefe', 'admin'].includes(user.role);
+  const podeRecolhimento = ['advogado', 'juiz', 'promotor', 'escrivao', 'promotor chefe', 'admin'].includes(user.role);
 
   const resetArmaState = () => {
     setArmaForm({ cidadaoId: '', porteNumero: '', numeroSerial: '' });

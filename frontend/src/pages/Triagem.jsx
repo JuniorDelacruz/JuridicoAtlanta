@@ -21,11 +21,11 @@ function Triagem() {
     registroDeArma: ['juiz', 'admin'], // + equipejuridico
     trocaDeNome: ['juiz', 'admin'], // + equipejuridico
     casamento: ['escrivao', 'juiz', 'admin'], // + equipejuridico
-    alvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
-    renovacaoAlvara: ['tabeliao', 'escrivao', 'promotor', 'promotor Chefe', 'juiz','admin'], // + equipejuridico
-    limpezaFicha: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
-    recolhimentoLimpeza: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
-    carimboPorteArma: ['promotor', 'promotor Chefe', 'juiz', 'admin'], // + equipejuridico
+    alvara: ['tabeliao', 'escrivao', 'promotor', 'promotor chefe', 'juiz', 'admin'], // + equipejuridico
+    renovacaoAlvara: ['tabeliao', 'escrivao', 'promotor', 'promotor chefe', 'juiz','admin'], // + equipejuridico
+    limpezaFicha: ['promotor', 'promotor chefe', 'juiz', 'admin'], // + equipejuridico
+    recolhimentoLimpeza: ['promotor', 'promotor chefe', 'juiz', 'admin'], // + equipejuridico
+    carimboPorteArma: ['promotor', 'promotor chefe', 'juiz', 'admin'], // + equipejuridico
   };
 
   // Verifica se o usuário tem permissão para um tipo específico
