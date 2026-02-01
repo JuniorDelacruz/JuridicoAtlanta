@@ -144,7 +144,7 @@ function App() {
         element={
           <ProtectedRoute
             allowedRoles={["cidadao","auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
-            allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
+            allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
             deniedTo="/" // <- se negar acesso, volta pra home
           >
             <Dashboard />
@@ -159,8 +159,8 @@ function App() {
         path="/paineis"
         element={
           <ProtectedRoute
-            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
-            allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
+            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", ]}
+            allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
             deniedTo="/dashboard" // <- se negar acesso, volta pra home
           >
             <Paineis />
@@ -172,7 +172,7 @@ function App() {
       <Route path="/arquivos/consultar-cidadao"
         element={<ProtectedRoute
           allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
-          allowedSubRoles={["equipejuridico"]} // <- padroniza aqui
+          allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
           deniedTo="/dashboard" // <- se negar acesso, volta pra home
         >
           <ConsultarCidadao />
