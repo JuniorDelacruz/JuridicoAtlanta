@@ -46,6 +46,57 @@ router.get(
     }
 );
 
+
+// GET /api/lancamentos/validar-requerimento/:numero
+router.get("/validar-requerimento/:numero", authMiddleware(), async (req, res) => {
+    try {
+        const numero = Number(req.params.numero);
+        if (!numero || Number.isNaN(numero)) {
+            return res.status(400).json({ ok: false, msg: "Número do requerimento inválido." });
+        }
+
+        const requerimento = await Requerimento.findByPk(numero);
+        if (!requerimento) {
+            return res.status(404).json({ ok: false, msg: "Requerimento não encontrado." });
+        }
+
+        // Já vinculado via tabela de lançamentos (regra principal)
+        const ja = await Lancamento.findOne({ where: { requerimentoNumero: numero } });
+        if (ja) {
+            return res.status(409).json({
+                ok: false,
+                msg: "Esse requerimento já está vinculado a um lançamento.",
+                vinculado: { lancamentoId: ja.id },
+            });
+        }
+
+        // (opcional) Já vinculado também no JSON do requerimento (se você estiver gravando lá)
+        const dados = requerimento.dados || {};
+        if (dados?.lancamentoVinculado?.id) {
+            return res.status(409).json({
+                ok: false,
+                msg: "Esse requerimento já possui vínculo registrado.",
+                vinculado: { lancamentoId: dados.lancamentoVinculado.id },
+            });
+        }
+
+        return res.json({
+            ok: true,
+            msg: "Requerimento OK para vínculo.",
+            requerimento: {
+                numero: requerimento.numero,
+                tipo: requerimento.tipo,
+                status: requerimento.status,
+                solicitante: requerimento.solicitante,
+            },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false, msg: "Erro ao validar requerimento." });
+    }
+});
+
+
 router.patch(
     "/:id",
     // ✅ agora não é mais por ROLE "admin". É por SUBROLE
