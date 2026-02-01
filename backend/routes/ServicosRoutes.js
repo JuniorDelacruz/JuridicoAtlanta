@@ -3,111 +3,158 @@ import db from "../models/index.js";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
-const { Servico } = db;
+const { ServicoJuridico } = db;
 
 const norm = (v) => (v === null || v === undefined ? "" : String(v).trim().toLowerCase());
 
-function isAdmin(user) {
-  const sub = norm(user?.subRole);
-  return ["master", "responsaveljuridico"].includes(sub);
+function isHighSubRole(subRole) {
+  const s = norm(subRole);
+  return s === "master" || s === "responsaveljuridico";
 }
 
-function canUseServico(user, serv) {
-  const sub = norm(user?.subRole);
-  if (["master", "responsaveljuridico"].includes(sub)) return true;
+function canManageServicos(user) {
+  return isHighSubRole(user?.subRole);
+}
 
-  if (serv.allowAny) return true;
+function canSeeServico(user, servico) {
+  if (isHighSubRole(user?.subRole)) return true;
 
   const role = norm(user?.role);
-  const roles = (serv.roles || []).map(norm);
-  const subRoles = (serv.subRoles || []).map(norm);
+  const sub = norm(user?.subRole);
 
-  return roles.includes(role) || subRoles.includes(sub);
+  const allow = servico?.allow || {};
+  if (allow.any) return true;
+
+  const roles = (allow.roles || []).map(norm);
+  const subRoles = (allow.subRoles || []).map(norm);
+
+  return (roles.length && roles.includes(role)) || (subRoles.length && subRoles.includes(sub));
 }
 
-// LISTAR serviços disponíveis pro usuário (select)
+/**
+ * GET /api/servicos
+ * -> usado pelo SELECT do lançamento (retorna somente ativos e que o user pode ver)
+ */
 router.get("/", authMiddleware(), async (req, res) => {
   try {
-    const servicos = await Servico.findAll({ where: { ativo: true }, order: [["label", "ASC"]] });
-    const filtrados = servicos.filter((s) => canUseServico(req.user, s));
-    res.json(filtrados);
-  } catch (e) {
-    console.error(e);
+    const rows = await ServicoJuridico.findAll({
+      where: { ativo: true },
+      order: [["label", "ASC"]],
+    });
+
+    const filtered = rows.filter((s) => canSeeServico(req.user, s));
+
+    res.json(
+      filtered.map((s) => ({
+        id: s.id,
+        label: s.label,
+        value: s.value,
+        valorTotalCents: s.valorTotalCents,
+        repasseAdvogadoCents: s.repasseAdvogadoCents,
+        allow: s.allow,
+      }))
+    );
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Erro ao listar serviços" });
   }
 });
 
-// ADMIN - listar todos (inclui inativos)
-router.get("/admin/all", authMiddleware(), async (req, res) => {
-  if (!isAdmin(req.user)) return res.status(403).json({ msg: "Sem permissão." });
-  const servicos = await Servico.findAll({ order: [["label", "ASC"]] });
-  res.json(servicos);
-});
+/**
+ * GET /api/servicos/admin
+ * -> lista tudo (admin)
+ */
+router.get("/admin", authMiddleware(), async (req, res) => {
+  try {
+    if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
 
-// ADMIN - criar
-router.post("/", authMiddleware(), async (req, res) => {
-  if (!isAdmin(req.user)) return res.status(403).json({ msg: "Sem permissão." });
-
-  const { tipo, label, allowAny, roles, subRoles, valorTotal, repasseAdvogado, ativo } = req.body;
-
-  if (!tipo || !label) return res.status(400).json({ msg: "tipo e label são obrigatórios." });
-
-  const valorTotalCents = Number(valorTotal) || 0;
-  const repasseAdvogadoCents = Number(repasseAdvogado) || 0;
-
-  if (valorTotalCents <= 0) return res.status(400).json({ msg: "Valor total deve ser > 0." });
-  if (repasseAdvogadoCents < 0 || repasseAdvogadoCents > valorTotalCents)
-    return res.status(400).json({ msg: "Repasse do advogado inválido." });
-
-  const novo = await Servico.create({
-    tipo,
-    label,
-    allowAny: !!allowAny,
-    roles: Array.isArray(roles) ? roles : [],
-    subRoles: Array.isArray(subRoles) ? subRoles : [],
-    valorTotalCents,
-    repasseAdvogadoCents,
-    ativo: ativo !== false,
-    criadoPor: req.user.id,
-    atualizadoPor: req.user.id,
-  });
-
-  res.json(novo);
-});
-
-// ADMIN - editar
-router.put("/:id", authMiddleware(), async (req, res) => {
-  if (!isAdmin(req.user)) return res.status(403).json({ msg: "Sem permissão." });
-
-  const serv = await Servico.findByPk(req.params.id);
-  if (!serv) return res.status(404).json({ msg: "Serviço não encontrado." });
-
-  const patch = { ...req.body, atualizadoPor: req.user.id };
-
-  // se mandar valorTotal/repasse como numbers (cents), valida
-  if (patch.valorTotalCents !== undefined || patch.repasseAdvogadoCents !== undefined) {
-    const vt = patch.valorTotalCents ?? serv.valorTotalCents;
-    const ra = patch.repasseAdvogadoCents ?? serv.repasseAdvogadoCents;
-    if (vt <= 0) return res.status(400).json({ msg: "Valor total deve ser > 0." });
-    if (ra < 0 || ra > vt) return res.status(400).json({ msg: "Repasse inválido." });
+    const rows = await ServicoJuridico.findAll({ order: [["label", "ASC"]] });
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Erro ao listar serviços (admin)" });
   }
-
-  await serv.update(patch);
-  res.json(serv);
 });
 
-// ADMIN - ativar/inativar
-router.post("/:id/toggle", authMiddleware(), async (req, res) => {
-  if (!isAdmin(req.user)) return res.status(403).json({ msg: "Sem permissão." });
+/**
+ * POST /api/servicos
+ * -> cria (admin)
+ */
+router.post("/", authMiddleware(), async (req, res) => {
+  try {
+    if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
 
-  const serv = await Servico.findByPk(req.params.id);
-  if (!serv) return res.status(404).json({ msg: "Serviço não encontrado." });
+    const { label, value, ativo, valorTotalCents, repasseAdvogadoCents, allow } = req.body;
 
-  serv.ativo = !serv.ativo;
-  serv.atualizadoPor = req.user.id;
-  await serv.save();
+    if (!label || !value) return res.status(400).json({ msg: "label e value são obrigatórios." });
 
-  res.json(serv);
+    const total = Number(valorTotalCents || 0);
+    const repAdv = Number(repasseAdvogadoCents || 0);
+
+    if (!Number.isFinite(total) || total < 0) return res.status(400).json({ msg: "valorTotalCents inválido." });
+    if (!Number.isFinite(repAdv) || repAdv < 0) return res.status(400).json({ msg: "repasseAdvogadoCents inválido." });
+    if (repAdv > total) return res.status(400).json({ msg: "repasseAdvogado não pode ser maior que o total." });
+
+    const created = await ServicoJuridico.create({
+      label,
+      value,
+      ativo: ativo !== undefined ? !!ativo : true,
+      valorTotalCents: total,
+      repasseAdvogadoCents: repAdv,
+      allow: allow || { any: true },
+    });
+
+    res.json({ msg: "Serviço criado", servico: created });
+  } catch (err) {
+    console.error(err);
+    // unique error
+    if (String(err?.name).includes("SequelizeUniqueConstraintError")) {
+      return res.status(409).json({ msg: "Já existe um serviço com esse value." });
+    }
+    res.status(500).json({ msg: "Erro ao criar serviço" });
+  }
+});
+
+/**
+ * PUT /api/servicos/:id
+ * -> edita (admin)
+ */
+router.put("/:id", authMiddleware(), async (req, res) => {
+  try {
+    if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
+
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ msg: "ID inválido." });
+
+    const row = await ServicoJuridico.findByPk(id);
+    if (!row) return res.status(404).json({ msg: "Serviço não encontrado." });
+
+    const { label, value, ativo, valorTotalCents, repasseAdvogadoCents, allow } = req.body;
+
+    const total = valorTotalCents !== undefined ? Number(valorTotalCents) : row.valorTotalCents;
+    const repAdv = repasseAdvogadoCents !== undefined ? Number(repasseAdvogadoCents) : row.repasseAdvogadoCents;
+
+    if (!Number.isFinite(total) || total < 0) return res.status(400).json({ msg: "valorTotalCents inválido." });
+    if (!Number.isFinite(repAdv) || repAdv < 0) return res.status(400).json({ msg: "repasseAdvogadoCents inválido." });
+    if (repAdv > total) return res.status(400).json({ msg: "repasseAdvogado não pode ser maior que o total." });
+
+    await row.update({
+      label: label !== undefined ? label : row.label,
+      value: value !== undefined ? value : row.value,
+      ativo: ativo !== undefined ? !!ativo : row.ativo,
+      valorTotalCents: total,
+      repasseAdvogadoCents: repAdv,
+      allow: allow !== undefined ? allow : row.allow,
+    });
+
+    res.json({ msg: "Serviço atualizado", servico: row });
+  } catch (err) {
+    console.error(err);
+    if (String(err?.name).includes("SequelizeUniqueConstraintError")) {
+      return res.status(409).json({ msg: "Já existe um serviço com esse value." });
+    }
+    res.status(500).json({ msg: "Erro ao atualizar serviço" });
+  }
 });
 
 export default router;
