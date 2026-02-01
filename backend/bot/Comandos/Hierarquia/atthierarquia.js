@@ -8,6 +8,7 @@ import {
   ComponentType
 } from 'discord.js';
  import db from '../../../models/index.js'
+import { hierarquiaRunNow } from '../../Eventos/Owner/Hierarquia.js';
  const { HierarquiaConfig, Hierarquia } = db
 
 export default {
@@ -76,8 +77,8 @@ export default {
       });
 
       // Executa a hierarquia
-      if (typeof client.hierarquiaRunNow === "function") {
-        await client.hierarquiaRunNow(cfgId);
+      if (typeof hierarquiaRunNow === "function") {
+        await hierarquiaRunNow(cfgId);
       } else {
         // Fallback: import dinâmico (ajuste o caminho se necessário)
         const { runHierarchyForConfig } = await import("../../Eventos/Owner/Hierarquia.js");
