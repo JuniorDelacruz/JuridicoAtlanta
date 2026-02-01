@@ -16,7 +16,7 @@ export default (sequelize) => {
     },
     role: {
       type: DataTypes.ENUM('cidadao', 'auxiliar', 'advogado', 'tabeliao', 'escrivao',
-        'promotor', 'conselheiro', 'promotor Chefe', 'juiz', 'desembargador', 'admin', 'equipejuridico'),
+        'promotor', 'conselheiro', 'promotor chefe', 'juiz', 'desembargador', 'admin', 'equipejuridico'),
       allowNull: true,
       defaultValue: 'cidadao'
     },
