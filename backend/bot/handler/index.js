@@ -1,26 +1,72 @@
-const fs = require("fs")
-const Discord = require("discord.js")
+// arquivo: handler.js  (ou o nome que você estiver usando)
 
-module.exports = async (client) => {
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Events } from 'discord.js';
 
-const SlashsArray = []
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  fs.readdir(`./Comandos`, (error, folder) => {
-  folder.forEach(subfolder => {
-fs.readdir(`./Comandos/${subfolder}/`, (error, files) => { 
-  files.forEach(files => {
-      
-  if(!files?.endsWith('.js')) return;
-  files = require(`../Comandos/${subfolder}/${files}`);
-  if(!files?.name) return;
-  client.slashCommands.set(files?.name, files);
-   
-  SlashsArray.push(files)
-  });
+export default async (client) => {
+  const slashCommands = [];
+
+  // Caminho da pasta principal de comandos
+  const commandsPath = path.join(__dirname, '..', 'Comandos');
+
+  try {
+    const subfolders = await fs.readdir(commandsPath, { withFileTypes: true });
+
+    for (const folder of subfolders) {
+      if (!folder.isDirectory()) continue;
+
+      const folderPath = path.join(commandsPath, folder.name);
+      const files = await fs.readdir(folderPath, { withFileTypes: true });
+
+      for (const file of files) {
+        if (!file.isFile() || !file.name.endsWith('.js')) continue;
+
+        const filePath = path.join(folderPath, file.name);
+
+        // Import dinâmico do comando
+        const commandModule = await import(filePath);
+
+        // Padrão mais comum em ESM: export default { name, description, run, ... }
+        const command = commandModule.default ?? commandModule;
+
+        if (!command?.name) {
+          console.warn(`Comando sem "name" ignorado: ${filePath}`);
+          continue;
+        }
+
+        // Registra no Collection do client
+        client.slashCommands.set(command.name, command);
+
+        // Adiciona ao array para deploy global
+        slashCommands.push(command);
+      }
+    }
+
+    // Quando o bot estiver pronto, registra os comandos em todos os servidores
+    client.on(Events.ClientReady, async () => {
+      console.log(`[Comandos] Registrando ${slashCommands.length} comandos slash globais...`);
+
+      try {
+        // Deploy global (para todos os servidores)
+        await client.application.commands.set(slashCommands);
+        console.log('[Comandos] Comandos slash globais registrados com sucesso!');
+      } catch (error) {
+        console.error('[Comandos] Erro ao registrar comandos globais:', error);
+      }
+
+      // Alternativa: se quiser registrar por guilda (mais rápido para testes)
+      // client.guilds.cache.forEach(async (guild) => {
+      //   await guild.commands.set(slashCommands);
+      //   console.log(`Comandos registrados em ${guild.name}`);
+      // });
     });
-  });
-});
-  client.on(Discord.Events.ClientReady, async () => {
-  client.guilds.cache.forEach(guild => guild.commands.set(SlashsArray))
-    });
+
+  } catch (error) {
+    console.error('Erro ao carregar comandos:', error);
+  }
 };
