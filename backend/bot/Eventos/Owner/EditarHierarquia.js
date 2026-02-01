@@ -14,7 +14,7 @@ import {
 // Importe o client exportado (ajuste o caminho conforme sua estrutura real)
 import { client } from '../../index.js';  // ou '../index.js', ou onde o client é exportado
  import db from '../../../models/index.js'
- import { HierarquiaConfig, Hierarquia } from db
+ const { HierarquiaConfig, Hierarquia } = db
 
 // util: extrai IDs de cargos de uma string (IDs ou menções <@&id>)
 function extractRoleIds(str) {

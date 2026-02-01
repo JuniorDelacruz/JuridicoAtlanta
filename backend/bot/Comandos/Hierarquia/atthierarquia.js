@@ -8,7 +8,7 @@ import {
   ComponentType
 } from 'discord.js';
  import db from '../../../models/index.js'
- import { HierarquiaConfig, Hierarquia } from db
+ const { HierarquiaConfig, Hierarquia } = db
 
 export default {
   name: "rodarhierarquia",

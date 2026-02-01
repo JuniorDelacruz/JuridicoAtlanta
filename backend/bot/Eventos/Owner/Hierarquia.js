@@ -6,7 +6,7 @@ import { Client } from 'discord.js';
 // Importe o client exportado (ajuste o caminho conforme sua estrutura)
 import { client } from '../../index.js';  // ou '../index.js', etc.
 import db from '../../../models/index.js'
-import { HierarquiaConfig, Hierarquia } from db
+ const { HierarquiaConfig, Hierarquia } = db
 
 // Divide e envia mensagens grandes em partes (até 2000 chars)
 async function sendMessageInParts(channel, content, maxLength = 2000) {
