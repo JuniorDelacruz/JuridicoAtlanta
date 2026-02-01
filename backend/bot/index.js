@@ -72,7 +72,7 @@ export async function startBot() {
 
   // Carrega o handler (se handler.js exporta uma função default)
   const { default: handler } = await import("./handler/index.js");
-  handler(client);  // ou await handler(client) se for async
+  await handler(client);  // ou await handler(client) se for async
 
   // Carrega todos os eventos da pasta
   await loadEventFiles(path.join(__dirname, "Eventos"));
