@@ -94,8 +94,8 @@ client.on(Events.ClientReady, async () => {
 
   try {
     // Para testes: registre APENAS no servidor de desenvolvimento
-    const testGuildId = "1288884651422650478"; // ← coloque aqui
-    const guild = client.guilds.cache.get(testGuildId);
+    // const testGuildId = "1288884651422650478"; // ← coloque aqui
+    // const guild = client.guilds.cache.get(testGuildId);
 
     if (guild) {
       console.log(`Registrando ${commands.length} comandos no servidor de teste (${guild.name})`);
@@ -104,7 +104,7 @@ client.on(Events.ClientReady, async () => {
     } else {
       console.warn("Servidor de teste não encontrado. Use deploy global para produção.");
       // Deploy global (lento) - descomente só quando necessário
-      // await client.application.commands.set(commands);
+      await client.application.commands.set(commands);
     }
   } catch (error) {
     console.error("Erro ao registrar comandos:", error);
