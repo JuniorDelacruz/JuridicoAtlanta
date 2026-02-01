@@ -128,7 +128,10 @@ router.patch(
             if (isActorMaster || isActorResponsavel) {
                 maxRoleAssignable = ROLE_ORDER.length - 1; // pode tudo
             } else if (actorSub === "alteracaocargo" || actorSub === "equipejuridico") {
-                maxRoleAssignable = actorRoleR; // só até seu role atual
+                if (actorRoleR < 0) {
+                    return res.status(403).json({ msg: "Para este sub-cargo, você precisa ter um cargo válido na hierarquia." });
+                }
+                maxRoleAssignable = actorRoleR;
             } else {
                 // sem permissão
                 return res.status(403).json({ msg: "Você não tem permissão para alterar cargos." });
