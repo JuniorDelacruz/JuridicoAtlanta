@@ -32,6 +32,7 @@ import Arquivos from './pages/Arquivos';
 import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 import Valores from './pages/valores/Valores';
 import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequerimentoDetalhesCasamento';
+import Lancamentos from './pages/Lançamentos';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -143,7 +144,7 @@ function App() {
         path="/dashboard"
         element={
           <ProtectedRoute
-            allowedRoles={["cidadao","auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
+            allowedRoles={["cidadao", "auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", "admin"]}
             allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
             deniedTo="/login" // <- se negar acesso, volta pra home
           >
@@ -159,7 +160,7 @@ function App() {
         path="/paineis"
         element={
           <ProtectedRoute
-            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador", ]}
+            allowedRoles={["auxiliar", "advogado", "tabeliao", "escrivao", "promotor", "conselheiro", "promotor chefe", "juiz", "desembargador",]}
             allowedSubRoles={["equipejuridico", 'responsaveljuridico', 'master']} // <- padroniza aqui
             deniedTo="/login" // <- se negar acesso, volta pra home
           >
@@ -180,7 +181,7 @@ function App() {
         }
       />
 
-
+      <Route path="/lancamentos" element={<Lancamentos />} />
       <Route path="/valores" element={<Valores />} />
       <Route path="/codigo-etica" element={<CodigoEticaJudiciario />} />
       <Route path="/manual-advogado" element={<ManualAdvogado />} />
