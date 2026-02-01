@@ -1,34 +1,35 @@
-export default (sequelize, DataTypes) => {
-  const Servico = sequelize.define(
-    "Servico",
+import { Model, DataTypes } from "sequelize";
+
+export default (sequelize) => {
+  class ServicoJuridico extends Model {}
+
+  ServicoJuridico.init(
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
-      // "registro_arma", "troca_nome", etc (value usado no lançamento)
-      tipo: { type: DataTypes.STRING, allowNull: false, unique: true },
-
-      // Nome amigável pro select
+      // Texto que aparece no select
       label: { type: DataTypes.STRING, allowNull: false },
 
-      // Regras de acesso
-      allowAny: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-      roles: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: false, defaultValue: [] },
-      subRoles: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: false, defaultValue: [] },
-
-      // Valores (em cents)
-      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      // Valor salvo (ex: "registro_arma") — também vai para o "tipo" do lançamento
+      value: { type: DataTypes.STRING, allowNull: false, unique: true },
 
       ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
-      criadoPor: { type: DataTypes.INTEGER, allowNull: true },
-      atualizadoPor: { type: DataTypes.INTEGER, allowNull: true },
+      // valores padrão do serviço (em centavos)
+      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+
+      // Regras de visibilidade (mesmo padrão do seu allow)
+      // { any: true } OU { roles: [...], subRoles: [...] }
+      allow: { type: DataTypes.JSONB, allowNull: false, defaultValue: { any: true } },
     },
     {
-      tableName: "servicos",
+      sequelize,
+      modelName: "ServicoJuridico",
+      tableName: "servicos_juridicos",
       timestamps: true,
     }
   );
 
-  return Servico;
+  return ServicoJuridico;
 };
