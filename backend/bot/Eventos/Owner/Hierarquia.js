@@ -30,54 +30,77 @@ export async function runHierarchyForConfig(client, configRow) {
     const { id: configId, guildId, name, roleIds, channelId, logChannelId } = configRow;
 
     const guild = await client.guilds.fetch(guildId);
-    if (!guild) return;
-
-    console.log(`[hierarquia] Iniciando fetch de membros no servidor ${guild.name} (${guild.id}) - ${guild.memberCount} membros estimados`);
-
-    try {
-      await guild.members.fetch(); // timeout de 30s
-      console.log(`[hierarquia] Fetch de membros concluído com sucesso. Membros em cache: ${guild.members.cache.size}`);
-    } catch (err) {
-      console.error(`[hierarquia] Erro no fetch de membros:`, err);
-      // Tenta fetch parcial se falhar total
-      await guild.members.fetch({ user: [] }).catch(() => { }); // fallback
+    if (!guild) {
+      console.warn(`[hierarquia] Guild ${guildId} não encontrada para config #${configId}`);
+      return;
     }
+
+    console.log(`[hierarquia] Iniciando execução da config #${configId} - "${name}" no servidor ${guild.name} (${guild.id})`);
 
     const roleMembersMap = new Map();
     const currentMembers = [];
 
-    // Mapeia membros por cargo
+    // Processa cada cargo individualmente (fetch otimizado)
     for (const roleId of roleIds) {
-      const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
-      if (!role) continue;
+      let role = guild.roles.cache.get(roleId);
+
+      if (!role) {
+        role = await guild.roles.fetch(roleId).catch(err => {
+          console.error(`[hierarquia] Erro ao fetch cargo ${roleId}:`, err);
+          return null;
+        });
+        if (!role) continue;
+      }
+
+      console.log(`[hierarquia] Processando cargo ${role.name} (${roleId}) - ${role.members.size} membros em cache inicial`);
+
+      // Se o cache do cargo estiver vazio ou muito pequeno, faz fetch específico
+      if (role.members.size < 5) {  // ajuste o número se quiser ser mais agressivo
+        try {
+          console.log(`[hierarquia] Fazendo fetch específico para membros do cargo ${role.name}`);
+          const fetched = await guild.members.fetch({ user: role.members.keys() }).catch(err => {
+            console.error(`[hierarquia] Falha no fetch específico do cargo ${roleId}:`, err);
+            return role.members;
+          });
+
+          // Atualiza o cache do role
+          role.members = fetched;
+          console.log(`[hierarquia] Fetch específico concluído: ${fetched.size} membros para ${role.name}`);
+        } catch (err) {
+          console.error(`[hierarquia] Erro geral no fetch do cargo ${roleId}:`, err);
+        }
+      }
 
       const membersWithRole = role.members.map(m => ({
         userId: m.user.id,
         username: m.user.username,
         displayName: m.user.displayName,
         roleId
-      }));
+      })).filter(m => m.userId); // filtra possíveis nulos
+
+      console.log(`[hierarquia] Encontrados ${membersWithRole.length} membros no cargo ${role.name}`);
 
       roleMembersMap.set(roleId, membersWithRole);
       currentMembers.push(...membersWithRole);
     }
 
+    console.log(`[hierarquia] Total de membros atuais encontrados: ${currentMembers.length}`);
+
     // Compara com snapshot do banco
-    const dbMembers = await Hierarquia.findAll({ where: { configId } });
+    const dbMembers = await client.db.Hierarquia.findAll({ where: { configId } });
     const dbMap = new Map(dbMembers.map(m => [m.userId, m]));
 
-    // Remove "presentes" do mapa → sobram os removidos
     for (const cm of currentMembers) {
       if (dbMap.has(cm.userId)) dbMap.delete(cm.userId);
     }
     const removedMembers = [...dbMap.values()];
 
-    // Aviso de removidos (se houver logChannel)
+    // Aviso de removidos
     if (logChannelId) {
       const chLog = await client.channels.fetch(logChannelId).catch(() => null);
-      if (chLog) {
+      if (chLog?.isTextBased()) {
         if (removedMembers.length > 0) {
-          let removedText = `## Membros que perderam cargos em **${name}**:\n\n`;
+          let removedText = `## Membros que perderam cargos em **${name}** (${removedMembers.length}):\n\n`;
           removedText += removedMembers
             .map(m => `- <@${m.userId}> (ID: ${m.userId}) — Cargo: <@&${m.roleId}>`)
             .join("\n");
@@ -88,44 +111,57 @@ export async function runHierarchyForConfig(client, configRow) {
       }
     }
 
-    // Limpa snapshot antigo e grava o novo (apenas desta config)
-    await Hierarquia.destroy({ where: { configId } });
-    if (currentMembers.length) {
-      await Hierarquia.bulkCreate(currentMembers.map(m => ({ ...m, configId })));
+    // Limpa e grava novo snapshot
+    await client.db.Hierarquia.destroy({ where: { configId } });
+    if (currentMembers.length > 0) {
+      await client.db.Hierarquia.bulkCreate(currentMembers.map(m => ({ ...m, configId })));
+      console.log(`[hierarquia] Snapshot atualizado: ${currentMembers.length} membros salvos`);
+    } else {
+      console.log(`[hierarquia] Nenhum membro encontrado - snapshot limpo`);
     }
 
-    // Limpa mensagens anteriores do bot no canal alvo
+    // Limpa mensagens antigas do bot no canal
     const channel = await client.channels.fetch(channelId).catch(() => null);
-    if (!channel) return;
-
-    const msgs = await channel.messages.fetch({ limit: 90 }).catch(() => null);
-    if (msgs) {
-      for (const msg of msgs.values()) {
-        if (msg.author?.id === client.user.id) {
-          await msg.delete().catch(() => { });
-        }
-      }
+    if (!channel?.isTextBased()) {
+      console.warn(`[hierarquia] Canal ${channelId} inválido ou não encontrado`);
+      return;
     }
 
-    // Monta texto da hierarquia
-    let hierarchyText = `# ・・・ HIERARQUIA ${name} ・・・\n\n`;
+    try {
+      const msgs = await channel.messages.fetch({ limit: 90 });
+      const botMsgs = msgs.filter(m => m.author.id === client.user.id);
+      if (botMsgs.size > 0) {
+        await channel.bulkDelete(botMsgs, true).catch(err => {
+          console.warn(`[hierarquia] Erro ao bulkDelete mensagens antigas:`, err);
+        });
+        console.log(`[hierarquia] ${botMsgs.size} mensagens antigas deletadas`);
+      }
+    } catch (err) {
+      console.warn(`[hierarquia] Erro ao limpar mensagens antigas:`, err);
+    }
+
+    // Monta e envia a hierarquia
+    let hierarchyText = `# ・・・ HIERARQUIA ${name.toUpperCase()} ・・・\n\n`;
     for (const [roleId, membersWithRole] of roleMembersMap.entries()) {
       const role = guild.roles.cache.get(roleId);
       if (!role) continue;
+
       hierarchyText += `### ${role.toString()} (${membersWithRole.length} membros)\n` +
-        (membersWithRole.length > 0 ? membersWithRole.map(m => `<@${m.userId}>`).join("\n") : "・・・") +
+        (membersWithRole.length > 0
+          ? membersWithRole.map(m => `<@${m.userId}>`).join("\n")
+          : "・・・ Nenhum membro no momento") +
         "\n\n";
     }
     hierarchyText += `# ・・・ FIM DA HIERARQUIA ・・・`;
 
-    // Envia
     await sendMessageInParts(channel, hierarchyText);
+    console.log(`[hierarquia] Hierarquia postada com sucesso no canal ${channelId}`);
 
     // Atualiza lastRun
     configRow.lastRunAt = new Date();
     await configRow.save();
   } catch (e) {
-    console.error(`Erro ao executar hierarquia #${configRow?.id}:`, e);
+    console.error(`Erro crítico ao executar hierarquia #${configRow?.id || 'desconhecida'}:`, e);
   }
 }
 
