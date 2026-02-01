@@ -8,7 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,          // já tem (servidores e canais)
+    GatewayIntentBits.GuildMembers,    // ← ADICIONE ESSA LINHA!
+  ],
 });
 
 client.slashCommands = new Collection();
