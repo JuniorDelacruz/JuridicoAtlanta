@@ -76,8 +76,18 @@ router.patch(
             const actorRoleR = roleRank(actorRole);
             const actorSubR = subRank(actorSub);
 
-            if (actorRoleR < 0) return res.status(403).json({ msg: "Seu cargo é inválido/sem hierarquia." });
-            if (actorSubR < 0) return res.status(403).json({ msg: "Seu sub-cargo é inválido/sem hierarquia." });
+            const isActorMaster = actorSub === "master";
+            const isActorResponsavel = actorSub === "responsaveljuridico";
+
+            // ✅ subRole sempre precisa ser válido (senão ninguém manda em nada)
+            if (actorSubR < 0) {
+                return res.status(403).json({ msg: "Seu sub-cargo é inválido/sem hierarquia." });
+            }
+
+            // ✅ role só é obrigatório pra quem NÃO é master/responsável
+            if (!isActorMaster && !isActorResponsavel && actorRoleR < 0) {
+                return res.status(403).json({ msg: "Seu cargo é inválido/sem hierarquia." });
+            }
 
             const user = await User.findByPk(req.params.id);
             if (!user) return res.status(404).json({ msg: "Usuário não encontrado" });
@@ -91,8 +101,6 @@ router.patch(
             // =========================
             // 1) Protege superiores
             // =========================
-            const isActorMaster = actorSub === "master";
-            const isActorResponsavel = actorSub === "responsaveljuridico";
 
             if (targetSub === "master" && !isActorMaster) {
                 return res.status(403).json({ msg: "Você não pode alterar um usuário MASTER." });
