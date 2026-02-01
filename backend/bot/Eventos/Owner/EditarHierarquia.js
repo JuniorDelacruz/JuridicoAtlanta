@@ -1,5 +1,6 @@
 // Eventos/Owner/hierarquiaEditor.js
-const {
+
+import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -8,8 +9,10 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle
-} = require("discord.js");
-const client = require("../../index");
+} from 'discord.js';
+
+// Importe o client exportado (ajuste o caminho conforme sua estrutura real)
+import { client } from '../../index.js';  // ou '../index.js', ou onde o client é exportado
 
 // util: extrai IDs de cargos de uma string (IDs ou menções <@&id>)
 function extractRoleIds(str) {
@@ -62,13 +65,18 @@ function buildEditorComponents(cfgId, draft) {
 
 client.on("interactionCreate", async (i) => {
   try {
-    // só vamos lidar com as interações do editor
-    if (!i.isStringSelectMenu() && !i.isChannelSelectMenu() && !i.isButton() && !i.isModalSubmit()) return;
+    // Só processa interações relevantes para o editor
+    if (
+      !i.isStringSelectMenu() &&
+      !i.isChannelSelectMenu() &&
+      !i.isButton() &&
+      !i.isModalSubmit()
+    ) return;
 
-    // garante store
+    // Garante o Map de drafts
     if (!client.hierarquiaDrafts) client.hierarquiaDrafts = new Map();
 
-    // 1) Selecionou a hierarquia
+    // 1) Seleção inicial da hierarquia (vem do comando editarhierarquia)
     if (i.isStringSelectMenu() && i.customId === "hierarquia_select") {
       const cfgId = Number(i.values[0]);
       const cfg = await client.db.HierarquiaConfig.findByPk(cfgId);
@@ -76,7 +84,7 @@ client.on("interactionCreate", async (i) => {
         return i.update({ content: "❌ Configuração não encontrada.", components: [] });
       }
 
-      // cria draft do usuário
+      // Cria draft temporário para o usuário
       client.hierarquiaDrafts.set(i.user.id, {
         userId: i.user.id,
         cfgId,
@@ -104,31 +112,29 @@ client.on("interactionCreate", async (i) => {
       });
     }
 
-    // Pega o draft do user (ephemeral só o autor interage)
+    // Pega o draft do usuário atual
     const draft = client.hierarquiaDrafts.get(i.user.id);
-    if (!draft) return; // não está no editor
+    if (!draft) return; // não está editando nada
 
-    // 2) Seletor de canal principal
+    // 2) Seleção de canal principal
     if (i.isChannelSelectMenu() && i.customId === `hierarquia_channel_${draft.cfgId}`) {
       draft.channelId = i.values[0] || null;
-
       return i.update({
         content: buildEditorContent(draft),
         components: buildEditorComponents(draft.cfgId, draft)
       });
     }
 
-    // 3) Seletor de canal de logs
+    // 3) Seleção de canal de logs
     if (i.isChannelSelectMenu() && i.customId === `hierarquia_log_${draft.cfgId}`) {
       draft.logChannelId = i.values[0] || null;
-
       return i.update({
         content: buildEditorContent(draft),
         components: buildEditorComponents(draft.cfgId, draft)
       });
     }
 
-    // 4) Abrir modal para nome/cargos/cron
+    // 4) Botão → abre modal para editar nome, cargos e cron
     if (i.isButton() && i.customId === `hierarquia_modal_${draft.cfgId}`) {
       const modal = new ModalBuilder()
         .setCustomId(`hierarquia_modal_submit_${draft.cfgId}`)
@@ -186,9 +192,8 @@ client.on("interactionCreate", async (i) => {
       });
     }
 
-    // 6) Salvar alterações
+    // 6) Salvar alterações no banco
     if (i.isButton() && i.customId === `hierarquia_save_${draft.cfgId}`) {
-      // valida se cargos existem
       const notFound = (draft.roleIds || []).filter(id => !i.guild.roles.cache.has(id));
       if (notFound.length) {
         return i.update({
@@ -209,10 +214,9 @@ client.on("interactionCreate", async (i) => {
       cfg.logChannelId = draft.logChannelId || null;
       await cfg.save();
 
-      // reagenda cron
+      // Re-agenda o cron job
       await client.hierarquiaReschedule?.(cfg.id);
 
-      // reflete status atual
       draft.enabled = cfg.enabled;
 
       return i.update({
@@ -221,12 +225,13 @@ client.on("interactionCreate", async (i) => {
       });
     }
 
-    // 7) Ativar/Desativar
+    // 7) Toggle Ativar/Desativar
     if (i.isButton() && i.customId === `hierarquia_toggle_${draft.cfgId}`) {
       const cfg = await client.db.HierarquiaConfig.findByPk(draft.cfgId);
       if (!cfg) {
         return i.update({ content: "❌ Configuração não encontrada.", components: [] });
       }
+
       cfg.enabled = !cfg.enabled;
       await cfg.save();
 
@@ -243,8 +248,12 @@ client.on("interactionCreate", async (i) => {
     console.error("hierarquiaEditor handler error:", e);
     try {
       if (i.isRepliable()) {
-        if (!i.replied && !i.deferred) return i.reply({ content: "❌ Ocorreu um erro.", ephemeral: true });
-        return i.editReply({ content: "❌ Ocorreu um erro." });
+        const content = "❌ Ocorreu um erro.";
+        if (!i.replied && !i.deferred) {
+          await i.reply({ content, ephemeral: true });
+        } else {
+          await i.editReply({ content });
+        }
       }
     } catch {}
   }
