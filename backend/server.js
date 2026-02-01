@@ -17,6 +17,7 @@ import arquivosRoutes from './routes/arquivos.routes.js'
 import meRoutes from "./routes/me.routes.js";
 import lancamentosRoutes from './routes/LancamentosRoutes.js'
 import { startBot } from './bot/index.js';
+import servicosRoutes from './routes/ServicosRoutes.js'
 
 dotenv.config();
 
@@ -104,6 +105,7 @@ app.use("/api/webhooks", webhookConfigRoutes);
 app.use("/api/lancamentos", lancamentosRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use("/api/me", meRoutes);
+app.use("/api/servicos", servicosRoutes);
 // Rotas de teste
 app.get('/api', (req, res) => {
     res.json({ message: 'API Jurídico Atlanta rodando (ESM mode)' });
