@@ -3,7 +3,7 @@ import db from "../models/index.js";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
-const { ServicoJuridico } = db;
+const { servicos } = db;
 
 const norm = (v) => (v === null || v === undefined ? "" : String(v).trim().toLowerCase());
 
@@ -37,7 +37,7 @@ function canSeeServico(user, servico) {
  */
 router.get("/", authMiddleware(), async (req, res) => {
   try {
-    const rows = await ServicoJuridico.findAll({
+    const rows = await servicos.findAll({
       where: { ativo: true },
       order: [["label", "ASC"]],
     });
@@ -68,7 +68,7 @@ router.get("/admin", authMiddleware(), async (req, res) => {
   try {
     if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
 
-    const rows = await ServicoJuridico.findAll({ order: [["label", "ASC"]] });
+    const rows = await servicos.findAll({ order: [["label", "ASC"]] });
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -95,7 +95,7 @@ router.post("/", authMiddleware(), async (req, res) => {
     if (!Number.isFinite(repAdv) || repAdv < 0) return res.status(400).json({ msg: "repasseAdvogadoCents inválido." });
     if (repAdv > total) return res.status(400).json({ msg: "repasseAdvogado não pode ser maior que o total." });
 
-    const created = await ServicoJuridico.create({
+    const created = await servicos.create({
       label,
       value,
       ativo: ativo !== undefined ? !!ativo : true,
@@ -126,7 +126,7 @@ router.put("/:id", authMiddleware(), async (req, res) => {
     const id = Number(req.params.id);
     if (!id) return res.status(400).json({ msg: "ID inválido." });
 
-    const row = await ServicoJuridico.findByPk(id);
+    const row = await servicos.findByPk(id);
     if (!row) return res.status(404).json({ msg: "Serviço não encontrado." });
 
     const { label, value, ativo, valorTotalCents, repasseAdvogadoCents, allow } = req.body;
