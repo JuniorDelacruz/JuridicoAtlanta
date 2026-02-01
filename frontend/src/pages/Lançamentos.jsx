@@ -772,7 +772,14 @@ function NovoLancamentoWizard({ user, tiposDisponiveis, onCancel, onCreated }) {
             setReqMsg(data?.msg || "OK");
         } catch (err) {
             const status = err?.response?.status;
-            const msg = err?.response?.data?.msg || err.message;
+
+            // tenta pegar msg em vários formatos
+            const msg =
+                err?.response?.data?.msg ||
+                err?.response?.data?.message ||
+                (typeof err?.response?.data === "string" ? err.response.data : "") ||
+                err?.message ||
+                "Erro ao validar requerimento.";
 
             if (status === 404) {
                 setReqStatus("notfound");
@@ -783,13 +790,13 @@ function NovoLancamentoWizard({ user, tiposDisponiveis, onCancel, onCreated }) {
             if (status === 409) {
                 setReqStatus("linked");
                 setReqInfo(null);
-                setReqMsg(msg || "Requerimento já vinculado.");
+                setReqMsg(msg || "Esse requerimento já está vinculado.");
                 return;
             }
             if (status === 400) {
                 setReqStatus("invalid");
                 setReqInfo(null);
-                setReqMsg(msg || "Número inválido.");
+                setReqMsg(msg || "Número do requerimento inválido.");
                 return;
             }
 
