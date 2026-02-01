@@ -53,7 +53,7 @@ export default function Dashboard() {
   };
 
   const allModules = [
-    { name: "Painéis", link: "/paineis", allowedRoles: ["juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Painéis", link: "/paineis", allowedSubRoles: ["alterarcargo","equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
