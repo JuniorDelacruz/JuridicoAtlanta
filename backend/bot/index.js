@@ -71,7 +71,7 @@ export async function startBot() {
   if (!token) throw new Error("DISCORD_BOT_TOKEN não definido.");
 
   // Carrega o handler (se handler.js exporta uma função default)
-  const { default: handler } = await import("./handler/index");
+  const { default: handler } = await import("./handler/index.js");
   handler(client);  // ou await handler(client) se for async
 
   // Carrega todos os eventos da pasta
