@@ -70,20 +70,20 @@ function Paineis() {
     }, [searchTerm, usuarios]);
 
     const handleRoleChange = async (userId, newRole, newSubRole) => {
-        const okRole = await confirm({
+
+
+
+
+        if (newRole && await !confirm({
             title: 'Alteração de cargo', message: `Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}`, confirmText: "Aprovar",
             cancelText: "Cancelar",
-        })
-
-        const okSubrole = await confirm({
-      title: "Alteração do SubCargo",
-      message: `Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`,
-      confirmText: "Aprovar",
-      cancelText: "Cancelar",
-    });
-
-        if (newRole && !okRole) return;
-        if (newSubRole !== undefined && !okSubrole) return;
+        })) return;
+        if (newSubRole !== undefined && await !confirm({
+            title: "Alteração do SubCargo",
+            message: `Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`,
+            confirmText: "Aprovar",
+            cancelText: "Cancelar",
+        })) return;
 
         try {
             const payload = {};
