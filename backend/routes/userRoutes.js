@@ -6,6 +6,8 @@ const router = express.Router();
 
 const { User } = db;
 
+const norm = (v) => String(v ?? "").trim().toLowerCase();
+
 router.get(
     "/",
     authMiddleware({ subRoles: ["alteracaocargo", "responsaveljuridico", "master"] }),
