@@ -53,12 +53,12 @@ export default function Dashboard() {
   };
 
   const allModules = [
-    { name: "Painéis", link: "/paineis", allowedRoles: ["juiz"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico"] },
-    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico"] },
-    { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico"] },
+    { name: "Painéis", link: "/paineis", allowedRoles: ["juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Lançamentos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
   ];
 
