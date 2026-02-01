@@ -121,10 +121,10 @@ function Paineis() {
 
             if (status === 403) {
 
-                push({ type: "warning", title: "Negado", message: "você não tem permissão para alterar cargos." })
+                push({ type: "error", title: "Negado", message: "você não tem permissão para alterar cargos." })
                 return;
             }
-            push({ type: "error", title: "Erro", message: `Erro ao atualizar: ${err.response?.data?.msg || err.message}`  })
+            push({ type: "warning", title: "Erro", message: `Erro ao atualizar: ${err.response?.data?.msg || err.message}`  })
             
         }
     };
