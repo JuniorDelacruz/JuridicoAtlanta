@@ -7,6 +7,8 @@ import {
   ActionRowBuilder,
   ComponentType
 } from 'discord.js';
+ import db from '../../../models/index.js'
+ import { HierarquiaConfig, Hierarquia } from db
 
 export default {
   name: "rodarhierarquia",
@@ -23,7 +25,7 @@ export default {
     }
 
     // Carrega as configs deste servidor
-    const configs = await client.db.HierarquiaConfig.findAll({ 
+    const configs = await HierarquiaConfig.findAll({ 
       where: { guildId: interaction.guild.id } 
     }).catch(() => []);
 
@@ -79,7 +81,7 @@ export default {
       } else {
         // Fallback: import dinâmico (ajuste o caminho se necessário)
         const { runHierarchyForConfig } = await import("../../Eventos/Owner/Hierarquia.js");
-        const cfg = await client.db.HierarquiaConfig.findByPk(cfgId);
+        const cfg = await HierarquiaConfig.findByPk(cfgId);
         if (cfg) await runHierarchyForConfig(client, cfg);
       }
 

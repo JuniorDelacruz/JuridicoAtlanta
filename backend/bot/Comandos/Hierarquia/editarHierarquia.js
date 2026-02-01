@@ -6,6 +6,8 @@ import {
   ActionRowBuilder,
   StringSelectMenuBuilder
 } from 'discord.js';
+ import db from '../../../models/index.js'
+ import { HierarquiaConfig, Hierarquia } from db
 
 export default {
   name: "editarhierarquia",
@@ -22,7 +24,7 @@ export default {
         });
       }
 
-      const configs = await client.db.HierarquiaConfig.findAll({ 
+      const configs = await HierarquiaConfig.findAll({ 
         where: { guildId: interaction.guild.id } 
       });
 

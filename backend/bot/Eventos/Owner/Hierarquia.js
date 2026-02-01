@@ -5,6 +5,8 @@ import { Client } from 'discord.js';
 
 // Importe o client exportado (ajuste o caminho conforme sua estrutura)
 import { client } from '../../index.js';  // ou '../index.js', etc.
+import db from '../../../models/index.js'
+import { HierarquiaConfig, Hierarquia } from db
 
 // Divide e envia mensagens grandes em partes (até 2000 chars)
 async function sendMessageInParts(channel, content, maxLength = 2000) {
@@ -12,12 +14,12 @@ async function sendMessageInParts(channel, content, maxLength = 2000) {
   let part = "";
   for (const line of lines) {
     if ((part + line + "\n").length > maxLength) {
-      await channel.send(part.trim()).catch(() => {});
+      await channel.send(part.trim()).catch(() => { });
       part = "";
     }
     part += line + "\n";
   }
-  if (part.trim()) await channel.send(part.trim()).catch(() => {});
+  if (part.trim()) await channel.send(part.trim()).catch(() => { });
 }
 
 /**
@@ -31,7 +33,7 @@ export async function runHierarchyForConfig(client, configRow) {
     if (!guild) return;
 
     // Pre-cache members (uma vez por execução)
-    await guild.members.fetch().catch(() => {});
+    await guild.members.fetch().catch(() => { });
 
     const roleMembersMap = new Map();
     const currentMembers = [];
@@ -53,7 +55,7 @@ export async function runHierarchyForConfig(client, configRow) {
     }
 
     // Compara com snapshot do banco
-    const dbMembers = await client.db.Hierarquia.findAll({ where: { configId } });
+    const dbMembers = await Hierarquia.findAll({ where: { configId } });
     const dbMap = new Map(dbMembers.map(m => [m.userId, m]));
 
     // Remove "presentes" do mapa → sobram os removidos
@@ -73,15 +75,15 @@ export async function runHierarchyForConfig(client, configRow) {
             .join("\n");
           await sendMessageInParts(chLog, removedText);
         } else {
-          await chLog.send(`Nenhum membro perdeu cargos em **${name}** desta vez.`).catch(() => {});
+          await chLog.send(`Nenhum membro perdeu cargos em **${name}** desta vez.`).catch(() => { });
         }
       }
     }
 
     // Limpa snapshot antigo e grava o novo (apenas desta config)
-    await client.db.Hierarquia.destroy({ where: { configId } });
+    await Hierarquia.destroy({ where: { configId } });
     if (currentMembers.length) {
-      await client.db.Hierarquia.bulkCreate(currentMembers.map(m => ({ ...m, configId })));
+      await Hierarquia.bulkCreate(currentMembers.map(m => ({ ...m, configId })));
     }
 
     // Limpa mensagens anteriores do bot no canal alvo
@@ -92,7 +94,7 @@ export async function runHierarchyForConfig(client, configRow) {
     if (msgs) {
       for (const msg of msgs.values()) {
         if (msg.author?.id === client.user.id) {
-          await msg.delete().catch(() => {});
+          await msg.delete().catch(() => { });
         }
       }
     }
@@ -122,10 +124,10 @@ export async function runHierarchyForConfig(client, configRow) {
 /* =========================
    Orquestração + watcher
    ========================= */
-client.hierarquiaJobs   = new Map(); // idConfig → cron.Job
-client.hierarquiaCache  = new Map(); // idConfig → assinatura (string)
+client.hierarquiaJobs = new Map(); // idConfig → cron.Job
+client.hierarquiaCache = new Map(); // idConfig → assinatura (string)
 client.hierarquiaWatchLock = false;  // evita corridas
-client.hierarquiaWatcher   = null;
+client.hierarquiaWatcher = null;
 
 /** Assinatura determinística da config (para detectar mudanças) */
 function getConfigSignature(cfg) {
@@ -147,7 +149,7 @@ client.hierarquiaReschedule = async (configId) => {
     const old = client.hierarquiaJobs.get(configId);
     if (old) { old.stop(); client.hierarquiaJobs.delete(configId); }
 
-    const cfg = await client.db.HierarquiaConfig.findByPk(configId);
+    const cfg = await HierarquiaConfig.findByPk(configId);
     if (!cfg || !cfg.enabled) return;
 
     const cronExpr = cron.validate(cfg.scheduleCron || "") ? cfg.scheduleCron : "0 10 * * *";
@@ -164,13 +166,13 @@ client.hierarquiaReschedule = async (configId) => {
 
 /** Executa uma config manualmente (usado no comando /rodarhierarquia) */
 client.hierarquiaRunNow = async (configId) => {
-  const cfg = await client.db.HierarquiaConfig.findByPk(configId).catch(() => null);
+  const cfg = await HierarquiaConfig.findByPk(configId).catch(() => null);
   if (cfg) return runHierarchyForConfig(client, cfg);
 };
 
 /** Carrega/atualiza TODOS os jobs conforme o banco */
 async function refreshJobsFromDB(initial = false) {
-  const rows = await client.db.HierarquiaConfig.findAll().catch(() => []);
+  const rows = await HierarquiaConfig.findAll().catch(() => []);
   const seen = new Set();
 
   for (const cfg of rows) {
@@ -242,10 +244,10 @@ client.on("ready", async () => {
 });
 
 // Encerramento gracioso (opcional)
-process.on("SIGINT", () => { 
-  if (client.hierarquiaWatcher) clearInterval(client.hierarquiaWatcher); 
+process.on("SIGINT", () => {
+  if (client.hierarquiaWatcher) clearInterval(client.hierarquiaWatcher);
 });
-process.on("SIGTERM", () => { 
-  if (client.hierarquiaWatcher) clearInterval(client.hierarquiaWatcher); 
+process.on("SIGTERM", () => {
+  if (client.hierarquiaWatcher) clearInterval(client.hierarquiaWatcher);
 });
 

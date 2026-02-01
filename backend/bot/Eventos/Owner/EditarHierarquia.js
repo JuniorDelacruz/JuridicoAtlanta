@@ -13,6 +13,8 @@ import {
 
 // Importe o client exportado (ajuste o caminho conforme sua estrutura real)
 import { client } from '../../index.js';  // ou '../index.js', ou onde o client é exportado
+ import db from '../../../models/index.js'
+ import { HierarquiaConfig, Hierarquia } from db
 
 // util: extrai IDs de cargos de uma string (IDs ou menções <@&id>)
 function extractRoleIds(str) {
@@ -79,7 +81,7 @@ client.on("interactionCreate", async (i) => {
     // 1) Seleção inicial da hierarquia (vem do comando editarhierarquia)
     if (i.isStringSelectMenu() && i.customId === "hierarquia_select") {
       const cfgId = Number(i.values[0]);
-      const cfg = await client.db.HierarquiaConfig.findByPk(cfgId);
+      const cfg = await HierarquiaConfig.findByPk(cfgId);
       if (!cfg) {
         return i.update({ content: "❌ Configuração não encontrada.", components: [] });
       }
@@ -202,7 +204,7 @@ client.on("interactionCreate", async (i) => {
         });
       }
 
-      const cfg = await client.db.HierarquiaConfig.findByPk(draft.cfgId);
+      const cfg = await HierarquiaConfig.findByPk(draft.cfgId);
       if (!cfg) {
         return i.update({ content: "❌ Configuração não encontrada.", components: [] });
       }
@@ -227,7 +229,7 @@ client.on("interactionCreate", async (i) => {
 
     // 7) Toggle Ativar/Desativar
     if (i.isButton() && i.customId === `hierarquia_toggle_${draft.cfgId}`) {
-      const cfg = await client.db.HierarquiaConfig.findByPk(draft.cfgId);
+      const cfg = await HierarquiaConfig.findByPk(draft.cfgId);
       if (!cfg) {
         return i.update({ content: "❌ Configuração não encontrada.", components: [] });
       }

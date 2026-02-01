@@ -1,6 +1,8 @@
 // arquivo: Comandos/admin/criarhierarquia.js   (ou onde você guardar)
 
 import { ApplicationCommandType, PermissionFlagsBits, ApplicationCommandOptionType } from 'discord.js';
+ import db from '../../../models/index.js'
+ import { HierarquiaConfig, Hierarquia } from db
 
 export default {
   name: "criarhierarquia",
@@ -117,7 +119,7 @@ export default {
     }
 
     // —— SALVA NO DB ——
-    const row = await client.db.HierarquiaConfig.create({
+    const row = await HierarquiaConfig.create({
       guildId: interaction.guild.id,
       name: nome,
       roleIds: finalRoleIds,
