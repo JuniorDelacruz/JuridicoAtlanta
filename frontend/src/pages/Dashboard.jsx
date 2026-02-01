@@ -59,7 +59,7 @@ export default function Dashboard() {
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Lançamentos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Lançamentos", link: "/lancamentos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
   ];
 
   const modules = useMemo(() => allModules.filter((m) => canAccess(user, m)), [user]);
