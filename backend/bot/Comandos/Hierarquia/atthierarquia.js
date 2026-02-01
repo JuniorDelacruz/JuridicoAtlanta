@@ -77,7 +77,7 @@ export default {
       });
 
       // Executa a hierarquia
-      if (typeof hierarquiaRunNow === "function") {
+      if (hierarquiaRunNow) {
         await hierarquiaRunNow(cfgId);
       } else {
         // Fallback: import dinâmico (ajuste o caminho se necessário)
