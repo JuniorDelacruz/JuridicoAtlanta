@@ -14,7 +14,7 @@ const ROLE_ORDER = [
     "escrivao",
     "promotor",
     "conselheiro",
-    "promotor chefe",
+    "promotor Chefe",
     "juiz",
     "desembargador",
 ];
