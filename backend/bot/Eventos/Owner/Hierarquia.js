@@ -32,6 +32,8 @@ export async function runHierarchyForConfig(client, configRow) {
     const guild = await client.guilds.fetch(guildId);
     if (!guild) return;
 
+    console.log(`[hierarquia] Iniciando fetch de membros no servidor ${guild.name} (${guild.id}) - ${guild.memberCount} membros estimados`);
+
     try {
       await guild.members.fetch(); // timeout de 30s
       console.log(`[hierarquia] Fetch de membros concluído com sucesso. Membros em cache: ${guild.members.cache.size}`);
