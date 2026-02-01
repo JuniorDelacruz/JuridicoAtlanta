@@ -73,17 +73,28 @@ function Paineis() {
 
 
 
+        if (newRole !== undefined) {
+            const okRole = await confirm({
+                title: "Alteração de cargo",
+                message: `Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}?`,
+                confirmText: "Aprovar",
+                cancelText: "Cancelar",
+            });
 
-        if (newRole && await !confirm({
-            title: 'Alteração de cargo', message: `Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}`, confirmText: "Aprovar",
-            cancelText: "Cancelar",
-        })) return;
-        if (newSubRole !== undefined && await !confirm({
-            title: "Alteração do SubCargo",
-            message: `Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`,
-            confirmText: "Aprovar",
-            cancelText: "Cancelar",
-        })) return;
+            if (!okRole) return;
+        }
+
+        // 2) Confirma troca de subcargo
+        if (newSubRole !== undefined) {
+            const okSub = await confirm({
+                title: "Alteração do SubCargo",
+                message: `Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`,
+                confirmText: "Aprovar",
+                cancelText: "Cancelar",
+            });
+
+            if (!okSub) return;
+        }
 
         try {
             const payload = {};
