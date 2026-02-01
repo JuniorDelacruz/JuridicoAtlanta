@@ -33,7 +33,7 @@ export async function runHierarchyForConfig(client, configRow) {
     if (!guild) return;
 
     try {
-      await guild.members.fetch({ time: 30000 }); // timeout de 30s
+      await guild.members.fetch(); // timeout de 30s
       console.log(`[hierarquia] Fetch de membros concluído com sucesso. Membros em cache: ${guild.members.cache.size}`);
     } catch (err) {
       console.error(`[hierarquia] Erro no fetch de membros:`, err);
