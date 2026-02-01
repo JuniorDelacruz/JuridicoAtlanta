@@ -38,7 +38,7 @@ function Paineis() {
                 const status = err?.response?.status;
 
                 if (status === 403) {
-                    push({type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos."});
+                    push({ type: "error", title: "Negado", message: "Acesso negado. Você não tem permissão para gerenciar cargos." });
                     navigate("/login");
                     return;
                 }
@@ -70,8 +70,20 @@ function Paineis() {
     }, [searchTerm, usuarios]);
 
     const handleRoleChange = async (userId, newRole, newSubRole) => {
-        if (newRole && !confirm(`Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}?`)) return;
-        if (newSubRole !== undefined && !confirm(`Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`)) return;
+        const okRole = await confirm({
+            title: 'Alteração de cargo', message: `Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${newRole}`, confirmText: "Aprovar",
+            cancelText: "Cancelar",
+        })
+
+        const okSubrole = await confirm({
+      title: "Alteração do SubCargo",
+      message: `Tem certeza que deseja ${newSubRole ? "adicionar" : "remover"} o status de Equipe Jurídica?`,
+      confirmText: "Aprovar",
+      cancelText: "Cancelar",
+    });
+
+        if (newRole && !okRole) return;
+        if (newSubRole !== undefined && !okSubrole) return;
 
         try {
             const payload = {};
