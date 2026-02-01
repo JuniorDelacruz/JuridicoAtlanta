@@ -165,7 +165,7 @@ client.hierarquiaReschedule = async (configId) => {
 };
 
 /** Executa uma config manualmente (usado no comando /rodarhierarquia) */
-client.hierarquiaRunNow = async (configId) => {
+export async function hierarquiaRunNow(configId) {
   const cfg = await HierarquiaConfig.findByPk(configId).catch(() => null);
   if (cfg) return runHierarchyForConfig(client, cfg);
 };
