@@ -6,7 +6,7 @@ import { Client } from 'discord.js';
 // Importe o client exportado (ajuste o caminho conforme sua estrutura)
 import { client } from '../../index.js';  // ou '../index.js', etc.
 import db from '../../../models/index.js'
- const { HierarquiaConfig, Hierarquia } = db
+const { HierarquiaConfig, Hierarquia } = db
 
 // Divide e envia mensagens grandes em partes (até 2000 chars)
 async function sendMessageInParts(channel, content, maxLength = 2000) {
@@ -32,8 +32,14 @@ export async function runHierarchyForConfig(client, configRow) {
     const guild = await client.guilds.fetch(guildId);
     if (!guild) return;
 
-    // Pre-cache members (uma vez por execução)
-    await guild.members.fetch().catch(() => { });
+    try {
+      await guild.members.fetch({ time: 30000 }); // timeout de 30s
+      console.log(`[hierarquia] Fetch de membros concluído com sucesso. Membros em cache: ${guild.members.cache.size}`);
+    } catch (err) {
+      console.error(`[hierarquia] Erro no fetch de membros:`, err);
+      // Tenta fetch parcial se falhar total
+      await guild.members.fetch({ user: [] }).catch(() => { }); // fallback
+    }
 
     const roleMembersMap = new Map();
     const currentMembers = [];

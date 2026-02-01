@@ -7,9 +7,9 @@ import {
   ActionRowBuilder,
   ComponentType
 } from 'discord.js';
- import db from '../../../models/index.js'
+import db from '../../../models/index.js'
 import { hierarquiaRunNow } from '../../Eventos/Owner/Hierarquia.js';
- const { HierarquiaConfig, Hierarquia } = db
+const { HierarquiaConfig, Hierarquia } = db
 
 export default {
   name: "rodarhierarquia",
@@ -19,21 +19,21 @@ export default {
 
   run: async (client, interaction) => {
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      return interaction.editReply({ 
-        content: `Você não possui permissão para utilizar este comando.`, 
-        ephemeral: true 
+      return interaction.editReply({
+        content: `Você não possui permissão para utilizar este comando.`,
+        ephemeral: true
       });
     }
 
     // Carrega as configs deste servidor
-    const configs = await HierarquiaConfig.findAll({ 
-      where: { guildId: interaction.guild.id } 
+    const configs = await HierarquiaConfig.findAll({
+      where: { guildId: interaction.guild.id }
     }).catch(() => []);
 
     if (!configs.length) {
-      return interaction.editReply({ 
-        content: "⚠️ Não há hierarquias criadas neste servidor.", 
-        ephemeral: true 
+      return interaction.editReply({
+        content: "⚠️ Não há hierarquias criadas neste servidor.",
+        ephemeral: true
       });
     }
 
@@ -63,49 +63,58 @@ export default {
       const sel = await interaction.channel.awaitMessageComponent({
         componentType: ComponentType.StringSelect,
         time: 60_000,
-        filter: (i) => 
-          i.user.id === interaction.user.id && 
+        filter: (i) =>
+          i.user.id === interaction.user.id &&
           i.customId === "run_now_hierarchy"
       });
 
       const cfgId = Number(sel.values[0]);
 
       // Atualiza a mensagem original removendo o menu e mostrando "executando"
-      await sel.update({ 
-        content: "⏳ Executando atualização agora...", 
-        components: [] 
+      await sel.update({
+        content: "⏳ Executando atualização agora...",
+        components: []
       });
 
-      // Executa a hierarquia
-      if (hierarquiaRunNow) {
-        await hierarquiaRunNow(cfgId);
-      } else {
-        // Fallback: import dinâmico (ajuste o caminho se necessário)
-        const { runHierarchyForConfig } = await import("../../Eventos/Owner/Hierarquia.js");
-        const cfg = await HierarquiaConfig.findByPk(cfgId);
-        if (cfg) await runHierarchyForConfig(client, cfg);
+      try {
+        console.log(`[rodarhierarquia] Iniciando execução manual da config #${cfgId} por ${interaction.user.tag}`);
+
+        if (typeof hierarquiaRunNow === "function") {
+          await hierarquiaRunNow(cfgId);  // ← mantenha o await aqui
+        } else {
+          const { runHierarchyForConfig } = await import("../../Eventos/Owner/Hierarquia.js");
+          const cfg = await HierarquiaConfig.findByPk(cfgId);
+          if (cfg) await runHierarchyForConfig(client, cfg);
+        }
+
+        console.log(`[rodarhierarquia] Execução da config #${cfgId} finalizada com sucesso`);
+
+        await interaction.followUp({
+          content: `✅ Hierarquia **#${cfgId}** atualizada com sucesso.`,
+          ephemeral: true
+        });
+      } catch (e) {
+        console.error(`[rodarhierarquia] Erro na execução da config #${cfgId}:`, e);
+        await interaction.followUp({
+          content: `❌ Erro ao atualizar hierarquia #${cfgId}: ${e.message || "desconhecido"}`,
+          ephemeral: true
+        });
       }
-
-      // Confirmação final
-      await interaction.followUp({ 
-        content: `✅ Hierarquia **#${cfgId}** atualizada com sucesso.`, 
-        ephemeral: true 
-      });
 
     } catch (e) {
       // Timeout ou erro
       if (e?.message?.toLowerCase?.().includes("time")) {
-        await interaction.editReply({ 
-          content: "⏰ Tempo esgotado. Tente novamente.", 
-          components: [] 
+        await interaction.editReply({
+          content: "⏰ Tempo esgotado. Tente novamente.",
+          components: []
         });
         return;
       }
 
       console.error("Erro em rodarhierarquia:", e);
-      await interaction.editReply({ 
-        content: "❌ Ocorreu um erro ao executar a atualização.", 
-        components: [] 
+      await interaction.editReply({
+        content: "❌ Ocorreu um erro ao executar a atualização.",
+        components: []
       });
     }
   }
