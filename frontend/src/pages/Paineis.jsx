@@ -114,17 +114,18 @@ function Paineis() {
                 })
             );
 
-            push({type: "success", title: "Sucesso", message: "Alteração feita com sucesso"})
-            alert("Atualização realizada com sucesso!");
+            push({ type: "success", title: "Sucesso", message: "Atualização realizada com sucesso!" })
+
         } catch (err) {
             const status = err?.response?.status;
 
             if (status === 403) {
-                alert("Acesso negado: você não tem permissão para alterar cargos.");
+
+                push({ type: "warning", title: "Negado", message: "você não tem permissão para alterar cargos." })
                 return;
             }
-
-            alert("Erro ao atualizar: " + (err.response?.data?.msg || err.message));
+            push({ type: "error", title: "Erro", message: `Erro ao atualizar: ${err.response?.data?.msg || err.message}`  })
+            
         }
     };
 
