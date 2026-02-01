@@ -53,13 +53,13 @@ export default function Dashboard() {
   };
 
   const allModules = [
-    { name: "Painéis", link: "/paineis", allowedSubRoles: ["alterarcargo","equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Painéis", link: "/paineis", allowedRoles: [], allowedSubRoles: ["alterarcargo","equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
     { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Processos", link: "/processos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Lançamentos", link: "/lancamentos", allowedRoles: ["advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Processos", link: "/processos", allowedRoles: [], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Lançamentos", link: "/lancamentos", allowedRoles: ['juiz', "advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
   ];
 
   const modules = useMemo(() => allModules.filter((m) => canAccess(user, m)), [user]);
