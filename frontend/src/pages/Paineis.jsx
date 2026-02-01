@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api"; // <- usa o axios instance com interceptor
-import { ArrowLeft, Scale, Search as SearchIcon, Webhook } from "lucide-react";
+import { ArrowLeft, PiSquare, Scale, Search as SearchIcon, Webhook } from "lucide-react";
 import { useToast } from "../utils/toast";
 import { useConfirm } from "../components/ui/confirm";
 
@@ -114,6 +114,7 @@ function Paineis() {
                 })
             );
 
+            push({type: "success", title: "Sucesso", message: "Alteração feita com sucesso"})
             alert("Atualização realizada com sucesso!");
         } catch (err) {
             const status = err?.response?.status;
