@@ -94,8 +94,8 @@ client.on(Events.ClientReady, async () => {
 
   try {
     // Para testes: registre APENAS no servidor de desenvolvimento
-    // const testGuildId = "1288884651422650478"; // ← coloque aqui
-    // const guild = client.guilds.cache.get(testGuildId);
+    const testGuildId = "null"; // ← coloque aqui
+    const guild = client.guilds.cache.get(testGuildId);
 
     if (guild) {
       console.log(`Registrando ${commands.length} comandos no servidor de teste (${guild.name})`);
