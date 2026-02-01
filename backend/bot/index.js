@@ -52,23 +52,31 @@ async function loadCommands() {
 
 // Carrega eventos (como antes)
 async function loadEventFiles(directory) {
-  const items = await fs.promises.readdir(directory, { withFileTypes: true });
+  try {
+    const items = await fs.promises.readdir(directory, { withFileTypes: true });
 
-  for (const item of items) {
-    const itemPath = path.join(directory, item.name);
+    for (const item of items) {
+      const itemPath = path.join(directory, item.name);
 
-    if (item.isDirectory()) {
-      await loadEventFiles(itemPath);
-      continue;
-    }
-
-    if (item.isFile() && item.name.endsWith(".js")) {
-      const module = await import(itemPath);
-      if (typeof module.default === "function") {
-        module.default(client);
-      } else if (typeof module.setup === "function") {
-        module.setup(client);
+      if (item.isDirectory()) {
+        await loadEventFiles(itemPath);
+        continue;
       }
+
+      if (item.isFile() && item.name.endsWith(".js")) {
+        const module = await import(itemPath);
+        if (typeof module.default === "function") {
+          module.default(client);
+        } else if (typeof module.setup === "function") {
+          module.setup(client);
+        }
+      }
+    }
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.warn(`Pasta de eventos não encontrada: ${directory}`);
+    } else {
+      console.error(`Erro ao ler pasta de eventos ${directory}:`, err);
     }
   }
 }
@@ -108,20 +116,20 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const cmd = client.slashCommands.get(interaction.commandName);
-  if (!cmd) return interaction.reply({ content: "Comando não encontrado.", ephemeral: true }).catch(() => {});
+  if (!cmd) return interaction.reply({ content: "Comando não encontrado.", ephemeral: true }).catch(() => { });
 
   if (!interaction.member && interaction.inGuild()) {
     interaction.member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
   }
 
-  await interaction.deferReply({ ephemeral: true }).catch(() => {});
+  await interaction.deferReply({ ephemeral: true }).catch(() => { });
 
   try {
     await cmd.run(client, interaction);
   } catch (err) {
     console.error("Erro executando comando:", err);
     if (!interaction.replied && interaction.deferred) {
-      await interaction.editReply({ content: "❌ Erro ao executar o comando." }).catch(() => {});
+      await interaction.editReply({ content: "❌ Erro ao executar o comando." }).catch(() => { });
     }
   }
 });
