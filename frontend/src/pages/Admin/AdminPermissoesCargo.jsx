@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../services/api";
-import { useToast } from "../utils/toast";
+import { api } from "../../services/api";
+import { useToast } from "../../utils/toast";
 import { useNavigate, useParams } from "react-router-dom";
 
 const norm = (v) => (v ?? "").toString().trim().toLowerCase();
