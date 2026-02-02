@@ -18,58 +18,8 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function norm(v) {
-  return (v ?? "").toString().trim().toLowerCase();
-}
-
-// tenta achar perms no "user" OU buscar no backend (caso você tenha criado um endpoint)
-function extractPermsFromUser(user) {
-  const maybe =
-    user?.perms ||
-    user?.permissions ||
-    user?.permissionKeys ||
-    user?.permKeys ||
-    user?.grants ||
-    null;
-
-  if (Array.isArray(maybe)) return maybe.map(String);
-  if (maybe && typeof maybe === "object") {
-    // caso venha como { "perm.key": true }
-    return Object.keys(maybe).filter((k) => !!maybe[k]);
-  }
-  return [];
-}
-
-async function fetchMyPermsFallback() {
-  const endpoints = [
-    "/api/me/perms",
-    "/api/me/permissions",
-    "/api/me/permissoes",
-  ];
-
-  for (const ep of endpoints) {
-    try {
-      const { data } = await axios.get(`${API_URL}${ep}`, { headers: authHeaders() });
-
-      // formatos aceitos: { perms: [...] } | { permissions: [...] } | [...]
-      const arr =
-        (Array.isArray(data) && data) ||
-        (Array.isArray(data?.perms) && data.perms) ||
-        (Array.isArray(data?.permissions) && data.permissions) ||
-        (Array.isArray(data?.permissionKeys) && data.permissionKeys) ||
-        [];
-
-      if (arr.length) return arr.map(String);
-    } catch {
-      // tenta o próximo
-    }
-  }
-
-  return [];
-}
-
 export default function TriagemCadastro() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
   const { push } = useToast();
   const navigate = useNavigate();
 
@@ -79,59 +29,20 @@ export default function TriagemCadastro() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
-  const [perms, setPerms] = useState(() => extractPermsFromUser(user));
+  const permitido = useMemo(() => {
+    if (!isAuthenticated) return false;
+    if (typeof hasPerm !== "function") return false;
+    return !!hasPerm(PERM_ACESSO);
+  }, [isAuthenticated, hasPerm]);
 
-  // mantém perms atualizadas se o user mudar
-  useEffect(() => {
-    setPerms(extractPermsFromUser(user));
-  }, [user]);
-
-  const hasPerm = useMemo(() => {
-    const pset = new Set((perms || []).map(String));
-    return (key) => {
-      if (!key) return false;
-
-      // super bypass (se você tiver algo assim no token)
-      if (user?.superadmin || user?.isSuperadmin) return true;
-
-      // normal
-      return pset.has(String(key));
-    };
-  }, [perms, user]);
-
-  const permitido = hasPerm(PERM_ACESSO);
-
-  // Gate + load perms (se não veio no token)
+  // Gate de acesso + fetch
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    (async () => {
-      try {
-        // se não veio no token, tenta buscar
-        if (!extractPermsFromUser(user)?.length) {
-          const fetched = await fetchMyPermsFallback();
-          if (fetched.length) setPerms(fetched);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
-
-  // Carrega pendentes (somente se permitido)
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    // reavalia após possível fetch de perms
-    const allowedNow =
-      (extractPermsFromUser(user)?.length ? new Set(extractPermsFromUser(user)) : null)?.has(PERM_ACESSO) ||
-      permitido;
-
-    if (!allowedNow) {
+    if (!permitido) {
       push({
         type: "error",
         title: "Acesso negado",
@@ -144,10 +55,12 @@ export default function TriagemCadastro() {
     const fetchPendentes = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const response = await axios.get(`${API_URL}/api/cartorio/pendentes`, {
           headers: authHeaders(),
         });
+
         const list = Array.isArray(response.data) ? response.data : [];
         setPendentes(list);
         setFiltered(list);
@@ -160,19 +73,23 @@ export default function TriagemCadastro() {
 
     fetchPendentes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, permitido, perms?.length]);
+  }, [isAuthenticated, permitido]);
 
-  // Filtra por busca
+  // Filtro de busca
   useEffect(() => {
     let result = pendentes;
+
     if (search.trim()) {
       const term = search.toLowerCase().trim();
-      result = result.filter((c) =>
-        String(c.nomeCompleto || "").toLowerCase().includes(term) ||
-        String(c.identidade || "").toLowerCase().includes(term) ||
-        String(c.discordId || "").toLowerCase().includes(term)
-      );
+      result = result.filter((c) => {
+        const nome = String(c.nomeCompleto || "").toLowerCase();
+        const identidade = String(c.identidade || "").toLowerCase();
+        const discordId = String(c.discordId || "").toLowerCase();
+
+        return nome.includes(term) || identidade.includes(term) || discordId.includes(term);
+      });
     }
+
     setFiltered(result);
   }, [search, pendentes]);
 
@@ -180,11 +97,7 @@ export default function TriagemCadastro() {
     if (!window.confirm("Tem certeza que deseja APROVAR este cadastro?")) return;
 
     try {
-      await axios.patch(
-        `${API_URL}/api/cartorio/${id}/aprovar`,
-        {},
-        { headers: authHeaders() }
-      );
+      await axios.patch(`${API_URL}/api/cartorio/${id}/aprovar`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((c) => c.id !== id));
       setFiltered((prev) => prev.filter((c) => c.id !== id));
@@ -207,11 +120,7 @@ export default function TriagemCadastro() {
     if (!window.confirm("Tem certeza que deseja INDEFERIR este cadastro?")) return;
 
     try {
-      await axios.patch(
-        `${API_URL}/api/cartorio/${id}/indeferir`,
-        {},
-        { headers: authHeaders() }
-      );
+      await axios.patch(`${API_URL}/api/cartorio/${id}/indeferir`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((c) => c.id !== id));
       setFiltered((prev) => prev.filter((c) => c.id !== id));
@@ -231,19 +140,11 @@ export default function TriagemCadastro() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Carregando cadastros pendentes...
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Carregando cadastros pendentes...</div>;
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-red-600">
-        {error}
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
   }
 
   return (
@@ -280,9 +181,7 @@ export default function TriagemCadastro() {
       {/* Conteúdo principal */}
       <main className="flex-grow max-w-7xl mx-auto py-8 px-6">
         <div className="flex justify-between items-center mb-6 gap-4 flex-col md:flex-row">
-          <h2 className="text-3xl font-bold text-gray-800">
-            Triagem de Novos Cadastros Pendentes
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-800">Triagem de Novos Cadastros Pendentes</h2>
 
           <div className="relative w-full md:w-80">
             <input
@@ -298,9 +197,7 @@ export default function TriagemCadastro() {
 
         <div className="bg-white rounded-xl shadow overflow-hidden">
           {filtered.length === 0 ? (
-            <div className="text-center py-12 text-gray-600">
-              Nenhum cadastro pendente no momento.
-            </div>
+            <div className="text-center py-12 text-gray-600">Nenhum cadastro pendente no momento.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -335,12 +232,7 @@ export default function TriagemCadastro() {
                     <tr key={cad.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {cad.imagemIdentidade ? (
-                          <a
-                            href={cad.imagemIdentidade}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block"
-                          >
+                          <a href={cad.imagemIdentidade} target="_blank" rel="noopener noreferrer" className="inline-block">
                             <img
                               src={cad.imagemIdentidade}
                               alt="Identidade"
@@ -354,13 +246,9 @@ export default function TriagemCadastro() {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {cad.nomeCompleto}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cad.nomeCompleto}</td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {cad.identidade}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cad.identidade}</td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <a
@@ -373,9 +261,7 @@ export default function TriagemCadastro() {
                         </a>
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {cad.profissao}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cad.profissao}</td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {cad.createdAt ? new Date(cad.createdAt).toLocaleDateString("pt-BR") : "—"}
@@ -407,7 +293,7 @@ export default function TriagemCadastro() {
         </div>
       </main>
 
-      {/* Footer fixado */}
+      {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-6 text-center mt-auto">
         <p>© {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados</p>
       </footer>
