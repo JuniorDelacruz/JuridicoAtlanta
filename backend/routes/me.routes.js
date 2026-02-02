@@ -9,7 +9,7 @@ const r = Router();
 r.get("/cidadao", authMiddleware(['admin']), getMeuCidadao);
 
 
-r.get("/me", authMiddleware(), async (req, res) => {
+r.get("/perms", authMiddleware(), async (req, res) => {
   const permSet = await resolveUserPermissions(db, req.user);
   res.json({
     user: req.user,
