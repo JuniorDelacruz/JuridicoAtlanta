@@ -33,7 +33,8 @@ import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 import Valores from './pages/valores/Valores';
 import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequerimentoDetalhesCasamento';
 import Lancamentos from './pages/Lançamentos';
-import AdminPermissoes from './pages/AdminPermissoes';
+import AdminPermissoesCentro from './pages/AdminPermissoesCentro.jsx';
+import AdminPermissoesCargo from './pages/AdminPermissoesCentro.jsx';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -182,7 +183,8 @@ function App() {
         }
       />
 
-      <Route path="/admin/permissoes" element={<AdminPermissoes />} />
+      <Route path="/admin/permissoes" element={<AdminPermissoesCentro />} />
+      <Route path="/admin/permissoes/:subjectType/:subjectValue" element={<AdminPermissoesCargo />} />
 
       <Route path="/lancamentos" element={<Lancamentos />} />
       <Route path="/valores" element={<Valores />} />
