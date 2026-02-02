@@ -25,9 +25,8 @@ export default function TriagemRequerimentosTipo() {
   const { slug } = useParams();
   const tipoCfg = getTriagemTipoBySlug(slug);
 
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
   const navigate = useNavigate();
-  const isEquipeJuridica = user?.subRole === "equipejuridico";
 
   const [pendentes, setPendentes] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -39,8 +38,8 @@ export default function TriagemRequerimentosTipo() {
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-  }, [tipoCfg, user?.role, isEquipeJuridica]);
+    return hasPerm(tipoCfg.permKey);
+  }, [tipoCfg, hasPerm]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,7 +67,6 @@ export default function TriagemRequerimentosTipo() {
       setError(null);
 
       try {
-        // backend espera "carimbo" pra filtrar AGUARDANDO_CARIMBO
         const tipoParam = isCarimbo ? "carimbo" : tipoCfg.tipoDb;
 
         const res = await axios.get(`${API_URL}/api/triagem/requerimentos`, {
@@ -102,9 +100,7 @@ export default function TriagemRequerimentosTipo() {
     if (search.trim()) {
       const term = search.toLowerCase().trim();
       result = result.filter(
-        (r) =>
-          String(r.numero || "").includes(term) ||
-          String(r.solicitante || "").toLowerCase().includes(term)
+        (r) => String(r.numero || "").includes(term) || String(r.solicitante || "").toLowerCase().includes(term)
       );
     }
     setFiltered(result);
@@ -117,30 +113,17 @@ export default function TriagemRequerimentosTipo() {
       confirmText: "Aprovar",
       cancelText: "Cancelar",
     });
-
     if (!ok) return;
 
     try {
-      await axios.patch(
-        `${API_URL}/api/triagem/requerimentos/${numero}/aprovar`,
-        {},
-        { headers: authHeaders() }
-      );
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      push({
-        type: "success",
-        title: "Aprovado",
-        message: `Requerimento #${numero} aprovado.`,
-      });
+      push({ type: "success", title: "Aprovado", message: `Requerimento #${numero} aprovado.` });
     } catch (err) {
-      push({
-        type: "error",
-        title: "Erro ao aprovar",
-        message: err.response?.data?.msg || err.message,
-      });
+      push({ type: "error", title: "Erro ao aprovar", message: err.response?.data?.msg || err.message });
     }
   };
 
@@ -152,30 +135,17 @@ export default function TriagemRequerimentosTipo() {
       cancelText: "Cancelar",
       danger: true,
     });
-
     if (!ok) return;
 
     try {
-      await axios.patch(
-        `${API_URL}/api/triagem/requerimentos/${numero}/indeferir`,
-        {},
-        { headers: authHeaders() }
-      );
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      push({
-        type: "warning",
-        title: "Indeferido",
-        message: `Requerimento #${numero} indeferido.`,
-      });
+      push({ type: "warning", title: "Indeferido", message: `Requerimento #${numero} indeferido.` });
     } catch (err) {
-      push({
-        type: "error",
-        title: "Erro ao indeferir",
-        message: err.response?.data?.msg || err.message,
-      });
+      push({ type: "error", title: "Erro ao indeferir", message: err.response?.data?.msg || err.message });
     }
   };
 
@@ -186,47 +156,25 @@ export default function TriagemRequerimentosTipo() {
       confirmText: "Carimbar",
       cancelText: "Cancelar",
     });
-
     if (!ok) return;
 
     try {
-      await axios.patch(
-        `${API_URL}/api/triagem/requerimentos/${numero}/carimbar`,
-        {},
-        { headers: authHeaders() }
-      );
+      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/carimbar`, {}, { headers: authHeaders() });
 
       setPendentes((prev) => prev.filter((r) => r.numero !== numero));
       setFiltered((prev) => prev.filter((r) => r.numero !== numero));
 
-      push({
-        type: "success",
-        title: "Carimbado",
-        message: `Requerimento #${numero} carimbado com sucesso.`,
-      });
+      push({ type: "success", title: "Carimbado", message: `Requerimento #${numero} carimbado com sucesso.` });
     } catch (err) {
-      push({
-        type: "error",
-        title: "Erro ao carimbar",
-        message: err.response?.data?.msg || err.message,
-      });
+      push({ type: "error", title: "Erro ao carimbar", message: err.response?.data?.msg || err.message });
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
-  }
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-red-600">
-        {error}
-      </div>
-    );
-  }
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+  if (error) return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      {/* Header */}
       <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -245,17 +193,13 @@ export default function TriagemRequerimentosTipo() {
 
             <span className="text-sm">Bem-vindo, {user?.username || "Usuário"}</span>
 
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition"
-            >
+            <button onClick={logout} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition">
               Sair
             </button>
           </div>
         </div>
       </header>
 
-      {/* Conteúdo */}
       <main className="flex-grow max-w-7xl mx-auto py-8 px-6">
         <div className="flex justify-between items-center mb-6 gap-4 flex-col md:flex-row">
           <h2 className="text-3xl font-bold text-gray-800">
@@ -284,30 +228,18 @@ export default function TriagemRequerimentosTipo() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Número
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Solicitante
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
 
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filtered.map((r) => (
                     <tr key={r.numero} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{r.numero}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {r.solicitante}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{r.numero}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.solicitante}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(r.createdAt).toLocaleDateString("pt-BR")}
                       </td>
@@ -340,7 +272,9 @@ export default function TriagemRequerimentosTipo() {
                         </button>
 
                         <button
-                          onClick={() => navigate(slug === 'casamento' ? `/triagem/${slug}/detalhe/${r.numero}` : `/triagem/${slug}/detalhes/${r.numero}`)}
+                          onClick={() =>
+                            navigate(slug === "casamento" ? `/triagem/${slug}/detalhe/${r.numero}` : `/triagem/${slug}/detalhes/${r.numero}`)
+                          }
                           className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"
                         >
                           Ver detalhes
