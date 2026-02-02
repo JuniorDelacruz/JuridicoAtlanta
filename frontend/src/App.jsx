@@ -33,6 +33,7 @@ import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 import Valores from './pages/valores/Valores';
 import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequerimentoDetalhesCasamento';
 import Lancamentos from './pages/Lançamentos';
+import AdminPermissoes from './pages/AdminPermissoes';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -180,6 +181,8 @@ function App() {
         </ProtectedRoute>
         }
       />
+
+      <Route path="/admin/permissoes" element={<AdminPermissoes />} />
 
       <Route path="/lancamentos" element={<Lancamentos />} />
       <Route path="/valores" element={<Valores />} />

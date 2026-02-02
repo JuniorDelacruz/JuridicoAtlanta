@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../models/index.js";
 import authMiddleware from "../middleware/auth.js";
+import { requirePerm } from "../middleware/requirePerm.js";
 
 const router = express.Router();
 const { Lancamento, Requerimento, User, CadastroCidadao, ServicoJuridico, sequelize } = db;
@@ -203,7 +204,7 @@ router.get("/membros-juridico", authMiddleware(), async (req, res) => {
  * GET /api/lancamentos?paid=0/1&createdBy=ID
  * =========================
  */
-router.get("/", authMiddleware(), async (req, res) => {
+router.get("/", authMiddleware(), requirePerm("lancamentos.view_all"), async (req, res) => {
     try {
         if (!hasPerm(req.user, "LANCAMENTOS_VER_GERAL")) {
             return res.status(403).json({ msg: "Sem permissão para ver todos os lançamentos." });
@@ -241,7 +242,7 @@ router.get("/", authMiddleware(), async (req, res) => {
  * - (opcional override) valorTotal, repasseAdvogado -> apenas master/responsavel usa
  * =========================
  */
-router.post("/", authMiddleware(), async (req, res) => {
+router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const { servicoId, titulo, descricao, requerimentoNumero, valorTotal, repasseAdvogado } = req.body;
