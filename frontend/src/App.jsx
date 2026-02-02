@@ -33,8 +33,8 @@ import ConsultarCidadao from './pages/arquivos/ConsultarCidadao';
 import Valores from './pages/valores/Valores';
 import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequerimentoDetalhesCasamento';
 import Lancamentos from './pages/Lançamentos';
-import AdminPermissoesCentro from './pages/AdminPermissoesCentro.jsx';
-import AdminPermissoesCargo from './pages/AdminPermissoesCentro.jsx';
+import AdminPermissoesCentro from './pages/Admin/AdminPermissoesCentro.jsx';
+import AdminPermissoesCargo from './pages/Admin/AdminPermissoesCargo.jsx';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
