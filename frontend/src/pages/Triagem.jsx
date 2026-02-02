@@ -16,7 +16,7 @@ function Triagem() {
 
   // Permissões por tipo (roles que podem ver/acessar cada card)
   const permissoes = {
-    cadastro: ['escrivao', 'admin'], // + equipejuridico
+    cadastro: ['escrivao', 'juiz'], // + equipejuridico
     porteDeArma: ['juiz', 'admin'], // + equipejuridico
     registroDeArma: ['juiz', 'admin'], // + equipejuridico
     trocaDeNome: ['juiz', 'admin'], // + equipejuridico
