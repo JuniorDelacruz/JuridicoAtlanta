@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
@@ -15,10 +15,21 @@ function authHeaders() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [cidadao, setCidadao] = useState(null);
+
+  // ✅ NOVO: permissões efetivas (keys)
+  const [perms, setPerms] = useState([]); // array de strings
+  const [permsLoading, setPermsLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const permsSet = useMemo(() => new Set((perms || []).map(String)), [perms]);
+
+  const hasPerm = (key) => permsSet.has(String(key));
+  const hasAnyPerm = (keys) => (keys || []).some((k) => hasPerm(k));
+  const hasAllPerms = (keys) => (keys || []).every((k) => hasPerm(k));
 
   // 1) resolve token e user
   useEffect(() => {
@@ -32,6 +43,9 @@ export function AuthProvider({ children }) {
 
     const token = localStorage.getItem("token");
     if (!token) {
+      setUser(null);
+      setCidadao(null);
+      setPerms([]);
       setLoading(false);
       return;
     }
@@ -43,6 +57,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("token");
         setUser(null);
         setCidadao(null);
+        setPerms([]);
         navigate("/login");
       } else {
         setUser(decoded);
@@ -52,6 +67,7 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("token");
       setUser(null);
       setCidadao(null);
+      setPerms([]);
       navigate("/login");
     } finally {
       setLoading(false);
@@ -77,16 +93,51 @@ export function AuthProvider({ children }) {
     })();
   }, [user]);
 
+  // ✅ 3) depois que tiver user, busca permissões efetivas
+  useEffect(() => {
+    if (!user) {
+      setPerms([]);
+      return;
+    }
+
+    (async () => {
+      setPermsLoading(true);
+      try {
+        // ⚠️ você precisa criar esse endpoint no backend
+        // resposta esperada: { perms: ["triagem.acessar.alvara", ...] }  OU { permissions: [...] }
+        const res = await axios.get(`${API_URL}/api/me/perms`, {
+          headers: authHeaders(),
+        });
+
+        const arr =
+          (Array.isArray(res.data?.perms) && res.data.perms) ||
+          (Array.isArray(res.data?.permissions) && res.data.permissions) ||
+          [];
+
+        setPerms(arr.map(String));
+      } catch (e) {
+        // Se der erro, deixa vazio => ninguém vê nada (mais seguro)
+        setPerms([]);
+      } finally {
+        setPermsLoading(false);
+      }
+    })();
+  }, [user]);
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
     setCidadao(null);
+    setPerms([]);
     navigate("/login");
   };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
+
+  const displayName =
+    (cidadao?.nomeCompleto?.trim() ? cidadao.nomeCompleto : user?.username) || "Usuário";
 
   return (
     <AuthContext.Provider
@@ -95,7 +146,14 @@ export function AuthProvider({ children }) {
         cidadao,
         logout,
         isAuthenticated: !!user,
-        displayName: (cidadao?.nomeCompleto?.trim() ? cidadao.nomeCompleto : user?.username) || "Usuário",
+        displayName,
+
+        // ✅ NOVO
+        perms,
+        permsLoading,
+        hasPerm,
+        hasAnyPerm,
+        hasAllPerms,
       }}
     >
       {children}

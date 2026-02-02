@@ -123,6 +123,8 @@ app.get('/api', (req, res) => {
 });
 
 
+app.locals.db = db;
+
 
 // await db.Permission.bulkCreate(
 //   [
