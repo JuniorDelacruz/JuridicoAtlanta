@@ -174,7 +174,6 @@ export default function Triagem() {
                   <h3 className="text-xl font-semibold mb-2">{tipo.nome}</h3>
                   <p className="text-gray-600 mb-4">{tipo.desc}</p>
 
-                  <div className="text-[11px] text-gray-400 mb-3">{tipo.perm}</div>
 
                   <button
                     onClick={() => tipo.permitido && navigate(tipo.path)}
