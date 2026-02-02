@@ -8,7 +8,7 @@ import {
   ComponentType
 } from 'discord.js';
 import db from '../../../models/index.js'
-import { hierarquiaRunNow } from '../../Eventos/Owner/Hierarquia.js';
+import { hierarquiaRunNow } from '../../Eventos/HIERARQUIA/Hierarquia.js';
 const { HierarquiaConfig, Hierarquia } = db
 
 export default {
@@ -82,7 +82,7 @@ export default {
         if (typeof hierarquiaRunNow === "function") {
           await hierarquiaRunNow(cfgId);  // ← mantenha o await aqui
         } else {
-          const { runHierarchyForConfig } = await import("../../Eventos/Owner/Hierarquia.js");
+          const { runHierarchyForConfig } = await import("../../Eventos/HIERARQUIA/Hierarquia.js");
           const cfg = await HierarquiaConfig.findByPk(cfgId);
           if (cfg) await runHierarchyForConfig(client, cfg);
         }
