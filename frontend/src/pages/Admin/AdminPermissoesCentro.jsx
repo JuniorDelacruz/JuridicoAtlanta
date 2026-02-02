@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../services/api";
 import { useToast } from "../../utils/toast";
 import { useNavigate } from "react-router-dom";
-import { 
-  PlusCircle, 
-  ArrowLeft, 
-  Users, 
-  ShieldCheck, 
-  Loader2 
+import {
+  PlusCircle,
+  ArrowLeft,
+  Users,
+  ShieldCheck,
+  Loader2
 } from "lucide-react";
 
 function groupBy(arr, getKey) {
@@ -33,6 +33,15 @@ export default function AdminPermissoesCentro() {
     { subjectType: "role", subjectValue: "promotor", label: "Promotor" },
     { subjectType: "role", subjectValue: "tabeliao", label: "Tabelião" },
     { subjectType: "role", subjectValue: "escrivao", label: "Escrivão" },
+
+    // Novos roles solicitados
+    { subjectType: "role", subjectValue: "cidadao", label: "Cidadão" },
+    { subjectType: "role", subjectValue: "auxiliar", label: "Auxiliar" },
+    { subjectType: "role", subjectValue: "advogado", label: "Advogado" },
+    { subjectType: "role", subjectValue: "promotor_chefe", label: "Promotor Chefe" },
+    { subjectType: "role", subjectValue: "desembargador", label: "Desembargador" },
+
+    // Sub-roles existentes (mantidos iguais)
     { subjectType: "subRole", subjectValue: "equipejuridico", label: "Equipe Jurídico" },
     { subjectType: "subRole", subjectValue: "responsaveljuridico", label: "Responsável Jurídico" },
     { subjectType: "subRole", subjectValue: "master", label: "Master" },
@@ -165,7 +174,7 @@ export default function AdminPermissoesCentro() {
             {perms.length > 0 && (
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {permsByGroup.map(([group, items]) => (
-                  <div 
+                  <div
                     key={group}
                     className="bg-gray-50/60 border border-gray-200 rounded-lg p-4 hover:shadow transition-shadow"
                   >
