@@ -79,9 +79,9 @@ router.get("/admin", authMiddleware(), requirePerm("servicos.manage"), async (re
  * POST /api/servicos
  * -> cria (admin)
  */
-router.post("/", authMiddleware(), async (req, res) => {
+router.post("/", authMiddleware(),requirePerm("servicos.manage"), async (req, res) => {
     try {
-        if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
+       
 
         const { label, value, ativo, valorTotalCents, repasseAdvogadoCents, allow } = req.body;
 
@@ -118,9 +118,9 @@ router.post("/", authMiddleware(), async (req, res) => {
  * PUT /api/servicos/:id
  * -> edita (admin)
  */
-router.put("/:id", authMiddleware(), async (req, res) => {
+router.put("/:id", authMiddleware(), requirePerm("servicos.manage"), async (req, res) => {
     try {
-        if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
+        
 
         const id = Number(req.params.id);
         if (!id) return res.status(400).json({ msg: "ID inválido." });
