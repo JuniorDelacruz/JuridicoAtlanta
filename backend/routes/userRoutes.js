@@ -37,7 +37,7 @@ const subRank = (sub) => SUBROLE_ORDER.indexOf(norm(sub));
 
 router.get(
     "/",
-    authMiddleware({ subRoles: ["alteracaocargo", "responsaveljuridico", "master"] }),
+    authMiddleware(), requirePerm("admin.perm.manageroles"),
     async (req, res) => {
         const users = await User.findAll({
             attributes: ["id", "username", "discordId", "role", "subRole"],
@@ -54,7 +54,7 @@ router.patch(
     "/:id",
     // ✅ agora não é mais por ROLE "admin". É por SUBROLE
     // você vai precisar adaptar seu authMiddleware pra aceitar subRoles (como eu te mandei antes)
-    authMiddleware({ subRoles: ["alteracaocargo", "responsaveljuridico", "master"] }),
+    authMiddleware(), requirePerm("admin.perm.manageroles"),
     async (req, res) => {
         const { role, subRole } = req.body;
 
