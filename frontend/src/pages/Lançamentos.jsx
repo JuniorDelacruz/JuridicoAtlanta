@@ -1,9 +1,26 @@
+// frontend/src/pages/Lancamentos.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../utils/toast";
 import { Plus, ArrowLeft, FileText, Eye, X, Users, Settings, Pencil } from "lucide-react";
+
+/**
+ * =========================================================
+ * PERMISSIONS
+ * =========================================================
+ */
+const PERMS = {
+  ADMIN_ALL: "admin.perms.all",
+
+  CREATE: "lancamentos.create",
+  VIEW_ALL: "lancamentos.view_all",
+  VIEW_MEUS: "lancamentos.view_meus",
+  REPASSE: "lancamentos.repasse.registrar",
+
+  SERVICOS_MANAGE: "servicos.manage",
+};
 
 /**
  * =========================================================
@@ -35,7 +52,6 @@ function fmtBRLFromCents(cents) {
 
 function centsToInputBRL(cents) {
   const n = Number(cents || 0) / 100;
-  // mantém simples: "1000,00"
   return n.toFixed(2).replace(".", ",");
 }
 
@@ -46,7 +62,7 @@ function centsToInputBRL(cents) {
  */
 export default function Lancamentos() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, hasPerm } = useAuth();
   const { push } = useToast();
 
   const [view, setView] = useState("home");
@@ -73,6 +89,23 @@ export default function Lancamentos() {
   const [openServicoModal, setOpenServicoModal] = useState(false);
   const [servicoEdit, setServicoEdit] = useState(null);
 
+  /**
+   * =========================================================
+   * PERMISSION FLAGS (usa hasPerm do AuthContext)
+   * - admin.perms.all libera tudo como master/responsavel
+   * =========================================================
+   */
+  const isAdminAll = !!hasPerm?.(PERMS.ADMIN_ALL);
+
+  const canCreate = isAdminAll || !!hasPerm?.(PERMS.CREATE);
+  const canViewMeus = isAdminAll || !!hasPerm?.(PERMS.VIEW_MEUS);
+  const canViewAll = isAdminAll || !!hasPerm?.(PERMS.VIEW_ALL);
+  const canRegistrarRepasse = isAdminAll || !!hasPerm?.(PERMS.REPASSE);
+  const canManageServicos = isAdminAll || !!hasPerm?.(PERMS.SERVICOS_MANAGE);
+
+  // "high" (override / poderes de admin interno)
+  const isHigh = useMemo(() => isAdminAll || isHighSubRole(user?.subRole), [isAdminAll, user?.subRole]);
+
   useEffect(() => {
     if (!isAuthenticated) navigate("/login");
   }, [isAuthenticated, navigate]);
@@ -84,35 +117,68 @@ export default function Lancamentos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // carregamento conforme view
+  // carregamento conforme view (com gate por perm)
   useEffect(() => {
-    if (view === "meus") fetchMeus();
+    if (!isAuthenticated) return;
 
-    if (view === "ver") {
-      fetchTodosFiltrado({ paid: tabVer === "pagos" ? 1 : 0 });
+    const deny = (msg) => {
+      push({ type: "error", title: "Negado", message: msg });
+      setView("home");
+    };
+
+    if (view === "meus") {
+      if (!canViewMeus) return deny("Você não tem permissão para ver seus lançamentos.");
+      fetchMeus();
+      return;
     }
 
-    if (view === "membros") fetchMembros();
+    if (view === "ver") {
+      if (!canViewAll) return deny("Você não tem permissão para ver lançamentos (geral).");
+      fetchTodosFiltrado({ paid: tabVer === "pagos" ? 1 : 0 });
+      return;
+    }
 
-    if (view === "membro" && membroSelecionado?.id) {
-      fetchTodosFiltrado({
-        paid: tabVer === "pagos" ? 1 : 0,
-        createdBy: membroSelecionado.id,
-      });
+    if (view === "membros") {
+      if (!canViewAll) return deny("Você não tem permissão para ver membros/lançamentos do jurídico.");
+      fetchMembros();
+      return;
+    }
+
+    if (view === "membro") {
+      if (!canViewAll) return deny("Você não tem permissão para ver lançamentos por membro.");
+      if (membroSelecionado?.id) {
+        fetchTodosFiltrado({
+          paid: tabVer === "pagos" ? 1 : 0,
+          createdBy: membroSelecionado.id,
+        });
+      }
+      return;
     }
 
     if (view === "servicos") {
+      if (!canManageServicos) return deny("Você não tem permissão para gerenciar serviços.");
       fetchServicosAdmin();
+      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
+  }, [
+    view,
+    isAuthenticated,
+    tabVer,
+    membroSelecionado?.id,
+    canViewMeus,
+    canViewAll,
+    canManageServicos,
+  ]);
 
-  // recarrega quando muda a tab ou troca membro selecionado
+  // recarrega quando muda a tab ou troca membro selecionado (somente onde faz sentido)
   useEffect(() => {
-    if (view === "ver") {
+    if (!isAuthenticated) return;
+
+    if (view === "ver" && canViewAll) {
       fetchTodosFiltrado({ paid: tabVer === "pagos" ? 1 : 0 });
     }
-    if (view === "membro" && membroSelecionado?.id) {
+    if (view === "membro" && canViewAll && membroSelecionado?.id) {
       fetchTodosFiltrado({
         paid: tabVer === "pagos" ? 1 : 0,
         createdBy: membroSelecionado.id,
@@ -126,7 +192,6 @@ export default function Lancamentos() {
       const { data } = await api.get("/api/servicos");
       setServicos(Array.isArray(data) ? data : []);
     } catch (err) {
-      // se falhar, não trava página; só avisa
       push({ type: "warning", title: "Serviços", message: err?.response?.data?.msg || err.message });
       setServicos([]);
     }
@@ -205,6 +270,11 @@ export default function Lancamentos() {
   }
 
   async function registrarRepasse(ids) {
+    if (!canRegistrarRepasse) {
+      push({ type: "error", title: "Negado", message: "Você não tem permissão para registrar repasse." });
+      return;
+    }
+
     try {
       const { data } = await api.post("/api/lancamentos/registrar-repasse", { ids });
       push({
@@ -221,8 +291,6 @@ export default function Lancamentos() {
       push({ type: "warning", title: "Erro", message: err?.response?.data?.msg || err.message });
     }
   }
-
-  const podeGerenciarServicos = useMemo(() => isHighSubRole(user?.subRole), [user?.subRole]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -251,38 +319,54 @@ export default function Lancamentos() {
       <main className="flex-grow max-w-7xl mx-auto w-full py-8 px-6">
         {/* HOME */}
         {view === "home" && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card
-              title="Meus Lançamentos"
-              icon={<FileText className="h-5 w-5" />}
-              desc="Veja seus lançamentos e adicione novos."
-              onClick={() => setView("meus")}
-            />
-            <Card
-              title="Ver Lançamentos"
-              icon={<Eye className="h-5 w-5" />}
-              desc="Visão geral (somente com permissão)."
-              onClick={() => {
-                setTabVer("pendentes");
-                setView("ver");
-              }}
-            />
-            <Card
-              title="Membros Jurídico"
-              icon={<Users className="h-5 w-5" />}
-              desc="Clique em um membro para ver os lançamentos dele."
-              onClick={() => setView("membros")}
-            />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {canViewMeus && (
+                <Card
+                  title="Meus Lançamentos"
+                  icon={<FileText className="h-5 w-5" />}
+                  desc="Veja seus lançamentos e adicione novos."
+                  onClick={() => setView("meus")}
+                />
+              )}
 
-            {podeGerenciarServicos && (
-              <Card
-                title="Serviços"
-                icon={<Settings className="h-5 w-5" />}
-                desc="Criar/editar serviços, permissões e repasses."
-                onClick={() => setView("servicos")}
-              />
+              {canViewAll && (
+                <Card
+                  title="Ver Lançamentos"
+                  icon={<Eye className="h-5 w-5" />}
+                  desc="Visão geral (somente com permissão)."
+                  onClick={() => {
+                    setTabVer("pendentes");
+                    setView("ver");
+                  }}
+                />
+              )}
+
+              {canViewAll && (
+                <Card
+                  title="Membros Jurídico"
+                  icon={<Users className="h-5 w-5" />}
+                  desc="Clique em um membro para ver os lançamentos dele."
+                  onClick={() => setView("membros")}
+                />
+              )}
+
+              {canManageServicos && (
+                <Card
+                  title="Serviços"
+                  icon={<Settings className="h-5 w-5" />}
+                  desc="Criar/editar serviços, permissões e repasses."
+                  onClick={() => setView("servicos")}
+                />
+              )}
+            </div>
+
+            {!canViewMeus && !canViewAll && !canManageServicos && (
+              <div className="mt-10 text-center text-gray-600">
+                Você não tem permissões para acessar Lançamentos no momento.
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {/* MEUS */}
@@ -302,13 +386,15 @@ export default function Lancamentos() {
                   Voltar
                 </button>
 
-                <button
-                  onClick={() => setOpenAdd(true)}
-                  className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium inline-flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Adicionar
-                </button>
+                {canCreate && (
+                  <button
+                    onClick={() => setOpenAdd(true)}
+                    className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium inline-flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar
+                  </button>
+                )}
               </div>
             </div>
 
@@ -398,7 +484,7 @@ export default function Lancamentos() {
                   Selecionados: <b>{selectedIds.length}</b>
                 </div>
 
-                {tabVer === "pendentes" && (
+                {tabVer === "pendentes" && canRegistrarRepasse && (
                   <button
                     disabled={selectedIds.length === 0}
                     onClick={() => registrarRepasse(selectedIds)}
@@ -414,7 +500,12 @@ export default function Lancamentos() {
               ) : todos.length === 0 ? (
                 <div className="py-10 text-center text-gray-500">Nenhum lançamento encontrado.</div>
               ) : (
-                <TableLancamentosGeral rows={todos} tab={tabVer} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
+                <TableLancamentosGeral
+                  rows={todos}
+                  tab={tabVer}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
+                />
               )}
             </Box>
           </div>
@@ -449,7 +540,7 @@ export default function Lancamentos() {
                   Selecionados: <b>{selectedIds.length}</b>
                 </div>
 
-                {tabVer === "pendentes" && (
+                {tabVer === "pendentes" && canRegistrarRepasse && (
                   <button
                     disabled={selectedIds.length === 0}
                     onClick={() => registrarRepasse(selectedIds)}
@@ -465,7 +556,12 @@ export default function Lancamentos() {
               ) : todos.length === 0 ? (
                 <div className="py-10 text-center text-gray-500">Nenhum lançamento encontrado.</div>
               ) : (
-                <TableLancamentosGeral rows={todos} tab={tabVer} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
+                <TableLancamentosGeral
+                  rows={todos}
+                  tab={tabVer}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
+                />
               )}
             </Box>
           </div>
@@ -522,7 +618,10 @@ export default function Lancamentos() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {servicosAdmin.map((s) => {
-                        const repJur = Math.max(0, Number(s.valorTotalCents || 0) - Number(s.repasseAdvogadoCents || 0));
+                        const repJur = Math.max(
+                          0,
+                          Number(s.valorTotalCents || 0) - Number(s.repasseAdvogadoCents || 0)
+                        );
                         return (
                           <tr key={s.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 text-sm">{s.ativo ? "✅" : "❌"}</td>
@@ -561,11 +660,11 @@ export default function Lancamentos() {
           <NovoLancamentoWizard
             user={user}
             servicos={servicos}
+            allowOverride={isHigh} // ✅ master/responsavel OU admin.perms.all
             onCancel={() => setOpenAdd(false)}
             onCreated={async () => {
               setOpenAdd(false);
               await fetchMeus();
-              // atualiza lista de serviços (caso tenham sido editados)
               await fetchServicosSelect();
             }}
           />
@@ -699,7 +798,9 @@ function TableLancamentosMeus({ rows }) {
         <tbody className="bg-white divide-y divide-gray-200">
           {rows.map((r) => (
             <tr key={r.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{r.data ? new Date(r.data).toLocaleString("pt-BR") : "—"}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {r.data ? new Date(r.data).toLocaleString("pt-BR") : "—"}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{r.requerimentoNumero || "—"}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{r.servicoLabel || r.tipo || "—"}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{r.titulo || "—"}</td>
@@ -761,7 +862,9 @@ function TableLancamentosGeral({ rows, tab, selectedIds, setSelectedIds }) {
                 </td>
               )}
 
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{r.data ? new Date(r.data).toLocaleString("pt-BR") : "—"}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {r.data ? new Date(r.data).toLocaleString("pt-BR") : "—"}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{r.requerimentoNumero || "—"}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.solicitanteNome || "—"}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{r.advogadoNome || "—"}</td>
@@ -792,13 +895,9 @@ function TableLancamentosGeral({ rows, tab, selectedIds, setSelectedIds }) {
 /**
  * =========================================================
  * WIZARD NOVO LANÇAMENTO
- * - Step1: Serviço (vem do banco)
- * - Step2: Requerimento (valida)
- * - Step3: Detalhes
- * - Step4: Valores (mostra os do serviço; override só master/responsavel)
  * =========================================================
  */
-function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
+function NovoLancamentoWizard({ user, servicos, allowOverride, onCancel, onCreated }) {
   const { push } = useToast();
 
   const [step, setStep] = useState(1);
@@ -814,8 +913,6 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
 
-  // override (somente master/responsavel)
-  const allowOverride = isHighSubRole(user?.subRole);
   const [valorTotalOverride, setValorTotalOverride] = useState("");
   const [repasseAdvOverride, setRepasseAdvOverride] = useState("");
 
@@ -861,8 +958,6 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
       setReqMsg(data?.msg || "OK");
     } catch (err) {
       const status = err?.response?.status;
-
-      // pega msg em vários formatos (incluindo quando o backend manda HTML/string)
       const raw = err?.response?.data;
       const msg =
         raw?.msg ||
@@ -892,7 +987,6 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
     }
   }
 
-  // valida enquanto digita (somente Step 2)
   useEffect(() => {
     if (step !== 2) return;
 
@@ -904,7 +998,6 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requerimentoNumero, step]);
 
-  // quando escolhe serviço, sugere override com valores base (pra ficar visual)
   useEffect(() => {
     if (!allowOverride) return;
     if (!servicoSelecionado) return;
@@ -923,7 +1016,6 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
         requerimentoNumero,
       };
 
-      // override apenas se for master/responsavel e tiver preenchido
       if (allowOverride) {
         payload.valorTotal = valorTotalOverride;
         payload.repasseAdvogado = repasseAdvOverride;
@@ -1055,7 +1147,7 @@ function NovoLancamentoWizard({ user, servicos, onCancel, onCreated }) {
               {allowOverride && (
                 <>
                   <div className="text-xs text-gray-500">
-                    Você é <b>master/responsável</b> — pode ajustar override se precisar. Se deixar como está, fica igual ao serviço.
+                    Você tem poder de <b>master/responsável</b> (ou <b>admin.perms.all</b>) — pode ajustar override se precisar.
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
