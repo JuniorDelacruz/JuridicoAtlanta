@@ -4,37 +4,18 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Scale, FileText, Search, FileCheck, Briefcase, Calendar } from "lucide-react";
 
-const normalize = (v) => String(v || "").trim().toLowerCase();
-
-const hasRole = (user, roles = []) =>
-  roles.map(normalize).includes(normalize(user?.role));
-
-const hasSubRole = (user, subRoles = []) =>
-  subRoles.map(normalize).includes(normalize(user?.subRole));
-
-const canAccess = (user, module) => {
-  const okRole =
-    (module.allowedRoles?.length ?? 0) === 0 || hasRole(user, module.allowedRoles);
-  const okSub =
-    (module.allowedSubRoles?.length ?? 0) === 0 || hasSubRole(user, module.allowedSubRoles);
-
-  if (module.allowedRoles?.length && module.allowedSubRoles?.length) return okRole || okSub;
-  if (module.allowedRoles?.length) return okRole;
-  if (module.allowedSubRoles?.length) return okSub;
-  return true;
-};
-
 export default function Dashboard() {
-  const { user, displayName, logout, isAuthenticated, } = useAuth();
+  const { user, displayName, logout, isAuthenticated, hasPerm } = useAuth();
   const navigate = useNavigate();
 
-  // 1) Redirect SEM side-effect no render
+  // Redirect SEM side-effect no render
   useEffect(() => {
     if (!isAuthenticated) navigate("/login", { replace: true });
   }, [isAuthenticated, navigate]);
 
-  // 2) Enquanto user não chegou ainda, renderiza loading ao invés de crashar
   if (!isAuthenticated) return null;
+
+  // Enquanto user não chegou ainda
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-700">
@@ -44,25 +25,32 @@ export default function Dashboard() {
   }
 
   const moduleConfig = {
-    "Painéis": { icon: Scale, bgColor: "bg-blue-600" },
-    "Requerimentos": { icon: FileText, bgColor: "bg-indigo-600" },
-    "Triagem": { icon: Search, bgColor: "bg-amber-600" },
-    "Cartório": { icon: FileCheck, bgColor: "bg-green-600" },
-    "Arquivos": { icon: Briefcase, bgColor: "bg-purple-600" },
-    "Processos": { icon: Calendar, bgColor: "bg-red-600" },
+    Painéis: { icon: Scale, bgColor: "bg-blue-600" },
+    Requerimentos: { icon: FileText, bgColor: "bg-indigo-600" },
+    Triagem: { icon: Search, bgColor: "bg-amber-600" },
+    Cartório: { icon: FileCheck, bgColor: "bg-green-600" },
+    Arquivos: { icon: Briefcase, bgColor: "bg-purple-600" },
+    Processos: { icon: Calendar, bgColor: "bg-red-600" },
+    Lançamentos: { icon: Calendar, bgColor: "bg-gray-700" },
   };
 
   const allModules = [
-    { name: "Painéis", link: "/paineis", allowedRoles: [], allowedSubRoles: ["alterarcargo","equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Cartório", link: "/cartorio", allowedRoles: ["tabeliao", "escrivao", "juiz"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Requerimentos", link: "/requerimentos", allowedRoles: ["advogado", "promotor", "juiz", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Triagem", link: "/triagem", allowedRoles: ["promotor", "tabeliao", "juiz", "escrivao"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Arquivos", link: "/arquivos", allowedRoles: ["advogado", "tabeliao", "auxiliar", 'juiz'], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
-    { name: "Processos", link: "/processos", allowedRoles: [], allowedSubRoles: ['master'] },
-    { name: "Lançamentos", link: "/lancamentos", allowedRoles: ['juiz', "advogado", "conselheiro"], allowedSubRoles: ["equipejuridico", 'responsaveljuridico', 'master'] },
+    { name: "Painéis", link: "/paineis", perm: "dashboard.acessar.painel" },
+    { name: "Cartório", link: "/cartorio", perm: "dashboard.acessar.cartorio" },
+    { name: "Requerimentos", link: "/requerimentos", perm: "dashboard.acessar.requerimento" },
+    { name: "Triagem", link: "/triagem", perm: "dashboard.acessar.triagem" },
+    { name: "Arquivos", link: "/arquivos", perm: "dashboard.acessar.arquivos" },
+    { name: "Lançamentos", link: "/lancamentos", perm: "dashboard.acessar.lancamentos" },
+
+    // Se você quiser por perm também, crie a perm e libera aqui:
+    // { name: "Processos", link: "/processos", perm: "dashboard.acessar.processos" },
   ];
 
-  const modules = useMemo(() => allModules.filter((m) => canAccess(user, m)), [user]);
+  const modules = useMemo(() => {
+    // se hasPerm não existir por algum motivo, trava tudo (mais seguro)
+    if (typeof hasPerm !== "function") return [];
+    return allModules.filter((m) => hasPerm(m.perm));
+  }, [hasPerm]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -114,8 +102,11 @@ export default function Dashboard() {
                   )}
                   <h4 className="text-xl font-semibold">{module.name}</h4>
                 </div>
+
                 <div className="p-6">
-                  <p className="text-gray-600 mb-4">Acesse e gerencie {module.name.toLowerCase()} do sistema.</p>
+                  <p className="text-gray-600 mb-4">
+                    Acesse e gerencie {module.name.toLowerCase()} do sistema.
+                  </p>
                   <span className="text-blue-600 font-medium hover:underline">Entrar →</span>
                 </div>
               </div>
@@ -125,7 +116,7 @@ export default function Dashboard() {
 
         {modules.length === 0 && (
           <div className="text-center text-gray-600 text-xl mt-10">
-            Nenhum módulo disponível para o seu cargo/subcargo no momento.
+            Nenhum módulo disponível para suas permissões no momento.
           </div>
         )}
       </main>
@@ -150,10 +141,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-
-          <p className="text-sm">
-            © {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados
-          </p>
+          <p className="text-sm">© {new Date().getFullYear()} Jurídico Atlanta RP • Todos os direitos reservados</p>
         </div>
       </footer>
     </div>
