@@ -38,7 +38,7 @@ export default function AdminPermissoesCentro() {
     { subjectType: "role", subjectValue: "cidadao", label: "Cidadão" },
     { subjectType: "role", subjectValue: "auxiliar", label: "Auxiliar" },
     { subjectType: "role", subjectValue: "advogado", label: "Advogado" },
-    { subjectType: "role", subjectValue: "promotor_chefe", label: "Promotor Chefe" },
+    { subjectType: "role", subjectValue: "promotor chefe", label: "Promotor Chefe" },
     { subjectType: "role", subjectValue: "desembargador", label: "Desembargador" },
 
     // Sub-roles existentes (mantidos iguais)
