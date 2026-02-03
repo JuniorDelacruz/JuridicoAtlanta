@@ -95,6 +95,7 @@ export default function Lancamentos() {
    * - admin.perms.all libera tudo como master/responsavel
    * =========================================================
    */
+  const isAdminAll = !!hasPerm?.(PERMS.ADMIN_ALL);
 
   const canCreate = !!hasPerm?.(PERMS.CREATE);
   const canViewMeus = !!hasPerm?.(PERMS.VIEW_MEUS);
