@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../utils/toast";
 import axios from "axios";
 import {
   Webhook,
@@ -38,11 +39,14 @@ const WEBHOOK_TYPES = [
   { key: "carimboPorteArma", label: "Carimbo do Porte de Arma" },
 ];
 
+const REQUIRED_PERM = "admin.perms.configwebhook";
+
 function isValidWebhookUrl(url) {
   try {
     const u = new URL(url);
     return u.protocol === "https:" || u.protocol === "http:";
   } catch {
+    // se o cara tá digitando e ainda não fechou, não bloqueia agressivo
     return true;
   }
 }
@@ -53,7 +57,8 @@ function typeLabel(tipo) {
 }
 
 export default function WebhookConfig() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
+  const { push } = useToast();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -74,21 +79,30 @@ export default function WebhookConfig() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null); // {type:'ok'|'err', text:''}
 
-  // ===== permissão =====
+  // ===== permissão (hasPerm) =====
+  const allowed = useMemo(() => {
+    if (!isAuthenticated) return false;
+    // se hasPerm não existir por algum motivo, bloqueia por segurança
+    if (typeof hasPerm !== "function") return false;
+    return !!hasPerm(REQUIRED_PERM);
+  }, [isAuthenticated, hasPerm]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    // Ajuste os roles como quiser (aqui deixei restrito)
-    const allowedRoles = ["admin", "juiz", "admin"];
-    if (!allowedRoles.includes(user.role)) {
-      alert("Acesso negado. Você não tem permissão para configurar Webhooks.");
+    if (!allowed) {
+      push({
+        type: "error",
+        title: "Negado",
+        message: "Você não tem permissão para configurar Webhooks.",
+      });
       navigate("/dashboard");
       return;
     }
-  }, [isAuthenticated, user.role, navigate]);
+  }, [isAuthenticated, allowed, navigate, push]);
 
   const tipoFinal = useMemo(() => {
     return useCustom ? (customTipo || "").trim() : tipo;
@@ -102,16 +116,16 @@ export default function WebhookConfig() {
 
   const authHeaders = () => {
     const token = localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+    return { Authorization: `Bearer ${token}` };
   };
 
   async function load() {
+    // segurança extra: não chama backend se não tem perm
+    if (!allowed) return;
+
     setLoading(true);
     setToast(null);
     try {
-      // esperado: [{ id, tipo, url, enabled, createdAt, updatedAt }]
       const res = await axios.get(`${API_URL}/api/webhooks`, {
         headers: authHeaders(),
       });
@@ -128,9 +142,9 @@ export default function WebhookConfig() {
   }
 
   useEffect(() => {
-    if (isAuthenticated) load();
+    if (allowed) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [allowed]);
 
   function resetForm() {
     setEditing(null);
@@ -223,6 +237,10 @@ export default function WebhookConfig() {
     }
   }
 
+  // se não tiver perm, nem renderiza a tela (evita flash)
+  if (!isAuthenticated) return null;
+  if (!allowed) return null;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header */}
@@ -242,7 +260,7 @@ export default function WebhookConfig() {
               Voltar ao Dashboard
             </button>
 
-            <span className="text-sm">Bem-vindo, {user.username || "Usuário"}</span>
+            <span className="text-sm">Bem-vindo, {user?.username || "Usuário"}</span>
 
             <button
               onClick={logout}
@@ -282,9 +300,7 @@ export default function WebhookConfig() {
               <Webhook className="h-8 w-8 text-blue-700" />
               <h3 className="text-xl font-semibold">Gerenciar Webhooks</h3>
             </div>
-            <p className="text-gray-600 mb-5">
-              Crie/edite webhooks por tipo de requerimento.
-            </p>
+            <p className="text-gray-600 mb-5">Crie/edite webhooks por tipo de requerimento.</p>
             <button
               onClick={openCreate}
               className="w-full flex items-center justify-center gap-2 px-6 py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700"
@@ -313,9 +329,7 @@ export default function WebhookConfig() {
               <RefreshCcw className="h-8 w-8 text-gray-700" />
               <h3 className="text-xl font-semibold">Sincronizar</h3>
             </div>
-            <p className="text-gray-600 mb-5">
-              Atualiza a lista direto do banco.
-            </p>
+            <p className="text-gray-600 mb-5">Atualiza a lista direto do banco.</p>
             <button
               onClick={load}
               disabled={loading}
@@ -423,9 +437,7 @@ export default function WebhookConfig() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b flex justify-between items-center">
-                <h3 className="text-2xl font-bold">
-                  {editing?.id ? "Editar Webhook" : "Novo Webhook"}
-                </h3>
+                <h3 className="text-2xl font-bold">{editing?.id ? "Editar Webhook" : "Novo Webhook"}</h3>
                 <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
                   <X className="h-6 w-6" />
                 </button>
@@ -435,9 +447,7 @@ export default function WebhookConfig() {
                 <form onSubmit={onSubmit} className="space-y-4">
                   {/* Tipo */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo do requerimento
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo do requerimento</label>
 
                     <div className="flex flex-col md:flex-row gap-3">
                       <select
@@ -485,9 +495,7 @@ export default function WebhookConfig() {
 
                   {/* URL */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      URL do Webhook
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">URL do Webhook</label>
                     <input
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
