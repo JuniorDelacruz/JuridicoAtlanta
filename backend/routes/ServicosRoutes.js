@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../models/index.js";
 import authMiddleware from "../middleware/auth.js";
+import { requirePerm } from "../middleware/requirePerm.js";
 
 const router = express.Router();
 const { ServicoJuridico } = db;
@@ -64,7 +65,7 @@ router.get("/", authMiddleware(), async (req, res) => {
  * GET /api/servicos/admin
  * -> lista tudo (admin)
  */
-router.get("/admin", authMiddleware(), async (req, res) => {
+router.get("/admin", authMiddleware(), requirePerm("servicos.manage"), async (req, res) => {
   try {
     if (!canManageServicos(req.user)) return res.status(403).json({ msg: "Sem permissão." });
 
