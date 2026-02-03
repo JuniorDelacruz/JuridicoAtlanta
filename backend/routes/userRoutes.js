@@ -130,16 +130,16 @@ router.patch(
             // =========================
             let maxRoleAssignable = -1;
 
+            // master/responsável REAL (por subRole) continuam podendo tudo
             if (isActorMaster || isActorResponsavel) {
-                maxRoleAssignable = ROLE_ORDER.length - 1; // pode tudo
-            } else if (actorSub === "alteracaocargo" || actorSub === "equipejuridico") {
+                maxRoleAssignable = ROLE_ORDER.length - 1;
+            } else {
+                // ✅ agora quem chegou aqui é porque passou no requirePerm("admin.perm.manageroles")
+                // então ele pode alterar ROLE, MAS limitado à própria hierarquia (não acima dele).
                 if (actorRoleR < 0) {
-                    return res.status(403).json({ msg: "Para este sub-cargo, você precisa ter um cargo válido na hierarquia." });
+                    return res.status(403).json({ msg: "Seu cargo é inválido/sem hierarquia." });
                 }
                 maxRoleAssignable = actorRoleR;
-            } else {
-                // sem permissão
-                return res.status(403).json({ msg: "Você não tem permissão para alterar cargos." });
             }
 
             // se tentou mudar role, valida teto
