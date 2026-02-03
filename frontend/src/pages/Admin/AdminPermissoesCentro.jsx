@@ -42,6 +42,7 @@ export default function AdminPermissoesCentro() {
     { subjectType: "role", subjectValue: "desembargador", label: "Desembargador" },
 
     // Sub-roles existentes (mantidos iguais)
+    { subjectType: "subRole", subjectValue: "alterarcargo", label: "Equipe Jurídico" },
     { subjectType: "subRole", subjectValue: "equipejuridico", label: "Equipe Jurídico" },
     { subjectType: "subRole", subjectValue: "responsaveljuridico", label: "Responsável Jurídico" },
     { subjectType: "subRole", subjectValue: "master", label: "Master" },
