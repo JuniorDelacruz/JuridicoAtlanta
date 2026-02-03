@@ -91,15 +91,6 @@ export default function Cartorio() {
       navigate("/login");
       return;
     }
-
-    if (!podeAcessarPagina) {
-      push({
-        type: "error",
-        title: "Acesso negado.",
-        message: "Você não tem permissão para acessar o Cartório.",
-      });
-      navigate("/dashboard");
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
