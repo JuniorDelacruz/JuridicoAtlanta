@@ -157,18 +157,27 @@ router.patch(
             // =========================
             let allowedSubSet = new Set();
 
+            const canManageRoles = requirePerm(req, "admin.perm.manageroles");
+
+            // master mantém poder total
             if (isActorMaster) {
-                allowedSubSet = new Set(SUBROLE_ORDER); // pode tudo (inclui master)
-            } else if (isActorResponsavel) {
-                // não pode setar responsaveljuridico nem master
+                allowedSubSet = new Set(SUBROLE_ORDER); // inclui master
+            }
+            // responsável mantém a limitação que você já queria
+            else if (isActorResponsavel) {
                 allowedSubSet = new Set([null, "alteracaocargo", "equipejuridico"]);
-            } else if (actorSub === "equipejuridico") {
-                // sugestão: pode no máximo equipejuridico
-                allowedSubSet = new Set([null, "alteracaocargo", "equipejuridico"]);
-            } else if (actorSub === "alteracaocargo") {
-                // só pode setar null ou alteracaocargo
-                allowedSubSet = new Set([null, "alteracaocargo"]);
-            } else {
+            }
+            // qualquer outro: se tem a perm, pode setar SUBROLE somente ATÉ o nível dele
+            else if (canManageRoles) {
+                // hierarquia pura: só pode atribuir subRole <= subRole dele
+                if (actorSubR < 0) {
+                    return res.status(403).json({ msg: "Seu sub-cargo é inválido/sem hierarquia." });
+                }
+
+                // slice até o rank do ator (inclusive)
+                allowedSubSet = new Set(SUBROLE_ORDER.slice(0, actorSubR + 1));
+            }
+            else {
                 return res.status(403).json({ msg: "Você não tem permissão para alterar sub-cargos." });
             }
 
