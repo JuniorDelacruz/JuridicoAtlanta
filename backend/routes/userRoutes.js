@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../models/index.js';
 import authMiddleware from '../middleware/auth.js'; // seu middleware de auth
+import { requirePerm } from '../middleware/requirePerm.js';
 
 const router = express.Router();
 
