@@ -95,16 +95,15 @@ export default function Lancamentos() {
    * - admin.perms.all libera tudo como master/responsavel
    * =========================================================
    */
-  const isAdminAll = !!hasPerm?.(PERMS.ADMIN_ALL);
 
-  const canCreate = isAdminAll || !!hasPerm?.(PERMS.CREATE);
-  const canViewMeus = isAdminAll || !!hasPerm?.(PERMS.VIEW_MEUS);
-  const canViewAll = isAdminAll || !!hasPerm?.(PERMS.VIEW_ALL);
-  const canRegistrarRepasse = isAdminAll || !!hasPerm?.(PERMS.REPASSE);
-  const canManageServicos = isAdminAll || !!hasPerm?.(PERMS.SERVICOS_MANAGE);
+  const canCreate = !!hasPerm?.(PERMS.CREATE);
+  const canViewMeus = !!hasPerm?.(PERMS.VIEW_MEUS);
+  const canViewAll = !!hasPerm?.(PERMS.VIEW_ALL);
+  const canRegistrarRepasse = !!hasPerm?.(PERMS.REPASSE);
+  const canManageServicos = !!hasPerm?.(PERMS.SERVICOS_MANAGE);
 
   // "high" (override / poderes de admin interno)
-  const isHigh = useMemo(() => isAdminAll || isHighSubRole(user?.subRole), [isAdminAll, user?.subRole]);
+  const isHigh = useMemo(() => isHighSubRole(user?.subRole), [isAdminAll, user?.subRole]);
 
   useEffect(() => {
     if (!isAuthenticated) navigate("/login");
