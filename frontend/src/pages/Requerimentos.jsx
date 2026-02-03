@@ -1,12 +1,10 @@
+// frontend/src/pages/RequerimentoHub.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { TIPOS_REQUERIMENTO } from "../config/requerimentosTipos";
 import { FileText, Shield, Users, Search, FileCheck, Calendar, ArrowLeft } from "lucide-react";
 import { api } from "../services/api";
-
-const API_URL = import.meta?.env?.VITE_API_URL || "https://apijuridico.starkstore.dev.br";
 
 const ICONS = {
   "porte-de-arma": Shield,
@@ -17,33 +15,49 @@ const ICONS = {
   "renovacao-alvara": Calendar,
 };
 
+// ✅ Permissão por card (novo método)
+const PERM_BY_SLUG = {
+  "casamento": "requerimento.acessar.casamento",
+  "alvara": "requerimento.acessar.emitiralvara",
+  "limpeza-de-ficha": "requerimento.acessar.limpezadeficha",
+  "porte-de-arma": "requerimento.acessar.portedearma",
+  "renovacao-alvara": "requerimento.acessar.renovacaoalvara",
+  "troca-de-nome": "requerimento.acessar.trocadenome",
+};
+
 export default function RequerimentoHub() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm, displayName } = useAuth();
   const navigate = useNavigate();
+
+  // (se você quiser manter o bypass antigo)
   const isEquipeJuridica = user?.subRole === "equipejuridico";
 
   const [resumo, setResumo] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const authHeaders = () => {
-    const token = localStorage.getItem("token");
-    return { Authorization: `Bearer ${token}` };
-  };
-
   const cards = useMemo(() => {
-    const pode = (t) =>
-      t.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
+    const pode = (slug) => {
+      const perm = PERM_BY_SLUG[slug];
+
+      // se algum slug não tiver perm mapeada, bloqueia por segurança
+      if (!perm) return false;
+
+      // bypasss opcionais (mantém compatibilidade)
+      if (user?.role === "admin") return true;
+      if (isEquipeJuridica) return true;
+
+      return !!hasPerm?.(perm);
+    };
 
     return TIPOS_REQUERIMENTO
-      // ✅ não exibe se disable === true
       .filter((t) => !t.disable)
       .map((t) => ({
         ...t,
-        permitido: pode(t),
+        permitido: pode(t.slug),
         counts: resumo[t.tipoDb] || { PENDENTE: 0, APROVADO: 0, INDEFERIDO: 0, TOTAL: 0 },
         Icon: ICONS[t.slug] || FileText,
       }));
-  }, [user?.role, isEquipeJuridica, resumo]);
+  }, [user?.role, isEquipeJuridica, hasPerm, resumo]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -54,7 +68,7 @@ export default function RequerimentoHub() {
     (async () => {
       setLoading(true);
       try {
-        const r = await api.get(`/api/requerimentos/resumo`,);
+        const r = await api.get(`/api/requerimentos/resumo`);
         setResumo(r.data || {});
       } catch {
         setResumo({});
@@ -73,6 +87,7 @@ export default function RequerimentoHub() {
             <FileText className="h-8 w-8" />
             <h1 className="text-xl font-bold">Requerimentos - Jurídico Atlanta RP</h1>
           </div>
+
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/dashboard")}
@@ -81,7 +96,9 @@ export default function RequerimentoHub() {
               <ArrowLeft className="h-4 w-4" />
               Voltar ao Dashboard
             </button>
-            <span className="text-sm">Bem-vindo, {user?.username || "Usuário"}</span>
+
+            <span className="text-sm">Bem-vindo, {displayName || user?.username || "Usuário"}</span>
+
             <button
               onClick={logout}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition"
@@ -93,14 +110,19 @@ export default function RequerimentoHub() {
       </header>
 
       <main className="flex-grow max-w-7xl mx-auto py-8 px-6">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Selecione o tipo de requerimento</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          Selecione o tipo de requerimento
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((c) => (
             <div
               key={c.slug}
-              className={`bg-white border ${c.permitido ? "border-indigo-200 hover:shadow-lg hover:border-indigo-300" : "border-gray-200 opacity-60 cursor-not-allowed"
-                } rounded-xl p-6 transition`}
+              className={`bg-white border ${
+                c.permitido
+                  ? "border-indigo-200 hover:shadow-lg hover:border-indigo-300"
+                  : "border-gray-200 opacity-60 cursor-not-allowed"
+              } rounded-xl p-6 transition`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <c.Icon className={`h-10 w-10 ${c.permitido ? "text-indigo-600" : "text-gray-400"}`} />
@@ -125,13 +147,17 @@ export default function RequerimentoHub() {
               <button
                 onClick={() => c.permitido && navigate(`/requerimentos/${c.slug}`)}
                 disabled={!c.permitido || loading}
-                className={`w-full px-6 py-2 rounded-md font-medium ${c.permitido && !loading
+                className={`w-full px-6 py-2 rounded-md font-medium ${
+                  c.permitido && !loading
                     ? "bg-indigo-600 text-white hover:bg-indigo-700"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
+                }`}
               >
                 Acessar
               </button>
+
+              {/* debug opcional */}
+              {/* <div className="mt-2 text-[10px] text-gray-400">perm: {PERM_BY_SLUG[c.slug] || "—"}</div> */}
             </div>
           ))}
         </div>
