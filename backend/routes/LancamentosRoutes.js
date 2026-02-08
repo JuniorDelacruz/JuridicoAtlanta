@@ -165,7 +165,7 @@ router.get("/membros-juridico", authMiddleware(), async (req, res) => {
             return res.status(403).json({ msg: "Sem permissão." });
         }
 
-        const juridicoRoles = ["escrivao", "tabeliao", "promotor", "conselheiro", "juiz"];
+        const juridicoRoles = ["escrivao", "tabeliao", "promotor", "conselheiro", "juiz", 'promotor chefe', 'advogado', 'auxiliar', 'desembargador'];
 
         const users = await User.findAll({
             where: {
