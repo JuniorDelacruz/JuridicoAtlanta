@@ -23,6 +23,8 @@ function initialValues(fields) {
       obj[f.name] = f.defaultValue;
     } else if (f.type === "select" && f.multiple) {
       obj[f.name] = [];
+    } else if (f.type === "file") {
+      obj[f.name] = null;
     } else {
       obj[f.name] = "";
     }
@@ -450,47 +452,89 @@ export default function RequerimentoNovo() {
                     {f.label} {f.required ? <span className="text-red-600">*</span> : null}
                   </label>
 
-                  {f.type === "select" ? (
-                    f.multiple ? (
-                      <MultiSelectDropdown
-                        label={f.label}
-                        options={resolveOptions(f, values)}
-                        value={Array.isArray(values[f.name]) ? values[f.name] : []}
-                        onChange={(arr) => setField(f.name, arr)}
-                        placeholder="Selecione..."
-                      />
-                    ) : (
-                      <select
-                        value={values[f.name] || ""}
-                        onChange={(e) => setField(f.name, e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={!!f.dependsOn && !values?.[f.dependsOn]} // ✅ desabilita até escolher estado
-                      >
-                        <option value="">
-                          {f.placeholder || "Selecione..."}
-                        </option>
+                  {f.type === "file" ? (
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept={f.accept || "image/*"}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
 
-                        {resolveOptions(f, values).map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    )
-                  ) : f.type === "textarea" ? (
-                    <textarea
-                      value={values[f.name] || ""}
-                      onChange={(e) => setField(f.name, e.target.value)}
-                      rows={4}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                          // validações simples (opcional)
+                          if (file && f.maxSizeMB && file.size > f.maxSizeMB * 1024 * 1024) {
+                            setToast({ type: "err", text: `Arquivo muito grande. Máx: ${f.maxSizeMB}MB` });
+                            e.target.value = ""; // limpa
+                            setField(f.name, null);
+                            return;
+                          }
+
+                          setField(f.name, file);
+                        }}
+                        className="w-full border border-gray-300 rounded-md p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+
+                      {/* Preview (opcional) */}
+                      {f.preview && values[f.name] instanceof File ? (
+                        <img
+                          src={URL.createObjectURL(values[f.name])}
+                          alt="Pré-visualização"
+                          className="max-h-56 rounded-lg border border-gray-200"
+                          onLoad={(e) => {
+                            // libera a URL depois de carregar (evita leak)
+                            const img = e.currentTarget;
+                            const src = img.src;
+                            setTimeout(() => URL.revokeObjectURL(src), 1000);
+                          }}
+                        />
+                      ) : null}
+
+                      {values[f.name] instanceof File ? (
+                        <div className="text-xs text-gray-600">
+                          {values[f.name].name} • {(values[f.name].size / 1024 / 1024).toFixed(2)}MB
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : f.type === "select" ? (
+                  f.multiple ? (
+                  <MultiSelectDropdown
+                    label={f.label}
+                    options={resolveOptions(f, values)}
+                    value={Array.isArray(values[f.name]) ? values[f.name] : []}
+                    onChange={(arr) => setField(f.name, arr)}
+                    placeholder="Selecione..."
+                  />
                   ) : (
-                    <input
-                      type={f.type || "text"}
-                      value={values[f.name] || ""}
-                      onChange={(e) => setField(f.name, e.target.value)}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  <select
+                    value={values[f.name] || ""}
+                    onChange={(e) => setField(f.name, e.target.value)}
+                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={!!f.dependsOn && !values?.[f.dependsOn]} // ✅ desabilita até escolher estado
+                  >
+                    <option value="">
+                      {f.placeholder || "Selecione..."}
+                    </option>
+
+                    {resolveOptions(f, values).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  )
+                  ) : f.type === "textarea" ? (
+                  <textarea
+                    value={values[f.name] || ""}
+                    onChange={(e) => setField(f.name, e.target.value)}
+                    rows={4}
+                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  ) : (
+                  <input
+                    type={f.type || "text"}
+                    value={values[f.name] || ""}
+                    onChange={(e) => setField(f.name, e.target.value)}
+                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                   )}
 
                   {/* ✅ status de verificação POR CAMPO */}
