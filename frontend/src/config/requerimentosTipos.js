@@ -115,6 +115,7 @@ export const TIPOS_REQUERIMENTO = [
                                     "Saloon", "Armaria", "Estábulo", "Ferraria", "Artesanato", "Doceria", "Gráfica", "Padaria", "Ateliê", "Jornal", "Madereira", "Tabacaria", "Berçária", "Mineradora", "Cooperativa (Ferrovia e Hidrovia)", "Imobiliária", "Veterinária"
                                 ],
                             },
+                            { name: "razaosocial", label: "Razão Social da Empresa", type: "text", required: true },
                         ],
     },
 {
