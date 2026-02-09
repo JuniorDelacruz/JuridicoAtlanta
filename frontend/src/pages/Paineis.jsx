@@ -15,21 +15,102 @@ import {
 import { useToast } from "../utils/toast";
 import { useConfirm } from "../components/ui/confirm";
 
-// ... (mantenha ROLE_OPTIONS, SUBROLE_OPTIONS, norm, labelRole, labelSubRole, SubRoleBadge iguais)
+// Valores normalizados (lowercase) — backend usa norm(toLowerCase)
+const ROLE_OPTIONS = [
+  { value: "cidadao", label: "Cidadão" },
+  { value: "auxiliar", label: "Auxiliar" },
+  { value: "advogado", label: "Advogado" },
+  { value: "tabeliao", label: "Tabelião" },
+  { value: "escrivao", label: "Escrivão" },
+  { value: "promotor", label: "Promotor" },
+  { value: "conselheiro", label: "Conselheiro" },
+  { value: "promotor chefe", label: "Promotor Chefe" },
+  { value: "juiz", label: "Juiz" },
+  { value: "desembargador", label: "Desembargador" },
+];
+
+const SUBROLE_OPTIONS = [
+  { value: null, label: "Nenhum" },
+  { value: "alterarcargo", label: "Alteração de Cargo" },
+  { value: "equipejuridico", label: "Equipe Jurídica" },
+  { value: "responsaveljuridico", label: "Responsável Jurídico" },
+  { value: "master", label: "Master" },
+];
+
+const norm = (v) => (v === null || v === undefined ? null : String(v).trim().toLowerCase());
+
+function labelRole(v) {
+  const nv = norm(v);
+  return ROLE_OPTIONS.find((x) => x.value === nv)?.label ?? String(v ?? "—");
+}
+
+function labelSubRole(v) {
+  const nv = norm(v);
+  return SUBROLE_OPTIONS.find((x) => x.value === nv)?.label ?? "Nenhum";
+}
+
+function SubRoleBadge({ subRole }) {
+  const v = norm(subRole);
+
+  if (!v) return <span className="text-xs text-gray-400">—</span>;
+
+  if (v === "master") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-100 text-yellow-800 text-xs font-semibold">
+        <Shield className="h-4 w-4" />
+        MASTER
+      </span>
+    );
+  }
+
+  if (v === "responsaveljuridico") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-semibold">
+        <ShieldCheck className="h-4 w-4" />
+        RESPONSÁVEL
+      </span>
+    );
+  }
+
+  if (v === "equipejuridico") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-100 text-green-800 text-xs font-semibold">
+        <Scale className="h-4 w-4" />
+        EQUIPE JURÍDICA
+      </span>
+    );
+  }
+
+  if (v === "alterarcargo") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs font-semibold">
+        <Crown className="h-4 w-4" />
+        ALTERAÇÃO CARGO
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs font-semibold">
+      {v}
+    </span>
+  );
+}
 
 export default function Paineis() {
-  const { 
-    user, 
-    logout, 
-    isAuthenticated, 
-    hasPerm, 
-    permsLoading 
+  const {
+    user,
+    logout,
+    isAuthenticated,
+    hasPerm,
+    permsLoading
   } = useAuth();
-  
+
   const navigate = useNavigate();
   const { push } = useToast();
   const { confirm } = useConfirm();
 
+  const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
   const [usuarios, setUsuarios] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -113,9 +194,94 @@ export default function Paineis() {
     fetchUsuarios();
   }, [hasCheckedPerm, isAuthorized, isAuthenticated, navigate, push]);
 
-  // ... (mantenha markSaving, patchUserLocal, getUserSnapshot, doUpdateUser, onChangeRole, onChangeSubRole iguais)
+  const markSaving = (id, on) => {
+    setSavingIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
-  // Renderizações
+  const patchUserLocal = (userId, patch) => {
+    setUsuarios((prev) => prev.map((u) => (u.id === userId ? { ...u, ...patch } : u)));
+  };
+
+  const getUserSnapshot = (userId) => {
+    const u = usuarios.find((x) => x.id === userId);
+    return u ? { role: u.role, subRole: u.subRole } : { role: null, subRole: null };
+  };
+
+  const doUpdateUser = async (userId, payload, confirmTitle, confirmMessage, snapshot) => {
+    const ok = await confirm({
+      title: confirmTitle,
+      message: confirmMessage,
+      confirmText: "Confirmar",
+      cancelText: "Cancelar",
+    });
+
+    if (!ok) {
+      patchUserLocal(userId, snapshot);
+      return;
+    }
+
+    markSaving(userId, true);
+
+    try {
+      await api.patch(`/api/users/${userId}`, payload);
+      patchUserLocal(userId, payload);
+
+      push({
+        type: "success",
+        title: "Sucesso",
+        message: "Atualização realizada com sucesso!",
+      });
+    } catch (err) {
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.msg || err.message;
+
+      patchUserLocal(userId, snapshot);
+
+      if (status === 403) {
+        push({ type: "error", title: "Negado", message: msg || "Você não tem permissão." });
+      } else {
+        push({ type: "warning", title: "Erro", message: msg });
+      }
+    } finally {
+      markSaving(userId, false);
+    }
+  };
+
+  const onChangeRole = async (userId, newRoleRaw) => {
+    const snapshot = getUserSnapshot(userId);
+    const newRole = norm(newRoleRaw);
+
+    patchUserLocal(userId, { role: newRole });
+
+    await doUpdateUser(
+      userId,
+      { role: newRole },
+      "Alteração de Cargo",
+      `Tem certeza que deseja mudar o cargo do usuário ID ${userId} para ${labelRole(newRole)}?`,
+      snapshot
+    );
+  };
+
+  const onChangeSubRole = async (userId, newSubRoleRaw) => {
+    const snapshot = getUserSnapshot(userId);
+    const finalSub = newSubRoleRaw === "null" ? null : norm(newSubRoleRaw);
+
+    patchUserLocal(userId, { subRole: finalSub });
+
+    await doUpdateUser(
+      userId,
+      { subRole: finalSub },
+      "Alteração de Permissão (SubCargo)",
+      `Tem certeza que deseja definir o subcargo de ID ${userId} para: ${labelSubRole(finalSub)}?`,
+      snapshot
+    );
+  };
+
   if (!isAuthenticated) return null;
 
   if (permsLoading || !hasCheckedPerm) {
@@ -150,7 +316,7 @@ export default function Paineis() {
     );
   }
 
-  // Renderização principal (header + main + tabela + footer)
+  // Renderização principal
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
