@@ -107,6 +107,8 @@ export default function Paineis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [savingIds, setSavingIds] = useState(() => new Set());
 
