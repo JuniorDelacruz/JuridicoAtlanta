@@ -107,6 +107,9 @@ export default function Paineis() {
   const canManageRoles = !!hasPerm?.("admin.perm.manageroles");
   const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
 
+
+  const canManagePermissions = !!hasPerm?.("admin.perms.manage");
+
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

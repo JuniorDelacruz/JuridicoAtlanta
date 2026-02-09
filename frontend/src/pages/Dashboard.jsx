@@ -36,6 +36,7 @@ export default function Dashboard() {
 
   const allModules = [
     { name: "Painéis", link: "/paineis", perm: "dashboard.acessar.painel" },
+    { name: "Permissões", link: "/admin/permissoes", perm: "admin.perms.manage"},
     { name: "Cartório", link: "/cartorio", perm: "dashboard.acessar.cartorio" },
     { name: "Requerimentos", link: "/requerimentos", perm: "dashboard.acessar.requerimento" },
     { name: "Triagem", link: "/triagem", perm: "dashboard.acessar.triagem" },
