@@ -206,7 +206,7 @@ router.get("/membros-juridico", authMiddleware(), async (req, res) => {
  */
 router.get("/", authMiddleware(), requirePerm("lancamentos.view_all"), async (req, res) => {
     try {
-        if (!hasPerm(req.user, "LANCAMENTOS_VER_GERAL")) {
+        if (!hasPerm(req.user, "lancamentos.view_all")) {
             return res.status(403).json({ msg: "Sem permissão para ver todos os lançamentos." });
         }
 
