@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
   const [perms, setPerms] = useState([]);
   const [permsLoading, setPermsLoading] = useState(false);
 
-  // ✅ NOVO: indica que já tentamos carregar perms (sucesso ou falha)
+  // ✅ indica que já tentamos carregar perms (sucesso ou falha)
   const [permsReady, setPermsReady] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setCidadao(null);
       setPerms([]);
+      setPermsLoading(false);
       setPermsReady(true); // ✅ nada pra carregar
       setLoading(false);
       return;
@@ -61,10 +62,19 @@ export function AuthProvider({ children }) {
         setUser(null);
         setCidadao(null);
         setPerms([]);
+        setPermsLoading(false);
         setPermsReady(true);
         navigate("/login");
       } else {
+        // ✅ token OK
         setUser(decoded);
+
+        // ✅ AQUI está o fix do F5:
+        // assim que autenticou, marca perms como "ainda não prontas"
+        // e já liga o loading de perms, evitando a página negar antes do fetch
+        setPerms([]);              // evita usar permissões antigas na UI
+        setPermsReady(false);
+        setPermsLoading(true);
       }
     } catch (err) {
       console.error("Token inválido:", err);
@@ -72,6 +82,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setCidadao(null);
       setPerms([]);
+      setPermsLoading(false);
       setPermsReady(true);
       navigate("/login");
     } finally {
@@ -86,22 +97,29 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    let alive = true;
+
     (async () => {
       try {
         const res = await axios.get(`${API_URL}/api/me/cidadao`, {
           headers: authHeaders(),
         });
-        setCidadao(res.data?.cidadao || null);
+        if (alive) setCidadao(res.data?.cidadao || null);
       } catch {
-        setCidadao(null);
+        if (alive) setCidadao(null);
       }
     })();
+
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   // 3) depois que tiver user, busca permissões efetivas
   useEffect(() => {
     if (!user) {
       setPerms([]);
+      setPermsLoading(false);
       setPermsReady(true);
       return;
     }
@@ -109,8 +127,11 @@ export function AuthProvider({ children }) {
     let alive = true;
 
     (async () => {
-      setPermsReady(false);     // ✅ vai carregar agora
-      setPermsLoading(true);
+      // ✅ garante estado coerente ao iniciar fetch (principalmente no F5)
+      if (alive) {
+        setPermsReady(false);
+        setPermsLoading(true);
+      }
 
       try {
         const res = await axios.get(`${API_URL}/api/me/perms`, {
@@ -128,7 +149,7 @@ export function AuthProvider({ children }) {
       } finally {
         if (alive) {
           setPermsLoading(false);
-          setPermsReady(true);  // ✅ terminou (ok ou erro)
+          setPermsReady(true); // ✅ terminou (ok ou erro)
         }
       }
     })();
@@ -143,6 +164,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setCidadao(null);
     setPerms([]);
+    setPermsLoading(false);
     setPermsReady(true);
     navigate("/login");
   };
@@ -165,7 +187,7 @@ export function AuthProvider({ children }) {
 
         perms,
         permsLoading,
-        permsReady, // ✅ EXPOSTO
+        permsReady,
         hasPerm,
         hasAnyPerm,
         hasAllPerms,
