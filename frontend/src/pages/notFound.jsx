@@ -17,7 +17,7 @@ export default function NotFound() {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Link
-          to="/"
+          to="/dashboard"
           className="px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg flex items-center gap-2"
         >
           <Home size={20} />
