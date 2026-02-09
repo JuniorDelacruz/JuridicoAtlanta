@@ -35,6 +35,7 @@ import TriagemRequerimentoDetalhesCasamento from './pages/Triagem/TriagemRequeri
 import Lancamentos from './pages/Lançamentos';
 import AdminPermissoesCentro from './pages/Admin/AdminPermissoesCentro.jsx';
 import AdminPermissoesCargo from './pages/Admin/AdminPermissoesCargo.jsx';
+import AdminPermissoesCriar from './pages/Admin/AdminPermissoesCriar.jsx';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -193,6 +194,9 @@ function App() {
       <Route path="/diretrizes-tribunal" element={<DiretrizesTribunal />} />
       <Route path="/codigo-penal" element={<CodigoPenalAtlanta />} />
       <Route path="/arquivos" element={<Arquivos />} />
+
+
+      <Route path="/admin/permissoes/criar" element={<AdminPermissoesCriar />} />
 
 
       <Route path="/paineis/webhooks" element={<WebhookConfig />} />
