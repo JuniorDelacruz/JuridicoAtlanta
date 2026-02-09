@@ -148,7 +148,7 @@ export default function Paineis() {
         });
         navigate("/dashboard");
       }
-    }, 0); // 0ms é suficiente na maioria dos casos; se precisar, aumente para 100-200ms
+    }, 100); // 0ms é suficiente na maioria dos casos; se precisar, aumente para 100-200ms
 
     return () => clearTimeout(timer);
   }, [isAuthenticated, hasPerm, navigate, push]);
