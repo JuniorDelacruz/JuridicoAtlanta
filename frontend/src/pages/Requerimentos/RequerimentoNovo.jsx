@@ -18,9 +18,55 @@ function authHeaders() {
 
 function initialValues(fields) {
   const obj = {};
-  for (const f of fields || []) obj[f.name] = f.defaultValue ?? "";
+  for (const f of fields || []) {
+    if (f.defaultValue !== undefined) {
+      obj[f.name] = f.defaultValue;
+    } else if (f.type === "select" && f.multiple) {
+      obj[f.name] = [];
+    } else {
+      obj[f.name] = "";
+    }
+  }
   return obj;
 }
+
+function resolveOptions(field, values) {
+  // normal
+  if (!field) return [];
+
+  // ✅ dependente: optionsByValue + dependsOn
+  if (field.optionsByValue && field.dependsOn) {
+    const parentValue = values?.[field.dependsOn];
+    const map = field.optionsByValue || {};
+    const opts = map[parentValue];
+    return Array.isArray(opts) ? opts : [];
+  }
+
+  // fallback normal
+  return Array.isArray(field.options) ? field.options : [];
+}
+
+
+function setField(name, value) {
+  setValues((prev) => {
+    const next = { ...prev, [name]: value };
+
+    // ✅ se o field tiver "resets", limpa esses campos
+    const field = (tipoCfg?.fields || []).find((f) => f.name === name);
+    if (field?.resets?.length) {
+      for (const depName of field.resets) {
+        const depField = (tipoCfg?.fields || []).find((f) => f.name === depName);
+
+        // se select multiple, zera array, senão string
+        if (depField?.type === "select" && depField?.multiple) next[depName] = [];
+        else next[depName] = "";
+      }
+    }
+
+    return next;
+  });
+}
+
 
 function MultiSelectDropdown({
   label,
@@ -408,7 +454,7 @@ export default function RequerimentoNovo() {
                     f.multiple ? (
                       <MultiSelectDropdown
                         label={f.label}
-                        options={f.options || []}
+                        options={resolveOptions(f, values)}
                         value={Array.isArray(values[f.name]) ? values[f.name] : []}
                         onChange={(arr) => setField(f.name, arr)}
                         placeholder="Selecione..."
@@ -418,9 +464,13 @@ export default function RequerimentoNovo() {
                         value={values[f.name] || ""}
                         onChange={(e) => setField(f.name, e.target.value)}
                         className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!!f.dependsOn && !values?.[f.dependsOn]} // ✅ desabilita até escolher estado
                       >
-                        <option value="">Selecione...</option>
-                        {(f.options || []).map((opt) => (
+                        <option value="">
+                          {f.placeholder || "Selecione..."}
+                        </option>
+
+                        {resolveOptions(f, values).map((opt) => (
                           <option key={opt} value={opt}>
                             {opt}
                           </option>
