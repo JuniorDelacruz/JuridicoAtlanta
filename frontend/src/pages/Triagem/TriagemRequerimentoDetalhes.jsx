@@ -50,13 +50,6 @@ export default function TriagemRequerimentoDetalhes() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const isEquipeJuridica = user?.subRole === "equipejuridico";
-
-  const permitido = useMemo(() => {
-    if (!triagemCfg) return false;
-    return triagemCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-  }, [triagemCfg, user?.role, isEquipeJuridica]);
-
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,11 +64,6 @@ export default function TriagemRequerimentoDetalhes() {
       return;
     }
     if (!triagemCfg) {
-      navigate("/triagem");
-      return;
-    }
-    if (!permitido) {
-      alert("Acesso negado. Você não tem permissão para ver detalhes na triagem.");
       navigate("/triagem");
       return;
     }
