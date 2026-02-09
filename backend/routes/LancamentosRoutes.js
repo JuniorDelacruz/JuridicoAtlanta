@@ -206,10 +206,7 @@ router.get("/membros-juridico", authMiddleware(), async (req, res) => {
  */
 router.get("/", authMiddleware(), requirePerm("lancamentos.view_all"), async (req, res) => {
     try {
-        if (!hasPerm(req.user, "lancamentos.view_all")) {
-            return res.status(403).json({ msg: "Sem permissão para ver todos os lançamentos." });
-        }
-
+        
         const paid = req.query.paid; // "0" | "1" | undefined
         const createdBy = req.query.createdBy ? Number(req.query.createdBy) : null;
 
@@ -364,9 +361,6 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
 router.post("/registrar-repasse", authMiddleware(), async (req, res) => {
     const t = await sequelize.transaction();
     try {
-        if (!hasPerm(req.user, "LANCAMENTOS_REGISTRAR_REPASSE")) {
-            return res.status(403).json({ msg: "Sem permissão." });
-        }
 
         const { ids } = req.body;
         if (!Array.isArray(ids) || ids.length === 0) {
