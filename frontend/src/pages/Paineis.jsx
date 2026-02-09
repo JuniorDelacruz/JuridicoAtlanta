@@ -98,14 +98,7 @@ function SubRoleBadge({ subRole }) {
 }
 
 export default function Paineis() {
-  const {
-    user,
-    logout,
-    isAuthenticated,
-    hasPerm,
-    permsLoading,
-    permsReady,
-  } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm, permsReady, permsVersion } = useAuth();
 
   const navigate = useNavigate();
   const { push } = useToast();
@@ -135,29 +128,15 @@ export default function Paineis() {
 
   // 1. Gate de permissão: espera permsLoading terminar antes de decidir
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-
-    if (!permsReady) return; // ✅ ainda não sabemos
-
-    // Permissões já carregadas
+    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!permsReady) return; // ainda carregando
     const canManage = !!hasPerm?.("admin.perm.manageroles");
-
-    setIsAuthorized(canManage);
-    setHasCheckedPerm(true);
-
+    
     if (!canManage) {
-      push({
-        type: "error",
-        title: "Negado",
-        message: "Você não tem permissão para gerenciar cargos.",
-      });
-      console.log("eita que foi jogado fora")
+      push({ type: "error", title: "Negado", message: "Você não tem permissão para gerenciar cargos." });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, permsReady, permsLoading, hasPerm, navigate, push]);
+  }, [isAuthenticated, permsReady, permsVersion, hasPerm, navigate, push]);
 
   // 2. Fetch de usuários: só roda se autorizado e permissão checada
   useEffect(() => {

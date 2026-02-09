@@ -1,4 +1,4 @@
-// AuthContext.jsx
+// frontend/src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -16,18 +16,23 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [cidadao, setCidadao] = useState(null);
 
-  const [perms, setPerms] = useState([]);
-  const [permsLoading, setPermsLoading] = useState(false);
-
-  // ✅ indica que já tentamos carregar perms (sucesso ou falha)
-  const [permsReady, setPermsReady] = useState(false);
+  // ✅ estado atômico de perms (evita permsReady=true com perms ainda vazio no mesmo render)
+  const [permState, setPermState] = useState({
+    list: [],
+    loading: false,
+    ready: false,     // "já terminou de carregar" (ok ou erro)
+    version: 0,       // incrementa quando aplicou uma lista nova
+  });
 
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const permsSet = useMemo(() => new Set((perms || []).map(String)), [perms]);
+  const permsSet = useMemo(
+    () => new Set((permState.list || []).map((x) => String(x))),
+    [permState.list]
+  );
 
   const hasPerm = (key) => permsSet.has(String(key));
   const hasAnyPerm = (keys) => (keys || []).some((k) => hasPerm(k));
@@ -47,9 +52,13 @@ export function AuthProvider({ children }) {
     if (!token) {
       setUser(null);
       setCidadao(null);
-      setPerms([]);
-      setPermsLoading(false);
-      setPermsReady(true); // ✅ nada pra carregar
+      setPermState((s) => ({
+        ...s,
+        list: [],
+        loading: false,
+        ready: true,
+        version: s.version + 1,
+      }));
       setLoading(false);
       return;
     }
@@ -61,29 +70,36 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("token");
         setUser(null);
         setCidadao(null);
-        setPerms([]);
-        setPermsLoading(false);
-        setPermsReady(true);
+        setPermState((s) => ({
+          ...s,
+          list: [],
+          loading: false,
+          ready: true,
+          version: s.version + 1,
+        }));
         navigate("/login");
       } else {
-        // ✅ token OK
         setUser(decoded);
 
-        // ✅ AQUI está o fix do F5:
-        // assim que autenticou, marca perms como "ainda não prontas"
-        // e já liga o loading de perms, evitando a página negar antes do fetch
-        setPerms([]);              // evita usar permissões antigas na UI
-        setPermsReady(false);
-        setPermsLoading(true);
+        // ✅ importante: ao entrar com token, ainda NÃO sabemos perms
+        setPermState((s) => ({
+          ...s,
+          ready: false,
+          loading: false,
+        }));
       }
     } catch (err) {
       console.error("Token inválido:", err);
       localStorage.removeItem("token");
       setUser(null);
       setCidadao(null);
-      setPerms([]);
-      setPermsLoading(false);
-      setPermsReady(true);
+      setPermState((s) => ({
+        ...s,
+        list: [],
+        loading: false,
+        ready: true,
+        version: s.version + 1,
+      }));
       navigate("/login");
     } finally {
       setLoading(false);
@@ -104,9 +120,11 @@ export function AuthProvider({ children }) {
         const res = await axios.get(`${API_URL}/api/me/cidadao`, {
           headers: authHeaders(),
         });
-        if (alive) setCidadao(res.data?.cidadao || null);
+        if (!alive) return;
+        setCidadao(res.data?.cidadao || null);
       } catch {
-        if (alive) setCidadao(null);
+        if (!alive) return;
+        setCidadao(null);
       }
     })();
 
@@ -117,21 +135,13 @@ export function AuthProvider({ children }) {
 
   // 3) depois que tiver user, busca permissões efetivas
   useEffect(() => {
-    if (!user) {
-      setPerms([]);
-      setPermsLoading(false);
-      setPermsReady(true);
-      return;
-    }
+    if (!user) return;
 
     let alive = true;
 
     (async () => {
-      // ✅ garante estado coerente ao iniciar fetch (principalmente no F5)
-      if (alive) {
-        setPermsReady(false);
-        setPermsLoading(true);
-      }
+      // começa loading
+      setPermState((s) => ({ ...s, loading: true, ready: false }));
 
       try {
         const res = await axios.get(`${API_URL}/api/me/perms`, {
@@ -143,14 +153,27 @@ export function AuthProvider({ children }) {
           (Array.isArray(res.data?.permissions) && res.data.permissions) ||
           [];
 
-        if (alive) setPerms(arr.map(String));
+        if (!alive) return;
+
+        // ✅ ATÔMICO: aplica list + ready juntos (evita o bug do F5)
+        setPermState((s) => ({
+          ...s,
+          list: arr.map(String),
+          loading: false,
+          ready: true,
+          version: s.version + 1,
+        }));
       } catch (e) {
-        if (alive) setPerms([]); // seguro
-      } finally {
-        if (alive) {
-          setPermsLoading(false);
-          setPermsReady(true); // ✅ terminou (ok ou erro)
-        }
+        if (!alive) return;
+
+        // seguro: sem perms
+        setPermState((s) => ({
+          ...s,
+          list: [],
+          loading: false,
+          ready: true,
+          version: s.version + 1,
+        }));
       }
     })();
 
@@ -163,18 +186,27 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     setUser(null);
     setCidadao(null);
-    setPerms([]);
-    setPermsLoading(false);
-    setPermsReady(true);
+    setPermState((s) => ({
+      ...s,
+      list: [],
+      loading: false,
+      ready: true,
+      version: s.version + 1,
+    }));
     navigate("/login");
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Carregando...
+      </div>
+    );
   }
 
   const displayName =
-    (cidadao?.nomeCompleto?.trim() ? cidadao.nomeCompleto : user?.username) || "Usuário";
+    (cidadao?.nomeCompleto?.trim() ? cidadao.nomeCompleto : user?.username) ||
+    "Usuário";
 
   return (
     <AuthContext.Provider
@@ -185,9 +217,12 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user,
         displayName,
 
-        perms,
-        permsLoading,
-        permsReady,
+        // perms
+        perms: permState.list,
+        permsLoading: permState.loading,
+        permsReady: permState.ready,
+        permsVersion: permState.version, // ✅ importante pra páginas aguardarem “commit”
+
         hasPerm,
         hasAnyPerm,
         hasAllPerms,
