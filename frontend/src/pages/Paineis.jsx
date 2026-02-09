@@ -154,6 +154,7 @@ export default function Paineis() {
         title: "Negado",
         message: "Você não tem permissão para gerenciar cargos.",
       });
+      console.log("eita que foi jogado fora")
       navigate("/dashboard");
     }
   }, [isAuthenticated, permsReady, permsLoading, hasPerm, navigate, push]);
