@@ -106,7 +106,7 @@ export default function Paineis() {
 
   const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
   const canManage = !!hasPerm?.("admin.perm.manageroles");
-  
+
   const [usuarios, setUsuarios] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -134,11 +134,14 @@ export default function Paineis() {
       push({ type: "error", title: "Negado", message: "Você não tem permissão para gerenciar cargos." });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, permsReady, hasPerm, navigate, push]);
+  }, [isAuthenticated, permsReady, canManage, navigate, push]);
 
   // 2. Fetch de usuários: só roda se autorizado e permissão checada
   useEffect(() => {
-    if (!hasCheckedPerm || !isAuthorized || !isAuthenticated) return;
+    if (!isAuthenticated) return;
+    if (!permsReady) return;
+    if (!canManage) return;
+
 
     const fetchUsuarios = async () => {
       setFetchLoading(true);
@@ -168,7 +171,7 @@ export default function Paineis() {
     };
 
     fetchUsuarios();
-  }, [hasCheckedPerm, isAuthorized, isAuthenticated, navigate, push]);
+  }, [isAuthenticated, permsReady, canManage, navigate, push]);
 
   const markSaving = (id, on) => {
     setSavingIds((prev) => {
