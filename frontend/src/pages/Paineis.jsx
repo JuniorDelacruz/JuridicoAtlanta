@@ -103,7 +103,8 @@ export default function Paineis() {
     logout,
     isAuthenticated,
     hasPerm,
-    permsLoading
+    permsLoading,
+    permsReady,
   } = useAuth();
 
   const navigate = useNavigate();
@@ -139,10 +140,7 @@ export default function Paineis() {
       return;
     }
 
-    if (permsLoading) {
-      // Ainda carregando permissões → não decide nada ainda
-      return;
-    }
+    if (!permsReady) return; // ✅ ainda não sabemos
 
     // Permissões já carregadas
     const canManage = !!hasPerm?.("admin.perm.manageroles");
@@ -158,7 +156,7 @@ export default function Paineis() {
       });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, permsLoading, hasPerm, navigate, push]);
+  }, [isAuthenticated, permsReady, permsLoading, hasPerm, navigate, push]);
 
   // 2. Fetch de usuários: só roda se autorizado e permissão checada
   useEffect(() => {
@@ -284,7 +282,7 @@ export default function Paineis() {
 
   if (!isAuthenticated) return null;
 
-  if (permsLoading || !hasCheckedPerm) {
+  if (!permsReady) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-600">
         Verificando autenticação e permissões...

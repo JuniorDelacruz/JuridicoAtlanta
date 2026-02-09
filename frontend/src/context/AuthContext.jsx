@@ -1,10 +1,10 @@
+// AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
 const AuthContext = createContext();
-
 const API_URL = "https://apijuridico.starkstore.dev.br";
 
 function authHeaders() {
@@ -16,9 +16,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [cidadao, setCidadao] = useState(null);
 
-  // ✅ NOVO: permissões efetivas (keys)
-  const [perms, setPerms] = useState([]); // array de strings
+  const [perms, setPerms] = useState([]);
   const [permsLoading, setPermsLoading] = useState(false);
+
+  // ✅ NOVO: indica que já tentamos carregar perms (sucesso ou falha)
+  const [permsReady, setPermsReady] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setCidadao(null);
       setPerms([]);
+      setPermsReady(true); // ✅ nada pra carregar
       setLoading(false);
       return;
     }
@@ -58,6 +61,7 @@ export function AuthProvider({ children }) {
         setUser(null);
         setCidadao(null);
         setPerms([]);
+        setPermsReady(true);
         navigate("/login");
       } else {
         setUser(decoded);
@@ -68,6 +72,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setCidadao(null);
       setPerms([]);
+      setPermsReady(true);
       navigate("/login");
     } finally {
       setLoading(false);
@@ -87,24 +92,27 @@ export function AuthProvider({ children }) {
           headers: authHeaders(),
         });
         setCidadao(res.data?.cidadao || null);
-      } catch (e) {
+      } catch {
         setCidadao(null);
       }
     })();
   }, [user]);
 
-  // ✅ 3) depois que tiver user, busca permissões efetivas
+  // 3) depois que tiver user, busca permissões efetivas
   useEffect(() => {
     if (!user) {
       setPerms([]);
+      setPermsReady(true);
       return;
     }
 
+    let alive = true;
+
     (async () => {
+      setPermsReady(false);     // ✅ vai carregar agora
       setPermsLoading(true);
+
       try {
-        // ⚠️ você precisa criar esse endpoint no backend
-        // resposta esperada: { perms: ["triagem.acessar.alvara", ...] }  OU { permissions: [...] }
         const res = await axios.get(`${API_URL}/api/me/perms`, {
           headers: authHeaders(),
         });
@@ -114,14 +122,20 @@ export function AuthProvider({ children }) {
           (Array.isArray(res.data?.permissions) && res.data.permissions) ||
           [];
 
-        setPerms(arr.map(String));
+        if (alive) setPerms(arr.map(String));
       } catch (e) {
-        // Se der erro, deixa vazio => ninguém vê nada (mais seguro)
-        setPerms([]);
+        if (alive) setPerms([]); // seguro
       } finally {
-        setPermsLoading(false);
+        if (alive) {
+          setPermsLoading(false);
+          setPermsReady(true);  // ✅ terminou (ok ou erro)
+        }
       }
     })();
+
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   const logout = () => {
@@ -129,6 +143,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setCidadao(null);
     setPerms([]);
+    setPermsReady(true);
     navigate("/login");
   };
 
@@ -148,9 +163,9 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user,
         displayName,
 
-        // ✅ NOVO
         perms,
         permsLoading,
+        permsReady, // ✅ EXPOSTO
         hasPerm,
         hasAnyPerm,
         hasAllPerms,
