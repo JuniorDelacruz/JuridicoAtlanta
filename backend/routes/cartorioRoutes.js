@@ -7,32 +7,15 @@ import authMiddleware from '../middleware/auth.js';
 import notifyDiscordBot from '../utils/discordWebhook.js';
 import { criarRegistroArma, validarPorte } from '../controllers/cartorio.controller.js';
 import { where } from 'sequelize';
+import { createImageUpload } from '../utils/upload.js';
 dotenv.config();
 const router = express.Router();
 
 const { CadastroCidadao, User } = db;
 
-// Config Multer (salva imagens em public/uploads)
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/uploads/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
-        cb(null, uniqueName);
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Apenas imagens são permitidas'), false);
-        }
-    }
+const upload = createImageUpload({
+  dest: "public/uploads",
+  maxSizeMB: 5,
 });
 
 // GET /api/cartorio/pendentes - Lista cadastros pendentes (para triagem/cartório)
