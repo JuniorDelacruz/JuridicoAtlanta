@@ -31,7 +31,7 @@ const ROLE_OPTIONS = [
 
 const SUBROLE_OPTIONS = [
   { value: null, label: "Nenhum" },
-  { value: "alteracaocargo", label: "Alteração de Cargo" },
+  { value: "alterarcargo", label: "Alteração de Cargo" },
   { value: "equipejuridico", label: "Equipe Jurídica" },
   { value: "responsaveljuridico", label: "Responsável Jurídico" },
   { value: "master", label: "Master" },
