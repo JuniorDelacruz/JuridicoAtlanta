@@ -67,80 +67,90 @@ export const TIPOS_REQUERIMENTO = [
         ]
     },
 
-    
-{
-    slug: "alvara",
+
+    {
+        slug: "alvara",
         tipoDb: "Emitir Alvará",
-            label: "Emitir Alvará",
-                roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
-                    subRole: ['equipejuridico'],
-                        fields: [
-                            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true },
+        label: "Emitir Alvará",
+        roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true },
 
-                            // ✅ Estado (single)
-                            {
-                                name: "nomeEstado",
-                                label: "Qual o Estado?",
-                                type: "select",
-                                required: true,
-                                multiple: false,
-                                options: Object.keys(ESTADOS_CIDADES),
+            // ✅ Estado (single)
+            {
+                name: "nomeEstado",
+                label: "Qual o Estado?",
+                type: "select",
+                required: true,
+                multiple: false,
+                options: Object.keys(ESTADOS_CIDADES),
 
-                                // ✅ quando estado mudar, limpa cidade
-                                resets: ["cidade"],
-                            },
+                // ✅ quando estado mudar, limpa cidade
+                resets: ["cidade"],
+            },
 
-                            // ✅ Cidade depende do Estado
-                            {
-                                name: "cidade",
-                                label: "Qual a Cidade?",
-                                type: "select",
-                                required: true,
+            // ✅ Cidade depende do Estado
+            {
+                name: "cidade",
+                label: "Qual a Cidade?",
+                type: "select",
+                required: true,
 
-                                // ⬇️ isso aqui é o “motor” universal
-                                dependsOn: "nomeEstado",
-                                optionsByValue: ESTADOS_CIDADES,
+                // ⬇️ isso aqui é o “motor” universal
+                dependsOn: "nomeEstado",
+                optionsByValue: ESTADOS_CIDADES,
 
-                                // opcional: placeholder custom
-                                placeholder: "Selecione o estado primeiro...",
-                            },
+                // opcional: placeholder custom
+                placeholder: "Selecione o estado primeiro...",
+            },
 
-                            {
-                                name: "setor",
-                                label: "Qual o setor da empresa?",
-                                type: "select",
-                                required: false,
-                                multiple: false,
-                                options: [
-                                    "Saloon", "Armaria", "Estábulo", "Ferraria", "Artesanato", "Doceria", "Gráfica", "Padaria", "Ateliê", "Jornal", "Madereira", "Tabacaria", "Berçária", "Mineradora", "Cooperativa (Ferrovia e Hidrovia)", "Imobiliária", "Veterinária"
-                                ],
-                            },
-                            { name: "razaosocial", label: "Razão Social da Empresa", type: "text", required: true },
-                        ],
+            {
+                name: "setor",
+                label: "Qual o setor da empresa?",
+                type: "select",
+                required: false,
+                multiple: false,
+                options: [
+                    "Saloon", "Armaria", "Estábulo", "Ferraria", "Artesanato", "Doceria", "Gráfica", "Padaria", "Ateliê", "Jornal", "Madereira", "Tabacaria", "Berçária", "Mineradora", "Cooperativa (Ferrovia e Hidrovia)", "Imobiliária", "Veterinária"
+                ],
+            },
+
+            {
+                name: "fotoDocumento",
+                label: "Foto do Documento",
+                type: "file",
+                required: true,
+                accept: "image/*",        // ou "image/png,image/jpeg"
+                maxSizeMB: 8,             // opcional (validação front)
+                preview: true             // opcional (mostrar preview)
+            },
+            { name: "razaosocial", label: "Razão Social da Empresa", type: "text", required: true },
+        ],
     },
-{
-    slug: "renovacao-alvara",
+    {
+        slug: "renovacao-alvara",
         tipoDb: "Renovação de Alvará",
-            label: "Renovação de Alvará",
-                roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
-                    subRole: ['equipejuridico'],
-                        fields: [
-                            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
-                        ]
-},
+        label: "Renovação de Alvará",
+        roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
+        fields: [
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
+        ]
+    },
 
-{
-    slug: "registro-arma",
+    {
+        slug: "registro-arma",
         label: "Registro de Arma",
-            tipoDb: "Registro de Arma",
-                roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
-                    subRole: ['equipejuridico'],
-                        disable: true,
-                            fields: [
-                                { name: "porteNumero", label: "Número do Porte" },
-                                { name: "numeroSerial", label: "Número de Série" },
-                                { name: "imagemIdentidadeUrl", label: "Imagem da Identidade (URL)" },
-                            ],
+        tipoDb: "Registro de Arma",
+        roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
+        subRole: ['equipejuridico'],
+        disable: true,
+        fields: [
+            { name: "porteNumero", label: "Número do Porte" },
+            { name: "numeroSerial", label: "Número de Série" },
+            { name: "imagemIdentidadeUrl", label: "Imagem da Identidade (URL)" },
+        ],
     },
 ];
 
