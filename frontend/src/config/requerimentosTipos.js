@@ -117,8 +117,26 @@ export const TIPOS_REQUERIMENTO = [
             },
 
             {
-                name: "fotoDocumento",
-                label: "Foto do Documento",
+                name: "fotoNomeEmpresaMapa",
+                label: "Foto com a localização da empresa no mapa (Nome visível).",
+                type: "file",
+                required: true,
+                accept: "image/*",        // ou "image/png,image/jpeg"
+                maxSizeMB: 8,             // opcional (validação front)
+                preview: true             // opcional (mostrar preview)
+            },
+             {
+                name: "fotoFachada",
+                label: "Foto da fachada da empresa.",
+                type: "file",
+                required: true,
+                accept: "image/*",        // ou "image/png,image/jpeg"
+                maxSizeMB: 8,             // opcional (validação front)
+                preview: true             // opcional (mostrar preview)
+            },
+             {
+                name: "fotoInv",
+                label: "Foto do inventário da loja.",
                 type: "file",
                 required: true,
                 accept: "image/*",        // ou "image/png,image/jpeg"
