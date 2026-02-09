@@ -104,6 +104,17 @@ export const TIPOS_REQUERIMENTO = [
                                 // opcional: placeholder custom
                                 placeholder: "Selecione o estado primeiro...",
                             },
+
+                            {
+                                name: "setor",
+                                label: "Qual o setor da empresa?",
+                                type: "select",
+                                required: false,
+                                multiple: false,
+                                options: [
+                                    "Saloon", "Armaria", "Estábulo", "Ferraria", "Artesanato", "Doceria", "Gráfica", "Padaria", "Ateliê", "Jornal", "Madereira", "Tabacaria", "Berçária", "Mineradora", "Cooperativa (Ferrovia e Hidrovia)", "Imobiliária", "Veterinária"
+                                ],
+                            },
                         ],
     },
 {
