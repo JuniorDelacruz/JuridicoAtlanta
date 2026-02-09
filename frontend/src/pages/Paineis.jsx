@@ -81,7 +81,7 @@ function SubRoleBadge({ subRole }) {
     );
   }
 
-  if (v === "alteracaocargo") {
+  if (v === "alterarcargo") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs font-semibold">
         <Crown className="h-4 w-4" />
