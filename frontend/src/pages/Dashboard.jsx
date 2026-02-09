@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   const moduleConfig = {
     Painéis: { icon: Scale, bgColor: "bg-blue-600" },
-    Permissões: {icon: Crown, bgColor: 'bg-black-600'},
+    Permissões: {icon: Crown, bgColor: 'bg-gray-700'},
     Requerimentos: { icon: FileText, bgColor: "bg-indigo-600" },
     Triagem: { icon: Search, bgColor: "bg-amber-600" },
     Cartório: { icon: FileCheck, bgColor: "bg-green-600" },
