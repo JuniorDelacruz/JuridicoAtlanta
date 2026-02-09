@@ -62,8 +62,36 @@ export const TIPOS_REQUERIMENTO = [
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
         subRole: ['equipejuridico'],
         fields: [
-            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
-        ]
+            { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true },
+
+            // ✅ Estado (single)
+            {
+                name: "nomeEstado",
+                label: "Qual o Estado?",
+                type: "select",
+                required: true,
+                multiple: false,
+                options: Object.keys(ESTADOS_CIDADES),
+
+                // ✅ quando estado mudar, limpa cidade
+                resets: ["cidade"],
+            },
+
+            // ✅ Cidade depende do Estado
+            {
+                name: "cidade",
+                label: "Qual a Cidade?",
+                type: "select",
+                required: true,
+
+                // ⬇️ isso aqui é o “motor” universal
+                dependsOn: "nomeEstado",
+                optionsByValue: ESTADOS_CIDADES,
+
+                // opcional: placeholder custom
+                placeholder: "Selecione o estado primeiro...",
+            },
+        ],
     },
     {
         slug: "renovacao-alvara",
