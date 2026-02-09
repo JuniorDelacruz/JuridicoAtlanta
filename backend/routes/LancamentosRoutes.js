@@ -14,44 +14,6 @@ function isHighSubRole(subRole) {
 }
 
 
-
-const PERMS = {
-    LANCAMENTOS_VER_GERAL: {
-        roles: ["juiz"],
-        subRoles: ["master", "responsaveljuridico", "equipejuridico"],
-    },
-
-    LANCAMENTOS_CRIAR: {
-        roles: ["juiz", "tabeliao", "escrivao", "promotor", "conselheiro"],
-        subRoles: ["master", "responsaveljuridico", "equipejuridico"],
-    },
-
-    LANCAMENTOS_REGISTRAR_REPASSE: {
-        roles: [], // se quiser permitir juiz também, põe aqui
-        subRoles: ["master", "responsaveljuridico"],
-    },
-
-    SERVICOS_GERENCIAR: {
-        roles: [],
-        subRoles: ["master", "responsaveljuridico"],
-    },
-};
-
-
-
-
-function hasPerm(user, key) {
-    const role = norm(user?.role);
-    const sub = norm(user?.subRole);
-    const p = PERMS[key];
-
-    if (!p) return false;
-    if (p.subRoles?.map(norm).includes(sub)) return true;
-    if (p.roles?.map(norm).includes(role)) return true;
-    return false;
-}
-
-
 function canViewAll(user) {
     const sub = norm(user?.subRole);
     const role = norm(user?.role);
