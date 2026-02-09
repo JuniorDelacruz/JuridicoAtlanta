@@ -98,22 +98,21 @@ function SubRoleBadge({ subRole }) {
 }
 
 export default function Paineis() {
-  const { user, logout, isAuthenticated, hasPerm, permsReady, permsVersion } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm, permsReady } = useAuth();
 
   const navigate = useNavigate();
   const { push } = useToast();
   const { confirm } = useConfirm();
 
   const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
+  const canManage = !!hasPerm?.("admin.perm.manageroles");
+  
   const [usuarios, setUsuarios] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [savingIds, setSavingIds] = useState(() => new Set());
-
-  const [hasCheckedPerm, setHasCheckedPerm] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const filteredUsuarios = useMemo(() => {
     if (!searchTerm.trim()) return usuarios;
@@ -130,13 +129,12 @@ export default function Paineis() {
   useEffect(() => {
     if (!isAuthenticated) { navigate("/login"); return; }
     if (!permsReady) return; // ainda carregando
-    const canManage = !!hasPerm?.("admin.perm.manageroles");
 
     if (!canManage) {
       push({ type: "error", title: "Negado", message: "Você não tem permissão para gerenciar cargos." });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, permsReady, isAuthorized, permsVersion, hasPerm, navigate, push]);
+  }, [isAuthenticated, permsReady, hasPerm, navigate, push]);
 
   // 2. Fetch de usuários: só roda se autorizado e permissão checada
   useEffect(() => {
@@ -270,7 +268,7 @@ export default function Paineis() {
     );
   }
 
-  if (!isAuthorized) {
+  if (!canManage) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700">
         Acesso negado.
