@@ -36,6 +36,7 @@ import Lancamentos from './pages/Lançamentos';
 import AdminPermissoesCentro from './pages/Admin/AdminPermissoesCentro.jsx';
 import AdminPermissoesCargo from './pages/Admin/AdminPermissoesCargo.jsx';
 import AdminPermissoesCriar from './pages/Admin/AdminPermissoesCriar.jsx';
+import NotFound from './pages/notFound.jsx';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -216,7 +217,7 @@ function App() {
 
 
       {/* 404 */}
-      <Route path="*" element={<div className="min-h-screen flex items-center justify-center text-2xl">Página não encontrada (404)</div>} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
 
 
