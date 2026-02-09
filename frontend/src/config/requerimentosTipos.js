@@ -1,9 +1,9 @@
 // frontend/src/config/requerimentosTipos.js
 const ESTADOS_CIDADES = {
-    Ambarino: ["Ambarino", "Cidade do Gelo", "Kattegat"],
-    Guarma: ["Ilha de Guarma", "Tortuga"],
+    "Ambarino": ["Ambarino", "Cidade do Gelo", "Kattegat"],
+    "Guarma": ["Ilha de Guarma", "Tortuga"],
     "New Hanover": ["Valentine", "Annesburg", "Van Horn", "Emerald Ranch"],
-    Lemoyne: ["Saint Denis", "Rhodes", "Braithwaite", "Lagras"],
+    "Lemoyne": ["Saint Denis", "Rhodes", "Braithwaite", "Lagras"],
     "México": ["México"],
     "New Austin": ["New Austin", "Armadillo", "Tumbleweed", "MacFarlane's Ranch"],
     "West Elizabeth": ["Black Water", "Strawberry"],
