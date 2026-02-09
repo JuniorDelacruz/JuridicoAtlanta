@@ -38,7 +38,7 @@ export const TRIAGEM_TIPOS = [
     {
         slug: "alvara",
         label: "Alvará",
-        tipoDb: "Alvará",
+        tipoDb: "Emitir Alvará",
         permKey: "triagem.acessar.alvara",
         path: "/triagem/alvara",
     },
