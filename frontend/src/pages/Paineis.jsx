@@ -15,7 +15,7 @@ import {
 import { useToast } from "../utils/toast";
 import { useConfirm } from "../components/ui/confirm";
 
-// ✅ IMPORTANTE: mande valores normalizados (lowercase) porque seu backend usa norm(toLowerCase)
+// Valores normalizados (lowercase) — backend usa norm(toLowerCase)
 const ROLE_OPTIONS = [
   { value: "cidadao", label: "Cidadão" },
   { value: "auxiliar", label: "Auxiliar" },
@@ -103,15 +103,14 @@ export default function Paineis() {
   const { push } = useToast();
   const { confirm } = useConfirm();
 
-  // ✅ PERMS
-  const canManageRoles = !!hasPerm?.("admin.perm.manageroles");
+  const [permissionChecked, setPermissionChecked] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+
   const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
-
-
   const canManagePermissions = !!hasPerm?.("admin.perms.manage");
 
   const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,16 +133,29 @@ export default function Paineis() {
       return;
     }
 
-    // ✅ Gate da página por perm
-    if (!canManageRoles) {
-      push({
-        type: "error",
-        title: "Negado",
-        message: "Você não tem permissão para gerenciar cargos.",
-      });
-      navigate("/dashboard");
-      return;
-    }
+    // Dá um micro-delay para o AuthContext atualizar hasPerm
+    const timer = setTimeout(() => {
+      const canManage = !!hasPerm?.("admin.perm.manageroles");
+
+      setAuthorized(canManage);
+      setPermissionChecked(true);
+
+      if (!canManage) {
+        push({
+          type: "error",
+          title: "Negado",
+          message: "Você não tem permissão para gerenciar cargos.",
+        });
+        navigate("/dashboard");
+      }
+    }, 0); // 0ms é suficiente na maioria dos casos; se precisar, aumente para 100-200ms
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, hasPerm, navigate, push]);
+
+  useEffect(() => {
+    // Só carrega usuários se já passou na verificação de permissão
+    if (!permissionChecked || !authorized) return;
 
     const fetchUsuarios = async () => {
       setLoading(true);
@@ -154,6 +166,7 @@ export default function Paineis() {
         setUsuarios(response.data || []);
       } catch (err) {
         const status = err?.response?.status;
+        const msg = err?.response?.data?.msg || err.message;
 
         if (status === 403) {
           push({
@@ -165,14 +178,14 @@ export default function Paineis() {
           return;
         }
 
-        setError("Erro ao carregar usuários: " + (err.response?.data?.msg || err.message));
+        setError("Erro ao carregar usuários: " + msg);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUsuarios();
-  }, [isAuthenticated, navigate, push, canManageRoles]);
+  }, [permissionChecked, authorized, navigate, push]);
 
   const markSaving = (id, on) => {
     setSavingIds((prev) => {
@@ -209,7 +222,6 @@ export default function Paineis() {
 
     try {
       await api.patch(`/api/users/${userId}`, payload);
-
       patchUserLocal(userId, payload);
 
       push({
@@ -263,20 +275,42 @@ export default function Paineis() {
     );
   };
 
+  // Renderizações de loading / erro / negado
   if (!isAuthenticated) return null;
 
-  // Se não tem perm, o useEffect já redireciona — mas isso evita flicker
-  if (!canManageRoles) {
+  if (!permissionChecked) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-gray-700 bg-gray-100">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-600">
+        Verificando permissões...
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700">
         Acesso negado.
       </div>
     );
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando usuários...</div>;
-  if (error) return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-600">
+        Carregando usuários...
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 text-red-600">
+        {error}
+      </div>
+    );
+  }
+
+  // Renderização principal
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
@@ -310,7 +344,6 @@ export default function Paineis() {
           <h2 className="text-3xl font-bold text-gray-800">Gerenciamento de Cargos</h2>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
-            {/* ✅ Só aparece se tiver perm */}
             {canConfigWebhooks && (
               <button
                 onClick={() => navigate("/paineis/webhooks")}
@@ -368,7 +401,9 @@ export default function Paineis() {
                           <SubRoleBadge subRole={u.subRole} />
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.discordId || "—"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {u.discordId || "—"}
+                        </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {labelRole(u.role)}
@@ -388,7 +423,7 @@ export default function Paineis() {
                               </option>
                             ))}
                           </select>
-                          {isSaving ? <div className="text-xs text-gray-400 mt-1">Salvando...</div> : null}
+                          {isSaving && <div className="text-xs text-gray-400 mt-1">Salvando...</div>}
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
