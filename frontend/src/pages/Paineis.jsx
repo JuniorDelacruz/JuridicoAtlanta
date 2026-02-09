@@ -98,16 +98,10 @@ function SubRoleBadge({ subRole }) {
 }
 
 export default function Paineis() {
-  const { user, logout, isAuthenticated, hasPerm } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm, permsLoading } = useAuth();
   const navigate = useNavigate();
   const { push } = useToast();
   const { confirm } = useConfirm();
-
-  const [permissionChecked, setPermissionChecked] = useState(false);
-  const [authorized, setAuthorized] = useState(false);
-
-  const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
-  const canManagePermissions = !!hasPerm?.("admin.perms.manage");
 
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -133,30 +127,22 @@ export default function Paineis() {
       return;
     }
 
-    // Dá um micro-delay para o AuthContext atualizar hasPerm
-    const timer = setTimeout(() => {
-      const canManage = !!hasPerm?.("admin.perm.manageroles");
+    // Espera o carregamento das permissões terminar
+    if (permsLoading) return;
 
-      setAuthorized(canManage);
-      setPermissionChecked(true);
+    const canManage = !!hasPerm?.("admin.perm.manageroles");
 
-      if (!canManage) {
-        push({
-          type: "error",
-          title: "Negado",
-          message: "Você não tem permissão para gerenciar cargos.",
-        });
-        navigate("/dashboard");
-      }
-    }, 100); // 0ms é suficiente na maioria dos casos; se precisar, aumente para 100-200ms
+    if (!canManage) {
+      push({
+        type: "error",
+        title: "Negado",
+        message: "Você não tem permissão para gerenciar cargos.",
+      });
+      navigate("/dashboard");
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, hasPerm, navigate, push]);
-
-  useEffect(() => {
-    // Só carrega usuários se já passou na verificação de permissão
-    if (!permissionChecked || !authorized) return;
-
+    // Só carrega usuários se passou no gate de permissão
     const fetchUsuarios = async () => {
       setLoading(true);
       setError(null);
@@ -185,7 +171,7 @@ export default function Paineis() {
     };
 
     fetchUsuarios();
-  }, [permissionChecked, authorized, navigate, push]);
+  }, [isAuthenticated, permsLoading, hasPerm, navigate, push]);
 
   const markSaving = (id, on) => {
     setSavingIds((prev) => {
@@ -275,18 +261,17 @@ export default function Paineis() {
     );
   };
 
-  // Renderizações de loading / erro / negado
-  if (!isAuthenticated) return null;
-
-  if (!permissionChecked) {
+  // Renderizações condicionais
+  if (!isAuthenticated || permsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-600">
-        Verificando permissões...
+        Verificando autenticação e permissões...
       </div>
     );
   }
 
-  if (!authorized) {
+  const canManage = !!hasPerm?.("admin.perm.manageroles");
+  if (!canManage) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700">
         Acesso negado.
