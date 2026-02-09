@@ -2,7 +2,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Scale, FileText, Search, FileCheck, Briefcase, Calendar, Crown } from "lucide-react";
+import { Scale, FileText, Search, FileCheck, Briefcase, Calendar, Crown, MonitorCog } from "lucide-react";
 
 export default function Dashboard() {
   const { user, displayName, logout, isAuthenticated, hasPerm } = useAuth();
@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   const moduleConfig = {
     Painéis: { icon: Scale, bgColor: "bg-blue-600" },
-    Permissões: {icon: Crown, bgColor: 'bg-red-600'},
+    Permissões: {icon: MonitorCog, bgColor: 'bg-red-600'},
     Requerimentos: { icon: FileText, bgColor: "bg-indigo-600" },
     Triagem: { icon: Search, bgColor: "bg-amber-600" },
     Cartório: { icon: FileCheck, bgColor: "bg-green-600" },
