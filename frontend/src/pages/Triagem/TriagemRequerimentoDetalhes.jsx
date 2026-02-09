@@ -93,7 +93,7 @@ export default function TriagemRequerimentoDetalhes() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, slug, numero, permitido]);
+  }, [isAuthenticated, slug, numero]);
 
   async function aprovar() {
     if (!confirm("Tem certeza que deseja APROVAR este requerimento?")) return;
