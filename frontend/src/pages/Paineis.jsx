@@ -131,12 +131,12 @@ export default function Paineis() {
     if (!isAuthenticated) { navigate("/login"); return; }
     if (!permsReady) return; // ainda carregando
     const canManage = !!hasPerm?.("admin.perm.manageroles");
-    
+
     if (!canManage) {
       push({ type: "error", title: "Negado", message: "Você não tem permissão para gerenciar cargos." });
       navigate("/dashboard");
     }
-  }, [isAuthenticated, permsReady, permsVersion, hasPerm, navigate, push]);
+  }, [isAuthenticated, permsReady, isAuthorized, permsVersion, hasPerm, navigate, push]);
 
   // 2. Fetch de usuários: só roda se autorizado e permissão checada
   useEffect(() => {
