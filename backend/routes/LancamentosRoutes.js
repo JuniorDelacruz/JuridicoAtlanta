@@ -58,7 +58,7 @@ function canViewAll(user) {
 
     // quem pode ver o geral
     const allowedSubRoles = ["master", "responsaveljuridico", "equipejuridico"];
-    const allowedRoles = ["juiz"]; // <- aqui entra juiz (e outros se quiser)
+    const allowedRoles = ["juiz", 'promotor chefe']; // <- aqui entra juiz (e outros se quiser)
 
     return allowedSubRoles.includes(sub) || allowedRoles.includes(role);
 }
