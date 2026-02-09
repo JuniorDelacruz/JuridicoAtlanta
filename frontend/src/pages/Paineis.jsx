@@ -98,17 +98,24 @@ function SubRoleBadge({ subRole }) {
 }
 
 export default function Paineis() {
-  const { user, logout, isAuthenticated, hasPerm, permsLoading } = useAuth();
+  const { 
+    user, 
+    logout, 
+    isAuthenticated, 
+    hasPerm, 
+    permsLoading 
+  } = useAuth();
+  
   const navigate = useNavigate();
   const { push } = useToast();
   const { confirm } = useConfirm();
+
+  const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
 
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const canConfigWebhooks = !!hasPerm?.("admin.perms.configwebhook");
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [savingIds, setSavingIds] = useState(() => new Set());
 
@@ -144,7 +151,7 @@ export default function Paineis() {
       return;
     }
 
-    // Só carrega usuários se passou no gate de permissão
+    // Carrega usuários apenas se tiver permissão
     const fetchUsuarios = async () => {
       setLoading(true);
       setError(null);
