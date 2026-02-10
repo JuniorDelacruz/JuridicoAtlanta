@@ -308,8 +308,10 @@ function buildForumPost(type, data) {
   if (type === WEBHOOK_TYPES.ALVARA || type === WEBHOOK_TYPES.RENOVACAO_ALVARA) {
     const id = safe(data?.id || data?.numero || dados?.numeroIdentificacao);
 
+    console.log(dados)
+
     return {
-      title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "Alvará"} #${id} — ${safe(dados?.razaosocial)}`,
+      title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "AVL-"} #${id} — ${safe(dados?.razaosocial)}`,
       message: {
         content:
           `**${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Pedido de RENOVAÇÃO" : "Pedido de ALVARÁ"}**\n` +
