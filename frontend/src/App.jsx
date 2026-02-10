@@ -206,9 +206,9 @@ function App() {
       <Route path="/cartorio" element={<Cartorio />} />
       <Route path="/triagem" element={<Triagem />} />
       <Route path="/triagem/:slug" element={<TriagemRequerimentosTipo />} />
-      <Route path="/triagem/:slug/detalhes/:numero" element={<TriagemRequerimentoDetalhes />} />
       <Route path="/triagem/casamento/detalhe/:numero" element={<TriagemRequerimentoDetalhesCasamento />} />
       <Route path="/triagem/alvara/detalhe/:numero" element={<TriagemAlvaraDetalhes />} />
+      <Route path="/triagem/:slug/detalhes/:numero" element={<TriagemRequerimentoDetalhes />} />
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
       <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
