@@ -96,7 +96,7 @@ router.get("/", authMiddleware(), async (req, res) => {
     }
 });
 
-router.post("/", authMiddleware(), async (req, res) => {
+router.post("/", authMiddleware(), maybeUploadAlvara, async (req, res) => {
     const { tipo, dados } = req.body;
 
     if (!tipo || !dados) {
