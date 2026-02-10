@@ -123,7 +123,7 @@ router.post("/", authMiddleware(), maybeUploadAlvara, async (req, res) => {
 
             const f1 = files.fotoNomeEmpresaMapa?.[0];
             const f2 = files.fotoFachada?.[0];
-            const f3 = files.fotoinv?.[0];
+            const f3 = files.fotoInv?.[0];
 
             if (!f1 || !f2 || !f3) {
                 return res.status(400).json({
