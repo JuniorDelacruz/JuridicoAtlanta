@@ -111,6 +111,32 @@ function buildWebhookPayload(item, reqUser) {
         dados?.cidadaoTest3,
     ].filter(Boolean);
 
+
+    let payloadPessoa = {
+        nomeCompleto: cid?.nomeCompleto,
+        registro: cid?.id,
+        discordId: cid?.discordId,
+        pombo: cid?.pombo,
+        identidade: cid?.identidade,
+        profissao: cid?.profissao,
+        residencia: cid?.residencia,
+    };
+
+    if (casamento) {
+        payloadPessoa = {
+            noivo: mapPessoaCidadao(noivo),
+            noiva: mapPessoaCidadao(noiva),
+            testemunhas: testemunhas.map(mapPessoaCidadao),
+        };
+    } else if (isAlvara) {
+        payloadPessoa = {
+            razaosocial: dados?.razaosocial,
+            setor: dados?.setor,
+            cidade: dados?.cidade,
+            estado: dados?.nomeEstado,
+        };
+    }
+
     return {
         id: item.numero,
         tipo: item.tipo,
@@ -121,40 +147,14 @@ function buildWebhookPayload(item, reqUser) {
             reqUser?.username ||
             String(reqUser?.id || "Sistema"),
 
-        // ✅ CASAMENTO: payload específico
-        ...(casamento
-            ? {
-                noivo: mapPessoaCidadao(noivo),
-                noiva: mapPessoaCidadao(noiva),
-                testemunhas: testemunhas.map(mapPessoaCidadao),
-            }
-            : isAlvara ? {
-                razaosocial: dados?.razaosocial,
-                setor: dados?.setor,
-                cidade: dados?.cidade,
-                estado: dados?.nomeEstado,
+        ...payloadPessoa,
 
-            } : {
-                // ✅ payload padrão que você já tinha
-                nomeCompleto: cid?.nomeCompleto,
-                registro: cid?.id,
-                discordId: cid?.discordId,
-                pombo: cid?.pombo,
-                identidade: cid?.identidade,
-                profissao: cid?.profissao,
-                residencia: cid?.residencia,
-            }),
+        ...(isTroca && { novoNome: dados?.novoNome }),
 
-        // troca nome
-        ...(isTroca ? { novoNome: dados?.novoNome } : {}),
-
-        // porte
-        ...(isPorte
-            ? {
-                validade: dados?.workflow?.juiz?.validade || dados?.validade || null,
-                arma: dados?.arma || null,
-            }
-            : {}),
+        ...(isPorte && {
+            validade: dados?.workflow?.juiz?.validade || dados?.validade || null,
+            arma: dados?.arma || null,
+        }),
     };
 }
 
