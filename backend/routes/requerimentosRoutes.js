@@ -3,9 +3,15 @@ import express from "express";
 import db from "../models/index.js";
 import { Sequelize } from "sequelize";
 import authMiddleware from "../middleware/auth.js";
+import { createImageUpload } from '../utils/upload.js';
 
 const router = express.Router();
 const { Requerimento, User, CadastroCidadao } = db;
+
+const upload = createImageUpload({
+  dest: "public/uploads",
+  maxSizeMB: 5,
+});
 
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
@@ -91,6 +97,11 @@ router.post("/", authMiddleware(), async (req, res) => {
         });
 
         let dadosComAnexo = {};
+
+
+        if (tipo === "Emitir Alvará") {
+           upload.single("imagemIdentidade")
+        }
 
         if (tipo === "Casamento") {
             // pega e valida os 5

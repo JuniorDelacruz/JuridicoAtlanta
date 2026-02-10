@@ -279,7 +279,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
         const Solicitante = await CadastroCidadao.findOne({
-            where: { discordId: discordId }
+            where: { discordId: discordId.discordId }
         })
 
 
