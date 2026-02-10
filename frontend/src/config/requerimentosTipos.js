@@ -29,6 +29,11 @@ export const TIPOS_REQUERIMENTO = [
                 ]
             },
         ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
     {
         slug: "troca-de-nome",
@@ -41,6 +46,11 @@ export const TIPOS_REQUERIMENTO = [
             { name: "novoNome", label: "Novo Nome Desejado", type: "text", required: true },
             { name: "motivo", label: "Motivo da troca", type: "textarea", required: true },
         ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
     {
         slug: "casamento",
@@ -54,7 +64,12 @@ export const TIPOS_REQUERIMENTO = [
             { name: "numeroIdentificacaoTest1", label: "Numero Cidadão da Testemunha 1", type: "text", required: true, verifyCadastro: true, },
             { name: "numeroIdentificacaoTest2", label: "Numero Cidadão da Testemunha 2", type: "text", required: true, verifyCadastro: true, },
             { name: "numeroIdentificacaoTest3", label: "Numero Cidadão da Testemunha 3", type: "text", required: true, verifyCadastro: true, },
-        ]
+        ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
     {
         slug: "limpeza-de-ficha",
@@ -64,7 +79,12 @@ export const TIPOS_REQUERIMENTO = [
         subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
-        ]
+        ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
 
 
@@ -125,7 +145,7 @@ export const TIPOS_REQUERIMENTO = [
                 maxSizeMB: 8,             // opcional (validação front)
                 preview: true             // opcional (mostrar preview)
             },
-             {
+            {
                 name: "fotoFachada",
                 label: "Foto da fachada da empresa.",
                 type: "file",
@@ -134,7 +154,7 @@ export const TIPOS_REQUERIMENTO = [
                 maxSizeMB: 8,             // opcional (validação front)
                 preview: true             // opcional (mostrar preview)
             },
-             {
+            {
                 name: "fotoInv",
                 label: "Foto do inventário da loja.",
                 type: "file",
@@ -145,6 +165,11 @@ export const TIPOS_REQUERIMENTO = [
             },
             { name: "razaosocial", label: "Razão Social da Empresa", type: "text", required: true },
         ],
+        api: {
+            url: "/api/requerimentos/alvara",
+            method: "POST",
+            mode: "multipart", // 👈 aqui mora a diferença
+        }
     },
     {
         slug: "renovacao-alvara",
@@ -154,7 +179,12 @@ export const TIPOS_REQUERIMENTO = [
         subRole: ['equipejuridico'],
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true, },
-        ]
+        ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
 
     {
@@ -169,6 +199,11 @@ export const TIPOS_REQUERIMENTO = [
             { name: "numeroSerial", label: "Número de Série" },
             { name: "imagemIdentidadeUrl", label: "Imagem da Identidade (URL)" },
         ],
+        api: {
+            url: "/api/requerimentos",
+            method: "POST",
+            mode: "default", // JSON normal
+        }
     },
 ];
 

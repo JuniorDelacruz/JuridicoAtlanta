@@ -216,8 +216,7 @@ export default function RequerimentoNovo() {
     setValues(initialValues(tipoCfg.fields));
     setErrors({});
     setVerifMap({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, isAuthenticated]);
+  }, [slug, isAuthenticated, permitido, tipoCfg, navigate]);
 
   // ✅ setField com "resets" (ex: mudar estado -> limpar cidade)
   function setField(name, value) {
@@ -328,6 +327,59 @@ export default function RequerimentoNovo() {
     return false;
   }, [saving, verifyFields, values, verifMap]);
 
+  // ✅ Envio por tipo (usa tipoCfg.api)
+  async function submitByTipo(tipoCfg, values) {
+    const api = tipoCfg?.api || {};
+    const urlPath = api.url || "/api/requerimentos";
+    const method = api.method || "POST";
+    const mode = api.mode || "default"; // default | multipart
+
+    const url = `${API_URL}${urlPath}`;
+
+    if (mode === "default") {
+      const payloadJson = {
+        tipo: tipoCfg.tipoDb,
+        dados: values,
+        solicitante: user?.username || "Usuário",
+      };
+
+      return axios({
+        url,
+        method,
+        data: payloadJson,
+        headers: authHeaders(),
+      });
+    }
+
+    if (mode === "multipart") {
+      const fd = new FormData();
+      fd.append("tipo", tipoCfg.tipoDb);
+
+      // manda dados como JSON (sem Files)
+      const dadosCopy = { ...values };
+      for (const f of tipoCfg.fields || []) {
+        if (f.type === "file") delete dadosCopy[f.name];
+      }
+      fd.append("dados", JSON.stringify(dadosCopy));
+
+      // anexa os files
+      for (const f of tipoCfg.fields || []) {
+        if (f.type === "file" && values?.[f.name] instanceof File) {
+          fd.append(f.name, values[f.name]);
+        }
+      }
+
+      return axios({
+        url,
+        method,
+        data: fd,
+        headers: authHeaders(), // NÃO setar Content-Type manualmente
+      });
+    }
+
+    throw new Error(`Modo de envio não suportado: ${mode}`);
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     if (!tipoCfg) return;
@@ -362,44 +414,7 @@ export default function RequerimentoNovo() {
     setSaving(true);
 
     try {
-      const hasFile = (tipoCfg.fields || []).some(
-        (f) => f.type === "file" && values?.[f.name] instanceof File
-      );
-
-      if (hasFile) {
-        const fd = new FormData();
-        fd.append("tipo", tipoCfg.tipoDb);
-
-        // manda dados como JSON string (sem os Files)
-        const dadosCopy = { ...values };
-        for (const f of tipoCfg.fields) {
-          if (f.type === "file") delete dadosCopy[f.name];
-        }
-        fd.append("dados", JSON.stringify(dadosCopy));
-
-        // anexa os files
-        for (const f of tipoCfg.fields) {
-          if (f.type === "file" && values[f.name] instanceof File) {
-            // f.name tem que bater com upload.single("...") no backend
-            fd.append(f.name, values[f.name]);
-          }
-        }
-
-        await axios.post(`${API_URL}/api/requerimentos`, fd, {
-          headers: { ...authHeaders() }, // NÃO setar Content-Type manualmente
-        });
-      } else {
-        const payloadJson = {
-          tipo: tipoCfg.tipoDb,
-          dados: values,
-          solicitante: user?.username || "Usuário",
-        };
-
-        await axios.post(`${API_URL}/api/requerimentos`, payloadJson, {
-          headers: authHeaders(),
-        });
-      }
-
+      await submitByTipo(tipoCfg, values);
       setToast({ type: "ok", text: "Requerimento criado com sucesso!" });
       navigate(`/requerimentos/${slug}`);
     } catch (err) {

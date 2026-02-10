@@ -9,9 +9,10 @@ const router = express.Router();
 const { Requerimento, User, CadastroCidadao } = db;
 
 const upload = createImageUpload({
-  dest: "public/uploads",
-  maxSizeMB: 5,
+    dest: "public/uploads",
+    maxSizeMB: 5,
 });
+const APIURL = "https://apijuridico.starkstore.dev.br"
 
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
@@ -76,6 +77,10 @@ router.get("/", authMiddleware(), async (req, res) => {
         res.status(500).json({ msg: "Erro ao listar requerimentos" });
     }
 });
+
+
+
+
 
 router.post("/", authMiddleware(), async (req, res) => {
     const { tipo, dados } = req.body;
@@ -199,6 +204,137 @@ router.post("/", authMiddleware(), async (req, res) => {
         res.status(500).json({ msg: "Erro ao criar requerimento" });
     }
 });
+
+// ✅ POST /api/requerimentos/alvara (multipart com 3 imagens)
+router.post(
+    "/alvara",
+    authMiddleware(),
+    upload.fields([
+        { name: "fotoInv", maxCount: 1 },
+        { name: "fotoFachada", maxCount: 1 },
+        { name: "fotoNomeEmpresaMapa", maxCount: 1 },
+    ]),
+    async (req, res) => {
+        try {
+            // multipart: tipo vem em req.body, dados vem string
+            const tipo = req.body?.tipo || "Emitir Alvará";
+            const rawDados = req.body?.dados;
+
+            if (!rawDados) {
+                return res.status(400).json({ msg: "Campo 'dados' é obrigatório (JSON string)." });
+            }
+
+            let dados;
+            try {
+                dados = JSON.parse(rawDados);
+            } catch (e) {
+                return res.status(400).json({ msg: "Campo 'dados' inválido. Envie um JSON válido." });
+            }
+
+            // valida tipo (opcional mas recomendado)
+            if (tipo !== "Emitir Alvará") {
+                return res.status(400).json({ msg: "Tipo inválido para esta rota." });
+            }
+
+            // valida arquivos
+            const files = req.files || {};
+            const fotoInv = files.fotoInv?.[0];
+            const fotoFachada = files.fotoFachada?.[0];
+            const fotoNomeEmpresaMapa = files.fotoNomeEmpresaMapa?.[0];
+
+            if (!fotoInv || !fotoFachada || !fotoNomeEmpresaMapa) {
+                return res.status(400).json({
+                    msg: "Envie as 3 imagens obrigatórias: fotoInv, fotoFachada, fotoNomeEmpresaMapa.",
+                });
+            }
+
+            // helper snapshot
+            const snapCidadao = (c) => ({
+                id: c.id,
+                nomeCompleto: c.nomeCompleto,
+                identidade: c.identidade,
+                profissao: c.profissao,
+                residencia: c.residencia,
+                discordId: c.discordId,
+                pombo: c.pombo,
+                status: c.status,
+            });
+
+            // ===== fluxo antigo (1 cadastro) — baseado no numeroIdentificacao =====
+            const identidade =
+                dados.numeroIdentificacao ||
+                dados.numeroRegistro ||
+                dados.identidade ||
+                null;
+
+            let cidadao = null;
+
+            if (identidade) {
+                cidadao = await CadastroCidadao.findOne({
+                    where: { id: String(identidade).trim() }, // ajuste se precisar
+                });
+
+                if (!cidadao) {
+                    return res.status(400).json({ msg: "Registro do cartório não encontrado." });
+                }
+
+                if (cidadao.status !== "APROVADO") {
+                    return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
+                }
+            } else {
+                return res.status(400).json({ msg: "Número de Identificação (Cartório) é obrigatório." });
+            }
+
+            // monta URLs/caminhos dos uploads
+            // ⚠️ depende do createImageUpload: normalmente multer dá .filename e .path
+            const toPublicUrl = (file) => {
+                // se você serve /public como estático, o normal é /uploads/...
+                // ajuste se sua app usa outro base path
+                return `${APIURL}/uploads/${file.filename}`;
+            };
+
+            const dadosComAnexo = {
+                ...dados,
+                cidadao: cidadao ? snapCidadao(cidadao) : null,
+
+                // salva referência das imagens no JSON
+                fotoInvUrl: toPublicUrl(fotoInv),
+                fotoFachadaUrl: toPublicUrl(fotoFachada),
+                fotoNomeEmpresaMapaUrl: toPublicUrl(fotoNomeEmpresaMapa),
+
+                // opcional: meta útil
+                uploads: {
+                    fotoInv: { originalName: fotoInv.originalname, size: fotoInv.size, mimetype: fotoInv.mimetype },
+                    fotoFachada: { originalName: fotoFachada.originalname, size: fotoFachada.size, mimetype: fotoFachada.mimetype },
+                    fotoNomeEmpresaMapa: {
+                        originalName: fotoNomeEmpresaMapa.originalname,
+                        size: fotoNomeEmpresaMapa.size,
+                        mimetype: fotoNomeEmpresaMapa.mimetype,
+                    },
+                },
+            };
+
+            // solicitante
+            const solicitanteRow = await CadastroCidadao.findOne({
+                where: { discordId: req.user.discordId },
+            });
+
+            const novo = await Requerimento.create({
+                tipo,
+                dados: dadosComAnexo,
+                solicitante: solicitanteRow?.nomeCompleto || req.user?.username,
+                status: "PENDENTE",
+                userId: req.user.id,
+            });
+
+            return res.status(201).json(novo);
+        } catch (err) {
+            console.error("Erro ao criar requerimento (alvara):", err);
+            return res.status(500).json({ msg: "Erro ao criar requerimento (alvara)" });
+        }
+    }
+);
+
 
 // GET /api/requerimentos/:numero  (NUMÉRICO)
 router.get("/:numero", authMiddleware(), async (req, res) => {
