@@ -45,8 +45,8 @@ function webhookTypeByRequerimentoTipo(tipo) {
             return WEBHOOK_TYPES.PORTE_SUSPENSO;
 
 
-        case "Alvará":
-        case "Alvara":
+        case "Emitir Alvará":
+        case "Emitir Alvara":
             return WEBHOOK_TYPES.ALVARA;
 
 
