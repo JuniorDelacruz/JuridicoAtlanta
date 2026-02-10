@@ -4,7 +4,7 @@ import db from "../models/index.js";
 import { botSendMessage, botSetNickname } from "./discordBotSend.js";
 import { buildNickname } from "./nickname.js";
 import { client } from "../bot/index.js";
-import { interpolators } from "sharp";
+
 
 const { WebhookConfig, Requerimento } = db;
 
