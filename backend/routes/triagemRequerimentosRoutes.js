@@ -297,7 +297,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         await item.save();
 
-        if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas") && isJuizOuAdmin) {
+        if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas")) {
             const dadosAtual = item.dados || {};
 
             item.status = "AGUARDANDO_CARIMBO";
