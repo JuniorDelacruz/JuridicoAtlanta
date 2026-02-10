@@ -1,19 +1,29 @@
+// frontend/src/pages/requerimentos/RequerimentoTipoList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { getTipoBySlug } from "../../config/requerimentosTipos";
 import { ArrowLeft, Plus, Search as SearchIcon } from "lucide-react";
 import { api } from "../../services/api";
 
-const API_URL = import.meta?.env?.VITE_API_URL || "https://apijuridico.starkstore.dev.br";
+// ✅ Permissão por slug (mesmo padrão do Hub)
+const PERM_BY_SLUG = {
+  "casamento": "requerimento.acessar.casamento",
+  "alvara": "requerimento.acessar.emitiralvara",
+  "limpeza-de-ficha": "requerimento.acessar.limpezadeficha",
+  "porte-de-arma": "requerimento.acessar.portedearma",
+  "renovacao-alvara": "requerimento.acessar.renovacaoalvara",
+  "troca-de-nome": "requerimento.acessar.trocadenome",
+};
 
 export default function RequerimentoTipoList() {
   const { slug } = useParams();
   const tipoCfg = getTipoBySlug(slug);
 
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm, displayName } = useAuth();
   const navigate = useNavigate();
+
+  // bypass opcional
   const isEquipeJuridica = user?.subRole === "equipejuridico";
 
   const [requerimentos, setRequerimentos] = useState([]);
@@ -23,25 +33,30 @@ export default function RequerimentoTipoList() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
 
-  const authHeaders = () => {
-    const token = localStorage.getItem("token");
-    return { Authorization: `Bearer ${token}` };
-  };
-
+  // ✅ permissão com hasPerm
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-  }, [tipoCfg, user?.role, isEquipeJuridica]);
+
+    const perm = PERM_BY_SLUG[slug];
+    if (!perm) return false; // segurança: slug sem perm = bloqueia
+
+    if (user?.role === "admin") return true;
+    if (isEquipeJuridica) return true;
+
+    return !!hasPerm?.(perm);
+  }, [tipoCfg, slug, user?.role, isEquipeJuridica, hasPerm]);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
+
     if (!tipoCfg) {
       navigate("/requerimentos");
       return;
     }
+
     if (!permitido) {
       alert("Acesso negado para este tipo de requerimento.");
       navigate("/requerimentos");
@@ -55,9 +70,7 @@ export default function RequerimentoTipoList() {
         const params = { tipo: tipoCfg.tipoDb };
         if (statusFilter !== "todos") params.status = statusFilter;
 
-        const res = await api.get(`/api/requerimentos`, {
-          params,
-        });
+        const res = await api.get(`/api/requerimentos`, { params });
 
         setRequerimentos(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
@@ -67,22 +80,22 @@ export default function RequerimentoTipoList() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, slug, statusFilter]);
+  }, [isAuthenticated, slug, statusFilter, permitido]);
 
   const filtered = useMemo(() => {
     let result = requerimentos;
     const term = search.trim().toLowerCase();
+
     if (term) {
-      result = result.filter((r) =>
-        String(r.numero || "").includes(term) ||
-        String(r.solicitante || "").toLowerCase().includes(term)
+      result = result.filter(
+        (r) =>
+          String(r.numero || "").includes(term) ||
+          String(r.solicitante || "").toLowerCase().includes(term)
       );
     }
     return result;
   }, [requerimentos, search]);
 
-  // Aqui você decide: navegar pra /requerimento/:slug/novo (recomendado)
-  // ou abrir modal. Vou deixar navegação.
   const handleNovo = () => navigate(`/requerimentos/${slug}/novo`);
 
   if (!tipoCfg) return null;
@@ -103,7 +116,9 @@ export default function RequerimentoTipoList() {
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </button>
-            <span className="text-sm">Bem-vindo, {user?.username || "Usuário"}</span>
+
+            <span className="text-sm">Bem-vindo, {displayName || user?.username || "Usuário"}</span>
+
             <button
               onClick={logout}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition"
@@ -164,17 +179,29 @@ export default function RequerimentoTipoList() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Número
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Solicitante
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
+
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filtered.map((req) => (
                       <tr key={req.numero} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{req.numero}</td>
+
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -188,10 +215,13 @@ export default function RequerimentoTipoList() {
                             {req.status}
                           </span>
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{req.solicitante}</td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(req.createdAt).toLocaleDateString("pt-BR")}
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => navigate(`/requerimentos/detalhes/${req.numero}`)}
@@ -208,6 +238,9 @@ export default function RequerimentoTipoList() {
             )}
           </div>
         )}
+
+        {/* debug opcional */}
+        {/* <div className="mt-4 text-xs text-gray-400">perm: {PERM_BY_SLUG[slug] || "—"}</div> */}
       </main>
 
       <footer className="bg-gray-900 text-gray-400 py-6 text-center mt-auto">
