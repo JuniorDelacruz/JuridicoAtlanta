@@ -275,9 +275,11 @@ export default function TriagemRequerimentosTipo() {
                         <button
                           onClick={() =>
                             navigate(
-                              especiais.has(slug)
-                                ? `/triagem/${slug}/detalhe/${r.numero}`
-                                : `/triagem/${slug}/detalhes/${r.numero}`
+                              slug === "casamento"
+                                ? `/triagem/casamento/detalhe/${r.numero}`
+                                : slug === "alvara"
+                                  ? `/triagem/alvara/detalhe/${r.numero}`
+                                  : `/triagem/${slug}/detalhes/${r.numero}`
                             )
                           }
                           className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"

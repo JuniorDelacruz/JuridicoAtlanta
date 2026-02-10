@@ -37,6 +37,7 @@ import AdminPermissoesCentro from './pages/Admin/AdminPermissoesCentro.jsx';
 import AdminPermissoesCargo from './pages/Admin/AdminPermissoesCargo.jsx';
 import AdminPermissoesCriar from './pages/Admin/AdminPermissoesCriar.jsx';
 import NotFound from './pages/notFound.jsx';
+import TriagemAlvaraDetalhes from './pages/Triagem/TriagemAlvaraDetalhes.jsx';
 
 function LandingPage() {
   // Sua página inicial atual (extraída para um componente separado)
@@ -206,7 +207,8 @@ function App() {
       <Route path="/triagem" element={<Triagem />} />
       <Route path="/triagem/:slug" element={<TriagemRequerimentosTipo />} />
       <Route path="/triagem/:slug/detalhes/:numero" element={<TriagemRequerimentoDetalhes />} />
-      <Route path="/triagem/:slug/detalhe/:numero" element={<TriagemRequerimentoDetalhesCasamento />} />
+      <Route path="/triagem/casamento/detalhe/:numero" element={<TriagemRequerimentoDetalhesCasamento />} />
+      <Route path="/triagem/alvara/detalhe/:numero" element={<TriagemAlvaraDetalhes />} />
       <Route path="/requerimentos/detalhes/:id" element={<RequerimentoDetalhes />} />
       <Route path="/requerimentos/:slug/novo" element={<RequerimentoNovo />} />
       <Route path="/requerimentos" element={<RequerimentoHub />} />
