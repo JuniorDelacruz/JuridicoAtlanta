@@ -22,7 +22,7 @@ const maybeUploadAlvara = (req, res, next) => {
     const mw = upload.fields([
         { name: "fotoNomeEmpresaMapa", maxCount: 1 },
         { name: "fotoFachada", maxCount: 1 },
-        { name: "fotoinv", maxCount: 1 },
+        { name: "fotoInv", maxCount: 1 },
     ]);
 
     mw(req, res, (err) => {
