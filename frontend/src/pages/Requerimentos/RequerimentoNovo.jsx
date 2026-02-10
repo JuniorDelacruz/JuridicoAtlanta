@@ -1,5 +1,5 @@
 // frontend/src/pages/requerimentos/RequerimentoNovo.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
@@ -13,27 +13,21 @@ const API_URL =
 
 function authHeaders() {
   const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function initialValues(fields) {
   const obj = {};
   for (const f of fields || []) {
-    if (f.defaultValue !== undefined) {
-      obj[f.name] = f.defaultValue;
-    } else if (f.type === "select" && f.multiple) {
-      obj[f.name] = [];
-    } else if (f.type === "file") {
-      obj[f.name] = null;
-    } else {
-      obj[f.name] = "";
-    }
+    if (f.defaultValue !== undefined) obj[f.name] = f.defaultValue;
+    else if (f.type === "select" && f.multiple) obj[f.name] = [];
+    else if (f.type === "file") obj[f.name] = null;
+    else obj[f.name] = "";
   }
   return obj;
 }
 
 function resolveOptions(field, values) {
-  // normal
   if (!field) return [];
 
   // ✅ dependente: optionsByValue + dependsOn
@@ -44,31 +38,9 @@ function resolveOptions(field, values) {
     return Array.isArray(opts) ? opts : [];
   }
 
-  // fallback normal
+  // normal
   return Array.isArray(field.options) ? field.options : [];
 }
-
-
-function setField(name, value) {
-  setValues((prev) => {
-    const next = { ...prev, [name]: value };
-
-    // ✅ se o field tiver "resets", limpa esses campos
-    const field = (tipoCfg?.fields || []).find((f) => f.name === name);
-    if (field?.resets?.length) {
-      for (const depName of field.resets) {
-        const depField = (tipoCfg?.fields || []).find((f) => f.name === depName);
-
-        // se select multiple, zera array, senão string
-        if (depField?.type === "select" && depField?.multiple) next[depName] = [];
-        else next[depName] = "";
-      }
-    }
-
-    return next;
-  });
-}
-
 
 function MultiSelectDropdown({
   label,
@@ -79,7 +51,7 @@ function MultiSelectDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const ref = useMemo(() => ({ current: null }), []);
+  const wrapRef = useRef(null);
 
   const arr = Array.isArray(value) ? value : [];
 
@@ -92,12 +64,12 @@ function MultiSelectDropdown({
   useEffect(() => {
     function onDocMouseDown(e) {
       if (!open) return;
-      const el = ref.current;
+      const el = wrapRef.current;
       if (el && !el.contains(e.target)) setOpen(false);
     }
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
-  }, [open, ref]);
+  }, [open]);
 
   function toggle(opt) {
     const has = arr.includes(opt);
@@ -113,7 +85,7 @@ function MultiSelectDropdown({
     arr.length === 0 ? placeholder : arr.length === 1 ? arr[0] : `${arr.length} selecionados`;
 
   return (
-    <div className="relative" ref={(node) => (ref.current = node)}>
+    <div className="relative" ref={wrapRef}>
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -147,7 +119,10 @@ function MultiSelectDropdown({
               filtered.map((opt) => {
                 const checked = arr.includes(opt);
                 return (
-                  <label key={opt} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={checked}
@@ -188,7 +163,10 @@ function validate(fields, values) {
   for (const f of fields || []) {
     if (f.required) {
       const v = values[f.name];
-      const empty = v === null || v === undefined || String(v).trim() === "";
+      const empty =
+        v === null ||
+        v === undefined ||
+        (Array.isArray(v) ? v.length === 0 : String(v).trim() === "");
       if (empty) errors[f.name] = "Campo obrigatório";
     }
   }
@@ -205,7 +183,7 @@ export default function RequerimentoNovo() {
 
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
+    return tipoCfg.roles?.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
   }, [tipoCfg, user?.role, isEquipeJuridica]);
 
   const [values, setValues] = useState(() => initialValues(tipoCfg?.fields));
@@ -213,11 +191,9 @@ export default function RequerimentoNovo() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // ✅ verificação por campo (map)
   // { [fieldName]: { status: "checking"|"ok"|"fail", identidade, cidadao, error } }
   const [verifMap, setVerifMap] = useState({});
 
-  // ✅ pega TODOS os campos com verifyCadastro:true
   const verifyFields = useMemo(() => {
     return (tipoCfg?.fields || []).filter((f) => f.verifyCadastro);
   }, [tipoCfg]);
@@ -239,12 +215,27 @@ export default function RequerimentoNovo() {
 
     setValues(initialValues(tipoCfg.fields));
     setErrors({});
-    setVerifMap({}); // ✅ reseta mapa
+    setVerifMap({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, isAuthenticated]);
 
+  // ✅ setField com "resets" (ex: mudar estado -> limpar cidade)
   function setField(name, value) {
-    setValues((p) => ({ ...p, [name]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [name]: value };
+
+      const field = (tipoCfg?.fields || []).find((f) => f.name === name);
+      if (field?.resets?.length) {
+        for (const depName of field.resets) {
+          const depField = (tipoCfg?.fields || []).find((f) => f.name === depName);
+          if (depField?.type === "select" && depField?.multiple) next[depName] = [];
+          else if (depField?.type === "file") next[depName] = null;
+          else next[depName] = "";
+        }
+      }
+
+      return next;
+    });
   }
 
   // ✅ debounce + verificação no backend POR CAMPO
@@ -267,7 +258,7 @@ export default function RequerimentoNovo() {
         return;
       }
 
-      // marca como checking se mudou
+      // marca como checking
       setVerifMap((prev) => {
         const current = prev[f.name];
         if (current?.status === "checking" && current?.identidade === identidade) return prev;
@@ -297,12 +288,7 @@ export default function RequerimentoNovo() {
           } else {
             setVerifMap((prev) => ({
               ...prev,
-              [f.name]: {
-                status: "fail",
-                identidade,
-                cidadao: null,
-                error: null,
-              },
+              [f.name]: { status: "fail", identidade, cidadao: null, error: null },
             }));
           }
         } catch (err) {
@@ -324,7 +310,7 @@ export default function RequerimentoNovo() {
     return () => timers.forEach(clearTimeout);
   }, [values, verifyFields]);
 
-  // ✅ bloqueia submit até TODOS verifyCadastro estarem OK e batendo com valor atual
+  // ✅ bloqueia submit até TODOS verifyCadastro estarem OK
   const submitDisabled = useMemo(() => {
     if (saving) return true;
     if (!verifyFields.length) return false;
@@ -346,11 +332,13 @@ export default function RequerimentoNovo() {
     e.preventDefault();
     if (!tipoCfg) return;
 
+    setToast(null);
+
     const v = validate(tipoCfg.fields, values);
     setErrors(v);
     if (Object.keys(v).length) return;
 
-    // ✅ valida todos verifyCadastro
+    // ✅ valida verifyCadastro
     if (verifyFields.length) {
       for (const f of verifyFields) {
         const identidade = String(values[f.name] || "").trim();
@@ -372,16 +360,45 @@ export default function RequerimentoNovo() {
     }
 
     setSaving(true);
-    setToast(null);
 
     try {
-      const payload = {
-        tipo: tipoCfg.tipoDb,
-        dados: values,
-        solicitante: user?.username || "Usuário",
-      };
+      const hasFile = (tipoCfg.fields || []).some(
+        (f) => f.type === "file" && values?.[f.name] instanceof File
+      );
 
-      await axios.post(`${API_URL}/api/requerimentos`, payload, { headers: authHeaders() });
+      if (hasFile) {
+        const fd = new FormData();
+        fd.append("tipo", tipoCfg.tipoDb);
+
+        // manda dados como JSON string (sem os Files)
+        const dadosCopy = { ...values };
+        for (const f of tipoCfg.fields) {
+          if (f.type === "file") delete dadosCopy[f.name];
+        }
+        fd.append("dados", JSON.stringify(dadosCopy));
+
+        // anexa os files
+        for (const f of tipoCfg.fields) {
+          if (f.type === "file" && values[f.name] instanceof File) {
+            // f.name tem que bater com upload.single("...") no backend
+            fd.append(f.name, values[f.name]);
+          }
+        }
+
+        await axios.post(`${API_URL}/api/requerimentos`, fd, {
+          headers: { ...authHeaders() }, // NÃO setar Content-Type manualmente
+        });
+      } else {
+        const payloadJson = {
+          tipo: tipoCfg.tipoDb,
+          dados: values,
+          solicitante: user?.username || "Usuário",
+        };
+
+        await axios.post(`${API_URL}/api/requerimentos`, payloadJson, {
+          headers: authHeaders(),
+        });
+      }
 
       setToast({ type: "ok", text: "Requerimento criado com sucesso!" });
       navigate(`/requerimentos/${slug}`);
@@ -443,7 +460,7 @@ export default function RequerimentoNovo() {
           <p className="text-gray-600 mb-6">Preencha os campos abaixo para abrir o requerimento.</p>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {tipoCfg.fields.map((f) => {
+            {(tipoCfg.fields || []).map((f) => {
               const ver = f.verifyCadastro ? verifMap[f.name] : null;
 
               return (
@@ -460,10 +477,12 @@ export default function RequerimentoNovo() {
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
 
-                          // validações simples (opcional)
                           if (file && f.maxSizeMB && file.size > f.maxSizeMB * 1024 * 1024) {
-                            setToast({ type: "err", text: `Arquivo muito grande. Máx: ${f.maxSizeMB}MB` });
-                            e.target.value = ""; // limpa
+                            setToast({
+                              type: "err",
+                              text: `Arquivo muito grande. Máx: ${f.maxSizeMB}MB`,
+                            });
+                            e.target.value = "";
                             setField(f.name, null);
                             return;
                           }
@@ -473,16 +492,13 @@ export default function RequerimentoNovo() {
                         className="w-full border border-gray-300 rounded-md p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
 
-                      {/* Preview (opcional) */}
                       {f.preview && values[f.name] instanceof File ? (
                         <img
                           src={URL.createObjectURL(values[f.name])}
                           alt="Pré-visualização"
                           className="max-h-56 rounded-lg border border-gray-200"
                           onLoad={(e) => {
-                            // libera a URL depois de carregar (evita leak)
-                            const img = e.currentTarget;
-                            const src = img.src;
+                            const src = e.currentTarget.src;
                             setTimeout(() => URL.revokeObjectURL(src), 1000);
                           }}
                         />
@@ -495,49 +511,45 @@ export default function RequerimentoNovo() {
                       ) : null}
                     </div>
                   ) : f.type === "select" ? (
-                  f.multiple ? (
-                  <MultiSelectDropdown
-                    label={f.label}
-                    options={resolveOptions(f, values)}
-                    value={Array.isArray(values[f.name]) ? values[f.name] : []}
-                    onChange={(arr) => setField(f.name, arr)}
-                    placeholder="Selecione..."
-                  />
-                  ) : (
-                  <select
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={!!f.dependsOn && !values?.[f.dependsOn]} // ✅ desabilita até escolher estado
-                  >
-                    <option value="">
-                      {f.placeholder || "Selecione..."}
-                    </option>
-
-                    {resolveOptions(f, values).map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                  )
+                    f.multiple ? (
+                      <MultiSelectDropdown
+                        label={f.label}
+                        options={resolveOptions(f, values)}
+                        value={Array.isArray(values[f.name]) ? values[f.name] : []}
+                        onChange={(arr) => setField(f.name, arr)}
+                        placeholder={f.placeholder || "Selecione..."}
+                      />
+                    ) : (
+                      <select
+                        value={values[f.name] || ""}
+                        onChange={(e) => setField(f.name, e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!!f.dependsOn && !values?.[f.dependsOn]}
+                      >
+                        <option value="">{f.placeholder || "Selecione..."}</option>
+                        {resolveOptions(f, values).map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    )
                   ) : f.type === "textarea" ? (
-                  <textarea
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                    <textarea
+                      value={values[f.name] || ""}
+                      onChange={(e) => setField(f.name, e.target.value)}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   ) : (
-                  <input
-                    type={f.type || "text"}
-                    value={values[f.name] || ""}
-                    onChange={(e) => setField(f.name, e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                    <input
+                      type={f.type || "text"}
+                      value={values[f.name] || ""}
+                      onChange={(e) => setField(f.name, e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   )}
 
-                  {/* ✅ status de verificação POR CAMPO */}
                   {f.verifyCadastro && ver && (
                     <div className="mt-2 text-sm">
                       {ver.status === "checking" ? (
@@ -574,7 +586,6 @@ export default function RequerimentoNovo() {
               </button>
             </div>
 
-            {/* dica rápida pra dev */}
             {verifyFields.length > 0 && (
               <p className="text-xs text-gray-500">
                 * Este tipo exige validação do cartório antes de enviar (todos os campos marcados).
