@@ -80,6 +80,9 @@ router.get("/", authMiddleware(), async (req, res) => {
             where.userId = req.user.id;
         }
 
+
+
+
         if (tipo) where.tipo = tipo;
         if (status && ["PENDENTE", "APROVADO", "INDEFERIDO"].includes(status)) where.status = status;
 
@@ -98,6 +101,16 @@ router.get("/", authMiddleware(), async (req, res) => {
 
 router.post("/", authMiddleware(), maybeUploadAlvara, async (req, res) => {
     const { tipo, dados } = req.body;
+
+    if (typeof dados === "string") {
+        try {
+            dados = JSON.parse(dados);
+        } catch {
+            return res.status(400).json({ msg: "Campo 'dados' inválido (JSON malformado)." });
+        }
+    }
+
+
 
     if (!tipo || !dados) {
         return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
