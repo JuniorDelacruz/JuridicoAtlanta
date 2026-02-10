@@ -9,29 +9,10 @@ const router = express.Router();
 const { Requerimento, User, CadastroCidadao } = db;
 
 const upload = createImageUpload({
-    dest: "public/uploads",
-    maxSizeMB: 5,
+  dest: "public/uploads",
+  maxSizeMB: 5,
 });
 
-
-const maybeUploadAlvara = (req, res, next) => {
-    // se não for multipart, segue normal (JSON)
-    if (!req.is("multipart/form-data")) return next();
-
-    // se for multipart, aceita os 3 campos de arquivo
-    const mw = upload.fields([
-        { name: "fotoNomeEmpresaMapa", maxCount: 1 },
-        { name: "fotoFachada", maxCount: 1 },
-        { name: "fotoInv", maxCount: 1 },
-    ]);
-
-    mw(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({ msg: err.message || "Erro no upload" });
-        }
-        next();
-    });
-};
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
 router.get("/resumo", authMiddleware(['admin']), async (req, res) => {
@@ -80,9 +61,6 @@ router.get("/", authMiddleware(), async (req, res) => {
             where.userId = req.user.id;
         }
 
-
-
-
         if (tipo) where.tipo = tipo;
         if (status && ["PENDENTE", "APROVADO", "INDEFERIDO"].includes(status)) where.status = status;
 
@@ -99,155 +77,128 @@ router.get("/", authMiddleware(), async (req, res) => {
     }
 });
 
-router.post(
-    "/",
-    authMiddleware(),
-    upload.fields([
-        { name: "fotoNomeEmpresaMapa", maxCount: 1 },
-        { name: "fotoFachada", maxCount: 1 },
-        { name: "fotoInv", maxCount: 1 },
-    ]),
-    async (req, res) => {
-        try {
-            // tipo sempre vem em req.body no multipart
-            const tipo = req.body.tipo;
+router.post("/", authMiddleware(), async (req, res) => {
+    const { tipo, dados } = req.body;
 
-            // dados pode vir OBJ (json) ou STRING (multipart)
-            let dados = req.body.dados;
-            if (typeof dados === "string") {
-                try {
-                    dados = JSON.parse(dados);
-                } catch {
-                    return res.status(400).json({ msg: "Campo 'dados' inválido (JSON malformado)." });
+    if (!tipo || !dados) {
+        return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
+    }
+    try {
+        // helper: cria snapshot padronizado
+        const snapCidadao = (c) => ({
+            id: c.id,
+            nomeCompleto: c.nomeCompleto,
+            identidade: c.identidade,
+            profissao: c.profissao,
+            residencia: c.residencia,
+            discordId: c.discordId,
+            pombo: c.pombo,
+            status: c.status, // opcional, mas útil
+        });
+
+        let dadosComAnexo = {};
+
+        if (tipo === "Casamento") {
+            // pega e valida os 5
+            const ids = {
+                noivo: String(dados?.numeroIdentificacaoNoivo || "").trim(),
+                noiva: String(dados?.numeroIdentificacaoNoiva || "").trim(),
+                test1: String(dados?.numeroIdentificacaoTest1 || "").trim(),
+                test2: String(dados?.numeroIdentificacaoTest2 || "").trim(),
+                test3: String(dados?.numeroIdentificacaoTest3 || "").trim(),
+            };
+
+            // valida vazio
+            for (const [k, v] of Object.entries(ids)) {
+                if (!v) return res.status(400).json({ msg: `Campo obrigatório não informado: ${k}` });
+            }
+
+            // busca (ajuste "id" se sua PK não for id)
+            const [cidadaoNoivo, cidadaoNoiva, cidadaoTest1, cidadaoTest2, cidadaoTest3] = await Promise.all([
+                CadastroCidadao.findOne({ where: { id: ids.noivo } }),
+                CadastroCidadao.findOne({ where: { id: ids.noiva } }),
+                CadastroCidadao.findOne({ where: { id: ids.test1 } }),
+                CadastroCidadao.findOne({ where: { id: ids.test2 } }),
+                CadastroCidadao.findOne({ where: { id: ids.test3 } }),
+            ]);
+
+            // valida se achou
+            if (!cidadaoNoivo) return res.status(400).json({ msg: "Cartório: noivo não encontrado." });
+            if (!cidadaoNoiva) return res.status(400).json({ msg: "Cartório: noiva não encontrada." });
+            if (!cidadaoTest1) return res.status(400).json({ msg: "Cartório: testemunha 1 não encontrada." });
+            if (!cidadaoTest2) return res.status(400).json({ msg: "Cartório: testemunha 2 não encontrada." });
+            if (!cidadaoTest3) return res.status(400).json({ msg: "Cartório: testemunha 3 não encontrada." });
+
+            // se exigir APROVADO
+            const mustAprovado = (c, label) => {
+                if (c.status !== "APROVADO") {
+                    return res.status(400).json({ msg: `Cadastro do(a) ${label} encontrado, porém está ${c.status}.` });
+                }
+            };
+            mustAprovado(cidadaoNoivo, "noivo");
+            mustAprovado(cidadaoNoiva, "noiva");
+            mustAprovado(cidadaoTest1, "testemunha 1");
+            mustAprovado(cidadaoTest2, "testemunha 2");
+            mustAprovado(cidadaoTest3, "testemunha 3");
+
+            // monta dados com anexo
+            dadosComAnexo = {
+                ...dados, // mantém os campos originais (numeros)
+                cidadaoNoivo: snapCidadao(cidadaoNoivo),
+                cidadaoNoiva: snapCidadao(cidadaoNoiva),
+                cidadaoTest1: snapCidadao(cidadaoTest1),
+                cidadaoTest2: snapCidadao(cidadaoTest2),
+                cidadaoTest3: snapCidadao(cidadaoTest3),
+            };
+        } else {
+            // ===== fluxo antigo (1 cadastro) =====
+            const identidade =
+                dados.numeroIdentificacao ||
+                dados.numeroRegistro ||
+                dados.identidade ||
+                null;
+
+            let cidadao = null;
+
+            if (identidade) {
+                cidadao = await CadastroCidadao.findOne({
+                    where: { id: String(identidade).trim() }, // ajuste se precisar
+                });
+
+                if (!cidadao) {
+                    return res.status(400).json({ msg: "Registro do cartório não encontrado." });
+                }
+
+                if (cidadao.status !== "APROVADO") {
+                    return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
                 }
             }
 
-            if (!tipo || !dados) {
-                return res.status(400).json({ msg: "Tipo e dados são obrigatórios" });
-            }
-
-            // pega arquivos (se vierem)
-            const files = req.files || {};
-            const getOne = (k) => (files?.[k]?.[0] ? files[k][0] : null);
-
-            // monta URLs (ajuste a base se você já tem URLAPI)
-            const base = process.env.URLAPI || "https://apijuridico.starkstore.dev.br";
-
-            const fotoNomeEmpresaMapa = getOne("fotoNomeEmpresaMapa");
-            const fotoFachada = getOne("fotoFachada");
-            const fotoInv = getOne("fotoInv");
-
-            // ✅ Só anexa isso se for "Emitir Alvará" (ou se quiser, anexa sempre que existir)
-            const anexos =
-                tipo === "Emitir Alvará"
-                    ? {
-                        fotoNomeEmpresaMapa: fotoNomeEmpresaMapa ? `${base}/uploads/${fotoNomeEmpresaMapa.filename}` : null,
-                        fotoFachada: fotoFachada ? `${base}/uploads/${fotoFachada.filename}` : null,
-                        fotoInv: fotoInv ? `${base}/uploads/${fotoInv.filename}` : null,
-                    }
-                    : {};
-
-            if (tipo === "Casamento") {
-                // pega e valida os 5
-                const ids = {
-                    noivo: String(dados?.numeroIdentificacaoNoivo || "").trim(),
-                    noiva: String(dados?.numeroIdentificacaoNoiva || "").trim(),
-                    test1: String(dados?.numeroIdentificacaoTest1 || "").trim(),
-                    test2: String(dados?.numeroIdentificacaoTest2 || "").trim(),
-                    test3: String(dados?.numeroIdentificacaoTest3 || "").trim(),
-                };
-
-                // valida vazio
-                for (const [k, v] of Object.entries(ids)) {
-                    if (!v) return res.status(400).json({ msg: `Campo obrigatório não informado: ${k}` });
-                }
-
-                // busca (ajuste "id" se sua PK não for id)
-                const [cidadaoNoivo, cidadaoNoiva, cidadaoTest1, cidadaoTest2, cidadaoTest3] = await Promise.all([
-                    CadastroCidadao.findOne({ where: { id: ids.noivo } }),
-                    CadastroCidadao.findOne({ where: { id: ids.noiva } }),
-                    CadastroCidadao.findOne({ where: { id: ids.test1 } }),
-                    CadastroCidadao.findOne({ where: { id: ids.test2 } }),
-                    CadastroCidadao.findOne({ where: { id: ids.test3 } }),
-                ]);
-
-                // valida se achou
-                if (!cidadaoNoivo) return res.status(400).json({ msg: "Cartório: noivo não encontrado." });
-                if (!cidadaoNoiva) return res.status(400).json({ msg: "Cartório: noiva não encontrada." });
-                if (!cidadaoTest1) return res.status(400).json({ msg: "Cartório: testemunha 1 não encontrada." });
-                if (!cidadaoTest2) return res.status(400).json({ msg: "Cartório: testemunha 2 não encontrada." });
-                if (!cidadaoTest3) return res.status(400).json({ msg: "Cartório: testemunha 3 não encontrada." });
-
-                // se exigir APROVADO
-                const mustAprovado = (c, label) => {
-                    if (c.status !== "APROVADO") {
-                        return res.status(400).json({ msg: `Cadastro do(a) ${label} encontrado, porém está ${c.status}.` });
-                    }
-                };
-                mustAprovado(cidadaoNoivo, "noivo");
-                mustAprovado(cidadaoNoiva, "noiva");
-                mustAprovado(cidadaoTest1, "testemunha 1");
-                mustAprovado(cidadaoTest2, "testemunha 2");
-                mustAprovado(cidadaoTest3, "testemunha 3");
-
-                // monta dados com anexo
-                dadosComAnexo = {
-                    ...dados, // mantém os campos originais (numeros)
-                    cidadaoNoivo: snapCidadao(cidadaoNoivo),
-                    cidadaoNoiva: snapCidadao(cidadaoNoiva),
-                    cidadaoTest1: snapCidadao(cidadaoTest1),
-                    cidadaoTest2: snapCidadao(cidadaoTest2),
-                    cidadaoTest3: snapCidadao(cidadaoTest3),
-                };
-            } else {
-                // ===== fluxo antigo (1 cadastro) =====
-                const identidade =
-                    dados.numeroIdentificacao ||
-                    dados.numeroRegistro ||
-                    dados.identidade ||
-                    null;
-
-                let cidadao = null;
-
-                if (identidade) {
-                    cidadao = await CadastroCidadao.findOne({
-                        where: { id: String(identidade).trim() }, // ajuste se precisar
-                    });
-
-                    if (!cidadao) {
-                        return res.status(400).json({ msg: "Registro do cartório não encontrado." });
-                    }
-
-                    if (cidadao.status !== "APROVADO") {
-                        return res.status(400).json({ msg: `Cadastro encontrado, porém está ${cidadao.status}.` });
-                    }
-                }
-
-                dadosComAnexo = {
-                    ...dados,
-                    cidadao: cidadao ? snapCidadao(cidadao) : null,
-                };
-            }
-
-            // solicitante com safe optional chaining
-            const solicitanteRow = await CadastroCidadao.findOne({
-                where: { discordId: req.user.discordId },
-            });
-
-            const novo = await Requerimento.create({
-                tipo,
-                dados: dadosComAnexo,
-                solicitante: solicitanteRow?.nomeCompleto || req.user?.username,
-                status: "PENDENTE",
-                userId: req.user.id,
-            });
-
-            return res.status(201).json(novo);
-        } catch (err) {
-            console.error("Erro ao criar requerimento:", err);
-            res.status(500).json({ msg: "Erro ao criar requerimento" });
+            dadosComAnexo = {
+                ...dados,
+                cidadao: cidadao ? snapCidadao(cidadao) : null,
+            };
         }
-    });
+
+        // solicitante com safe optional chaining
+        const solicitanteRow = await CadastroCidadao.findOne({
+            where: { discordId: req.user.discordId },
+        });
+
+        const novo = await Requerimento.create({
+            tipo,
+            dados: dadosComAnexo,
+            solicitante: solicitanteRow?.nomeCompleto || req.user?.username,
+            status: "PENDENTE",
+            userId: req.user.id,
+        });
+
+        return res.status(201).json(novo);
+    } catch (err) {
+        console.error("Erro ao criar requerimento:", err);
+        res.status(500).json({ msg: "Erro ao criar requerimento" });
+    }
+});
 
 // GET /api/requerimentos/:numero  (NUMÉRICO)
 router.get("/:numero", authMiddleware(), async (req, res) => {
