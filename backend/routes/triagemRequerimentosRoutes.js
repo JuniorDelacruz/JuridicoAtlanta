@@ -130,6 +130,7 @@ function buildWebhookPayload(item, reqUser) {
         };
     } else if (isAlvara) {
         payloadPessoa = {
+            ...payloadPessoa,
             razaosocial: dados?.razaosocial,
             setor: dados?.setor,
             cidade: dados?.cidade,
