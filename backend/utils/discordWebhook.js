@@ -4,6 +4,7 @@ import db from "../models/index.js";
 import { botSendMessage, botSetNickname } from "./discordBotSend.js";
 import { buildNickname } from "./nickname.js";
 import { client } from "../bot/index.js";
+import { interpolators } from "sharp";
 
 const { WebhookConfig, Requerimento } = db;
 
@@ -310,6 +311,13 @@ function buildForumPost(type, data) {
 
     console.log(dados)
 
+     const base = {
+    color: 0x2ecc71,
+    thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
+    timestamp: new Date().toISOString(),
+    author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
+  };
+
     return {
       title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "AVL"}-${id}/${safe(dados?.razaosocial)}`,
       message: {
@@ -322,14 +330,9 @@ function buildForumPost(type, data) {
           `**Cidadão:** ${safe(cid?.nomeCompleto)} (${mentionUser(cid?.discordId)})\n` +
           `**Identidade:** ${safe(cid?.identidade)}\n`,
         embeds: [
-          {
+          { ...base,
             color: 0x3498db,
-            title: "Anexos",
-            fields: [
-              { name: "Mapa (nome visível)", value: safe(dados?.fotoNomeEmpresaMapaUrl), inline: false },
-              { name: "Fachada", value: safe(dados?.fotoFachadaUrl), inline: false },
-              { name: "Inventário", value: safe(dados?.fotoInvUrl), inline: false },
-            ],
+            author: { name: "Atlanta Juridico", icon_url: ""},
           },
         ],
       },

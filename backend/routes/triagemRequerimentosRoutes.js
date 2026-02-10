@@ -271,7 +271,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
 
-        
+
         const discordId = await User.findOne({ where: { id: req.user.id } })
 
 
@@ -300,10 +300,21 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
 
-         if (item.tipo === "Emitir Alvará") {
+        if (item.tipo === "Emitir Alvará") {
             const dados = item.dados || {};
 
-           
+            item.dados = {
+                ...dados,
+                workflow: {
+                    ...(dados.workflow || {}),
+                    juiz: {
+                        ...(dados.workflow?.juiz || {}),
+                        aprovado: true,
+                        validade: "30 dias",
+                        data: new Date().toISOString(),
+                    },
+                },
+            };
 
 
             await item.save();
@@ -338,6 +349,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
             if (hookType) {
+                console.log(item)
                 const payload = await buildWebhookPayload(item, req.user);
                 notifyDiscord(hookType, payload).catch((e) =>
                     console.error("[webhook aprovar] falha:", e?.message || e)
