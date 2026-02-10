@@ -172,7 +172,7 @@ export default function TriagemRequerimentosTipo() {
 
   if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   if (error) return <div className="flex items-center justify-center min-h-screen text-red-600">{error}</div>;
-
+  const especiais = new Set(["casamento", "alvara"]);
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
@@ -271,9 +271,14 @@ export default function TriagemRequerimentosTipo() {
                           Indeferir
                         </button>
 
+
                         <button
                           onClick={() =>
-                            navigate(slug === "casamento" | "alvara" ? `/triagem/${slug}/detalhe/${r.numero}` : `/triagem/${slug}/detalhes/${r.numero}`)
+                            navigate(
+                              especiais.has(slug)
+                                ? `/triagem/${slug}/detalhe/${r.numero}`
+                                : `/triagem/${slug}/detalhes/${r.numero}`
+                            )
                           }
                           className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs"
                         >
