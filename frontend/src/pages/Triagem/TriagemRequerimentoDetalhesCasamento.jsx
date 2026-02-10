@@ -119,9 +119,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
     // se nem existe esse slug na triagem, já bloqueia
     if (!triagemCfg) return false;
 
-    if (user?.role === "admin") return true;
-    if (isEquipeJuridica) return true;
-
     return !!hasPerm?.(PERM_TRIAGEM_CASAMENTO);
   }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 

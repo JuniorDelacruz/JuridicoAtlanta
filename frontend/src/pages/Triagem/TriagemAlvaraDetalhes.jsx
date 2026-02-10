@@ -66,10 +66,8 @@ export default function TriagemAlvaraDetalhes() {
   const permitido = useMemo(() => {
     if (!triagemCfg) return false;
 
-    if (user?.role === "admin") return true;
-    if (isEquipeJuridica) return true;
-
     return !!hasPerm?.(PERM_TRIAGEM_ALVARA);
+    
   }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 
   const [data, setData] = useState(null);
