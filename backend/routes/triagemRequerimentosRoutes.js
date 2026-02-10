@@ -46,7 +46,6 @@ function webhookTypeByRequerimentoTipo(tipo) {
 
 
         case "Emitir Alvará":
-        case "Emitir Alvara":
             return WEBHOOK_TYPES.ALVARA;
 
 
