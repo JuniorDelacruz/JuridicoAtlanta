@@ -297,6 +297,20 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
         await item.save();
 
+
+
+
+         if (item.tipo === "Emitir Alvará") {
+            const dados = item.dados || {};
+
+           
+
+
+            await item.save();
+
+        }
+
+
         if ((item.tipo === "Porte de Arma" || item.tipo === "Porte de Armas")) {
             const dadosAtual = item.dados || {};
 
@@ -405,7 +419,6 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
         const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
         if (hookType) {
-            console.log(item)
             const payload = buildWebhookPayload(item, req.user);
             notifyDiscord(hookType, payload).catch((e) =>
                 console.error("[webhook aprovar] falha:", e?.message || e)

@@ -311,7 +311,7 @@ function buildForumPost(type, data) {
     console.log(dados)
 
     return {
-      title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "AVL-"} #${id} — ${safe(dados?.razaosocial)}`,
+      title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "AVL"}-${id}/${safe(dados?.razaosocial)}`,
       message: {
         content:
           `**${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Pedido de RENOVAÇÃO" : "Pedido de ALVARÁ"}**\n` +

@@ -17,5 +17,8 @@ export default defineConfig({
       host: "juridicoatlanta.starkstore.dev.br",
       clientPort: 443,
     }
+  },
+  build: {
+    sourcemap: false
   }
 })
