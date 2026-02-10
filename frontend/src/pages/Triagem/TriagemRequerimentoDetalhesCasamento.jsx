@@ -131,10 +131,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
       navigate("/login");
       return;
     }
-    if (!triagemCfg) {
-      navigate("/triagem");
-      return;
-    }
     if (!permitido) {
       alert("Acesso negado. Você não tem permissão para ver detalhes na triagem.");
       navigate("/triagem");

@@ -70,10 +70,6 @@ export default function TriagemAlvaraDetalhes() {
       navigate("/login");
       return;
     }
-    if (!triagemCfg) {
-      navigate("/triagem");
-      return;
-    }
 
     (async () => {
       setLoading(true);
