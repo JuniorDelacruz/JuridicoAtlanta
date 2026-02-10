@@ -25,6 +25,8 @@ const API_URL =
   import.meta?.env?.VITE_API_BASE_URL ||
   "https://apijuridico.starkstore.dev.br";
 
+const PERM_TRIAGEM_CASAMENTO = "triagem.acessar.casamento"; // ✅ perm específica
+
 function authHeaders() {
   const token = localStorage.getItem("token");
   return { Authorization: `Bearer ${token}` };
@@ -93,9 +95,7 @@ function CartorioCard({ title, cidadao }) {
           </div>
         </div>
       ) : (
-        <div className="text-gray-600 text-sm">
-          Não há dados de cartório vinculados para este perfil.
-        </div>
+        <div className="text-gray-600 text-sm">Não há dados de cartório vinculados para este perfil.</div>
       )}
     </div>
   );
@@ -106,17 +106,24 @@ export default function TriagemRequerimentoDetalhesCasamento() {
 
   const triagemCfg = getTriagemTipoBySlug(slug);
 
-  // aqui é casamento mesmo
+  // ✅ casamento mesmo
   const reqTipoCfg = getTipoBySlug("casamento");
 
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
   const navigate = useNavigate();
+
   const isEquipeJuridica = user?.subRole === "equipejuridico";
 
+  // ✅ perm SOMENTE do casamento
   const permitido = useMemo(() => {
+    // se nem existe esse slug na triagem, já bloqueia
     if (!triagemCfg) return false;
-    return triagemCfg.roles.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-  }, [triagemCfg, user?.role, isEquipeJuridica]);
+
+    if (user?.role === "admin") return true;
+    if (isEquipeJuridica) return true;
+
+    return !!hasPerm?.(PERM_TRIAGEM_CASAMENTO);
+  }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -131,8 +138,10 @@ export default function TriagemRequerimentoDetalhesCasamento() {
       navigate("/login");
       return;
     }
+
+    // ✅ se cair aqui e NÃO tiver perm, volta pro hub da triagem
     if (!permitido) {
-      alert("Acesso negado. Você não tem permissão para ver detalhes na triagem.");
+      alert("Acesso negado. Você não tem permissão para ver detalhes de triagem (Casamento).");
       navigate("/triagem");
       return;
     }
@@ -146,10 +155,10 @@ export default function TriagemRequerimentoDetalhesCasamento() {
           headers: authHeaders(),
         });
 
-        // valida que é casamento
-        const expectedTipo = triagemCfg.tipoDb; // deve ser "Casamento" conforme config
+        // ✅ trava no tipo certo (ajuste se no seu DB não for exatamente "Casamento")
+        const expectedTipo = "Casamento";
         if (res.data?.tipo !== expectedTipo) {
-          setError("Este requerimento não pertence a esta categoria de triagem.");
+          setError("Este requerimento não é do tipo Casamento.");
           setData(null);
         } else {
           setData(res.data);
@@ -160,8 +169,7 @@ export default function TriagemRequerimentoDetalhesCasamento() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, slug, numero, permitido]);
+  }, [isAuthenticated, permitido, navigate, numero]);
 
   async function aprovar() {
     if (!confirm("Tem certeza que deseja APROVAR este requerimento?")) return;
@@ -206,14 +214,10 @@ export default function TriagemRequerimentoDetalhesCasamento() {
   };
 
   const StatusBadge =
-    (data && statusConfig[data.status]) || {
-      color: "bg-gray-100 text-gray-800",
-      icon: FileText,
-    };
+    (data && statusConfig[data.status]) || { color: "bg-gray-100 text-gray-800", icon: FileText };
 
   const dados = data?.dados || {};
 
-  // ✅ campos do casamento conforme config
   const camposDoTipo = useMemo(() => {
     if (!reqTipoCfg?.fields?.length) return [];
     return reqTipoCfg.fields.map((f) => ({
@@ -223,7 +227,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
     }));
   }, [reqTipoCfg, dados]);
 
-  // ✅ aqui está a “lista de pessoas” que você vai salvar no banco
   const pessoas = useMemo(
     () => [
       { key: "cidadaoNoivo", label: "Noivo", value: dados?.cidadaoNoivo || null },
@@ -316,7 +319,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
               </div>
 
               <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* resumo */}
                 <div className="bg-gray-50 rounded-lg p-5">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Informações gerais</h3>
                   <div className="space-y-3 text-sm">
@@ -339,7 +341,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
                   </div>
                 </div>
 
-                {/* dados do requerimento */}
                 <div className="bg-white border rounded-lg p-5 lg:col-span-2">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Dados do requerimento</h3>
 
@@ -375,7 +376,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
                   )}
                 </div>
 
-                {/* ✅ cartório de 5 pessoas */}
                 <div className="bg-white border rounded-lg p-5 lg:col-span-3">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Cartório — Noivo, Noiva e Testemunhas
@@ -388,7 +388,8 @@ export default function TriagemRequerimentoDetalhesCasamento() {
                   </div>
 
                   <p className="text-xs text-gray-500 mt-4">
-                    * Esses dados vêm de <span className="font-mono">dados.cidadaoNoivo</span>,{" "}
+                    * Esses dados vêm de{" "}
+                    <span className="font-mono">dados.cidadaoNoivo</span>,{" "}
                     <span className="font-mono">dados.cidadaoNoiva</span>,{" "}
                     <span className="font-mono">dados.cidadaoTest1</span>,{" "}
                     <span className="font-mono">dados.cidadaoTest2</span>,{" "}

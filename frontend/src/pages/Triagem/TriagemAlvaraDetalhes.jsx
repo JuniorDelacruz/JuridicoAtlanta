@@ -25,6 +25,8 @@ const API_URL =
   import.meta?.env?.VITE_API_BASE_URL ||
   "https://apijuridico.starkstore.dev.br";
 
+const PERM_TRIAGEM_ALVARA = "triagem.acessar.alvara"; // ✅ perm específica do alvará
+
 function authHeaders() {
   const token = localStorage.getItem("token");
   return { Authorization: `Bearer ${token}` };
@@ -55,8 +57,20 @@ export default function TriagemAlvaraDetalhes() {
   const { slug, numero } = useParams();
   const triagemCfg = getTriagemTipoBySlug(slug);
 
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
   const navigate = useNavigate();
+
+  const isEquipeJuridica = user?.subRole === "equipejuridico";
+
+  // ✅ perm SOMENTE do alvará
+  const permitido = useMemo(() => {
+    if (!triagemCfg) return false;
+
+    if (user?.role === "admin") return true;
+    if (isEquipeJuridica) return true;
+
+    return !!hasPerm?.(PERM_TRIAGEM_ALVARA);
+  }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,6 +85,13 @@ export default function TriagemAlvaraDetalhes() {
       return;
     }
 
+    // ✅ bloqueia sem perm
+    if (!permitido) {
+      alert("Acesso negado. Você não tem permissão para ver detalhes de triagem (Alvará).");
+      navigate("/triagem");
+      return;
+    }
+
     (async () => {
       setLoading(true);
       setError(null);
@@ -80,8 +101,8 @@ export default function TriagemAlvaraDetalhes() {
           headers: authHeaders(),
         });
 
-        // ✅ aqui garantimos que é ALVARÁ mesmo
-        const expectedTipo = "Emitir Alvará";
+        // ✅ garante que é ALVARÁ mesmo
+        const expectedTipo = "Emitir Alvará"; // ajuste se seu DB tiver outro texto
         if (res.data?.tipo !== expectedTipo) {
           setError("Este requerimento não é do tipo Emitir Alvará.");
           setData(null);
@@ -94,14 +115,17 @@ export default function TriagemAlvaraDetalhes() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, numero, slug]);
+  }, [isAuthenticated, permitido, navigate, numero]);
 
   async function aprovar() {
     if (!confirm("Tem certeza que deseja APROVAR este requerimento de Alvará?")) return;
     setActing(true);
     try {
-      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/aprovar`, {}, { headers: authHeaders() });
+      await axios.patch(
+        `${API_URL}/api/triagem/requerimentos/${numero}/aprovar`,
+        {},
+        { headers: authHeaders() }
+      );
       alert("Requerimento aprovado!");
       voltar();
     } catch (err) {
@@ -115,7 +139,11 @@ export default function TriagemAlvaraDetalhes() {
     if (!confirm("Tem certeza que deseja INDEFERIR este requerimento de Alvará?")) return;
     setActing(true);
     try {
-      await axios.patch(`${API_URL}/api/triagem/requerimentos/${numero}/indeferir`, {}, { headers: authHeaders() });
+      await axios.patch(
+        `${API_URL}/api/triagem/requerimentos/${numero}/indeferir`,
+        {},
+        { headers: authHeaders() }
+      );
       alert("Requerimento indeferido!");
       voltar();
     } catch (err) {
@@ -255,7 +283,6 @@ export default function TriagemAlvaraDetalhes() {
               </div>
 
               <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Info Empresa */}
                 <div className="bg-gray-50 rounded-lg p-5 lg:col-span-1">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 inline-flex items-center gap-2">
                     <Building2 className="h-5 w-5" /> Empresa
@@ -265,15 +292,12 @@ export default function TriagemAlvaraDetalhes() {
                     {infoEmpresa.map((item) => (
                       <div key={item.label} className="flex items-start justify-between gap-4">
                         <span className="text-gray-500">{item.label}</span>
-                        <span className="font-medium text-gray-800 text-right">
-                          {item.value ?? "—"}
-                        </span>
+                        <span className="font-medium text-gray-800 text-right">{item.value ?? "—"}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Imagens */}
                 <div className="bg-white border rounded-lg p-5 lg:col-span-2">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 inline-flex items-center gap-2">
                     <ImageIcon className="h-5 w-5" /> Fotos (Uploads)
@@ -289,7 +313,8 @@ export default function TriagemAlvaraDetalhes() {
                               <p className="text-xs text-gray-500 mt-1 break-all">
                                 {img.meta?.originalName ? (
                                   <>
-                                    {img.meta.originalName} • {bytesToSize(img.meta.size)} • {img.meta.mimetype || "—"}
+                                    {img.meta.originalName} • {bytesToSize(img.meta.size)} •{" "}
+                                    {img.meta.mimetype || "—"}
                                   </>
                                 ) : (
                                   "—"
@@ -323,7 +348,6 @@ export default function TriagemAlvaraDetalhes() {
                   )}
                 </div>
 
-                {/* Dados do Cartório */}
                 <div className="bg-white border rounded-lg p-5 lg:col-span-3">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Dados do cartório (anexo)</h3>
 
@@ -378,7 +402,9 @@ export default function TriagemAlvaraDetalhes() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-gray-600 text-sm">Este requerimento não possui anexo do cartório (dados.cidadao).</div>
+                    <div className="text-gray-600 text-sm">
+                      Este requerimento não possui anexo do cartório (dados.cidadao).
+                    </div>
                   )}
                 </div>
               </div>
