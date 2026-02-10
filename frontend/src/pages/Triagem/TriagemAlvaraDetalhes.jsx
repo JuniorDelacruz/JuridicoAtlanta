@@ -64,10 +64,7 @@ export default function TriagemAlvaraDetalhes() {
 
   // ✅ perm SOMENTE do alvará
   const permitido = useMemo(() => {
-    if (!triagemCfg) return false;
-
-    return !!hasPerm?.(PERM_TRIAGEM_ALVARA);
-    
+        return !!hasPerm?.(PERM_TRIAGEM_ALVARA);
   }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 
   const [data, setData] = useState(null);

@@ -116,9 +116,6 @@ export default function TriagemRequerimentoDetalhesCasamento() {
 
   // ✅ perm SOMENTE do casamento
   const permitido = useMemo(() => {
-    // se nem existe esse slug na triagem, já bloqueia
-    if (!triagemCfg) return false;
-
     return !!hasPerm?.(PERM_TRIAGEM_CASAMENTO);
   }, [triagemCfg, user?.role, isEquipeJuridica, hasPerm]);
 
