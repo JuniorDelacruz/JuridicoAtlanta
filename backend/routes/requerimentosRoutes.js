@@ -9,10 +9,29 @@ const router = express.Router();
 const { Requerimento, User, CadastroCidadao } = db;
 
 const upload = createImageUpload({
-  dest: "public/uploads",
-  maxSizeMB: 5,
+    dest: "public/uploads",
+    maxSizeMB: 5,
 });
 
+
+const maybeUploadAlvara = (req, res, next) => {
+    // se não for multipart, segue normal (JSON)
+    if (!req.is("multipart/form-data")) return next();
+
+    // se for multipart, aceita os 3 campos de arquivo
+    const mw = upload.fields([
+        { name: "fotoNomeEmpresaMapa", maxCount: 1 },
+        { name: "fotoFachada", maxCount: 1 },
+        { name: "fotoinv", maxCount: 1 },
+    ]);
+
+    mw(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ msg: err.message || "Erro no upload" });
+        }
+        next();
+    });
+};
 
 // ✅ GET /api/requerimentos/resumo (TEM QUE VIR ANTES DE /:numero)
 router.get("/resumo", authMiddleware(['admin']), async (req, res) => {
@@ -100,7 +119,30 @@ router.post("/", authMiddleware(), async (req, res) => {
 
 
         if (tipo === "Emitir Alvará") {
-           upload.single("imagemIdentidade")
+            const files = req.files || {};
+
+            const f1 = files.fotoNomeEmpresaMapa?.[0];
+            const f2 = files.fotoFachada?.[0];
+            const f3 = files.fotoinv?.[0];
+
+            if (!f1 || !f2 || !f3) {
+                return res.status(400).json({
+                    msg: "No Alvará, as 3 fotos são obrigatórias: fotoNomeEmpresaMapa, fotoFachada, fotoinv",
+                });
+            }
+
+            // monta URL pública (igual você já faz no cartório)
+            const base = process.env.URLAPI; // ex: https://apijuridico.starkstore.dev.br
+            const toUrl = (file) => `${base}/uploads/${file.filename}`;
+
+            dadosComAnexo = {
+                ...dados,
+                anexos: {
+                    fotoNomeEmpresaMapa: toUrl(f1),
+                    fotoFachada: toUrl(f2),
+                    fotoinv: toUrl(f3),
+                },
+            };
         }
 
         if (tipo === "Casamento") {
