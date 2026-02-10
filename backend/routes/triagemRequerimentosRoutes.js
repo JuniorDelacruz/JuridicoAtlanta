@@ -67,7 +67,7 @@ function isTrocaDeNome(tipo) {
 }
 
 function isEmitirAlvara(tipo) {
-    return String(tipo || "").toLowerCase().includes("Emitir Alvará");
+    return String(tipo || "").includes("Emitir Alvará");
 }
 
 function isCasamento(tipo) {
