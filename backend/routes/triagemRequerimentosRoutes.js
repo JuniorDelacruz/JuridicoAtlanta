@@ -70,6 +70,10 @@ function isCasamento(tipo) {
     return String(tipo || "").toLowerCase().includes("casamento");
 }
 
+function isAlvara(tipo) {
+    return String(tipo || "").toLowerCase().includes("Emitir Alvará");
+}
+
 function mapPessoaCidadao(c) {
     if (!c) return null;
     return {
@@ -90,6 +94,7 @@ function buildWebhookPayload(item, reqUser) {
     const isPorte = isPortDeArmas(item?.tipo);
     const isTroca = isTrocaDeNome(item?.tipo);
     const casamento = isCasamento(item?.tipo);
+    const isAlvara = isAlvara(item?.tipo);
 
     // padrão antigo (1 cidadao)
     const cid = dados?.cidadao || {};
@@ -121,7 +126,13 @@ function buildWebhookPayload(item, reqUser) {
                 noiva: mapPessoaCidadao(noiva),
                 testemunhas: testemunhas.map(mapPessoaCidadao),
             }
-            : {
+            : isAlvara ? {
+                razaosocial: dados?.razaosocial,
+                setor: dados?.setor,
+                cidade: dados?.cidade,
+                estado: dados?.nomeEstado,
+
+            } : {
                 // ✅ payload padrão que você já tinha
                 nomeCompleto: cid?.nomeCompleto,
                 registro: cid?.id,
@@ -348,7 +359,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
             const hookType = webhookTypeByRequerimentoTipo(item.tipo);
 
             if (hookType) {
-                
+
                 const payload = await buildWebhookPayload(item, req.user);
                 notifyDiscord(hookType, payload).catch((e) =>
                     console.error("[webhook aprovar] falha:", e?.message || e)
