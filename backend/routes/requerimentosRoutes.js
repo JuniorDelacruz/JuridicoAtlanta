@@ -102,14 +102,6 @@ router.get("/", authMiddleware(), async (req, res) => {
 router.post("/", authMiddleware(), maybeUploadAlvara, async (req, res) => {
     const { tipo, dados } = req.body;
 
-    if (typeof dados === "string") {
-        try {
-            dados = JSON.parse(dados);
-        } catch {
-            return res.status(400).json({ msg: "Campo 'dados' inválido (JSON malformado)." });
-        }
-    }
-
 
 
     if (!tipo || !dados) {
