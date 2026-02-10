@@ -271,10 +271,7 @@ router.patch("/:numero/aprovar", authMiddleware(allowedTriagemRoles), async (req
 
 
 
-        // ✅ Fluxo especial: Porte -> juiz/aprovação encaminha pra carimbo
-        // ATENÇÃO no seu código: `role === "juiz" || "admin"` tá errado (sempre true).
-        // O correto é:
-        const isJuizOuAdmin = role === "juiz" || role === "admin";
+        
         const discordId = await User.findOne({ where: { id: req.user.id } })
 
 
