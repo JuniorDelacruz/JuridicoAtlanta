@@ -48,6 +48,11 @@ type: DataTypes.STRING,
 allowNull: true,
 },
 
+mode: {
+type: DataTypes.STRING,
+allowNull: true,
+},
+
 
 // opcional: auditoria
 createdBy: {
