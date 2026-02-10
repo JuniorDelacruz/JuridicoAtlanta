@@ -66,13 +66,15 @@ function isTrocaDeNome(tipo) {
     return t.includes('troca') && (t.includes('nome') || t.includes('nomes'));
 }
 
+function isEmitirAlvara(tipo) {
+    return String(tipo || "").toLowerCase().includes("Emitir Alvará");
+}
+
 function isCasamento(tipo) {
     return String(tipo || "").toLowerCase().includes("casamento");
 }
 
-function isAlvara(tipo) {
-    return String(tipo || "").toLowerCase().includes("Emitir Alvará");
-}
+
 
 function mapPessoaCidadao(c) {
     if (!c) return null;
@@ -94,7 +96,7 @@ function buildWebhookPayload(item, reqUser) {
     const isPorte = isPortDeArmas(item?.tipo);
     const isTroca = isTrocaDeNome(item?.tipo);
     const casamento = isCasamento(item?.tipo);
-    const isAlvara = isAlvara(item?.tipo);
+    const isAlvara = isEmitirAlvara(item?.tipo);
 
     // padrão antigo (1 cidadao)
     const cid = dados?.cidadao || {};
