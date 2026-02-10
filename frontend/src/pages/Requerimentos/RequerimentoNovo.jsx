@@ -11,6 +11,16 @@ const API_URL =
   import.meta?.env?.VITE_API_BASE_URL ||
   "https://apijuridico.starkstore.dev.br";
 
+const PERM_BY_SLUG = {
+  "casamento": "requerimento.acessar.casamento",
+  "alvara": "requerimento.acessar.emitiralvara",
+  "limpeza-de-ficha": "requerimento.acessar.limpezadeficha",
+  "porte-de-arma": "requerimento.acessar.portedearma",
+  "renovacao-alvara": "requerimento.acessar.renovacaoalvara",
+  "troca-de-nome": "requerimento.acessar.trocadenome",
+};
+
+
 function authHeaders() {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -30,7 +40,6 @@ function initialValues(fields) {
 function resolveOptions(field, values) {
   if (!field) return [];
 
-  // ✅ dependente: optionsByValue + dependsOn
   if (field.optionsByValue && field.dependsOn) {
     const parentValue = values?.[field.dependsOn];
     const map = field.optionsByValue || {};
@@ -38,7 +47,6 @@ function resolveOptions(field, values) {
     return Array.isArray(opts) ? opts : [];
   }
 
-  // normal
   return Array.isArray(field.options) ? field.options : [];
 }
 
@@ -177,21 +185,29 @@ export default function RequerimentoNovo() {
   const { slug } = useParams();
   const tipoCfg = getTipoBySlug(slug);
 
-  const { user, logout, isAuthenticated } = useAuth();
+  // ✅ AGORA pegamos hasPerm daqui também
+  const { user, logout, isAuthenticated, hasPerm } = useAuth();
   const isEquipeJuridica = user?.subRole === "equipejuridico";
   const navigate = useNavigate();
 
+  // ✅ permitido via perm (não via roles)
   const permitido = useMemo(() => {
     if (!tipoCfg) return false;
-    return tipoCfg.roles?.includes(user?.role) || isEquipeJuridica || user?.role === "admin";
-  }, [tipoCfg, user?.role, isEquipeJuridica]);
+
+    const perm = PERM_BY_SLUG[slug];
+    if (!perm) return false; // slug sem perm => bloqueia por segurança
+
+    if (user?.role === "admin") return true;
+    if (isEquipeJuridica) return true;
+
+    return !!hasPerm?.(perm);
+  }, [tipoCfg, slug, user?.role, isEquipeJuridica, hasPerm]);
 
   const [values, setValues] = useState(() => initialValues(tipoCfg?.fields));
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // { [fieldName]: { status: "checking"|"ok"|"fail", identidade, cidadao, error } }
   const [verifMap, setVerifMap] = useState({});
 
   const verifyFields = useMemo(() => {
@@ -204,9 +220,11 @@ export default function RequerimentoNovo() {
       return;
     }
     if (!tipoCfg) {
-      navigate("/requerimento");
+      navigate("/requerimentos"); // ✅ estava /requerimento (provável typo)
       return;
     }
+
+    // ✅ bloqueio por perm
     if (!permitido) {
       alert("Acesso negado para este tipo de requerimento.");
       navigate(`/requerimentos/${slug}`);
