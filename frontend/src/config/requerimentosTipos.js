@@ -94,6 +94,11 @@ export const TIPOS_REQUERIMENTO = [
         label: "Emitir Alvará",
         roles: ["auxiliar", "advogado", "tabeliao", "escrivao", "conselheiro", "juiz", "promotor", "promotorchefe", "admin"],
         subRole: ['equipejuridico'],
+        api: {
+            url: "/api/requerimentos/alvara",
+            method: "POST",
+            mode: "multipart", // 👈 aqui mora a diferença
+        },
         fields: [
             { name: "numeroIdentificacao", label: "Número de Identificação (Registro Cartório)", type: "text", required: true, verifyCadastro: true },
 
@@ -165,11 +170,7 @@ export const TIPOS_REQUERIMENTO = [
             },
             { name: "razaosocial", label: "Razão Social da Empresa", type: "text", required: true },
         ],
-        api: {
-            url: "/api/requerimentos/alvara",
-            method: "POST",
-            mode: "multipart", // 👈 aqui mora a diferença
-        }
+
     },
     {
         slug: "renovacao-alvara",
