@@ -375,7 +375,7 @@ export default function RequerimentoNovo() {
         for (const f of tipoCfg.fields) {
           if (f.type === "file") delete dadosCopy[f.name];
         }
-        fd.append("dados", dadosCopy);
+        fd.append("dados", JSON.stringify(dadosCopy));
 
         // anexa os files
         for (const f of tipoCfg.fields) {
