@@ -311,12 +311,13 @@ function buildForumPost(type, data) {
 
     console.log(dados)
 
-     const base = {
-    color: 0x2ecc71,
-    thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
-    timestamp: new Date().toISOString(),
-    author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
-  };
+    const base = {
+      color: 0x2ecc71,
+      thumbnail: { url: "https://i.imgur.com/A22LhtG.png" },
+      timestamp: new Date().toISOString(),
+      author: { name: "Jurídico Atlanta RP", icon_url: "https://i.imgur.com/A22LhtG.png" },
+      footer: { text: `Aprovado por: ${safe(data?.aprovadoPor)}` },
+    };
 
     return {
       title: `${type === WEBHOOK_TYPES.RENOVACAO_ALVARA ? "Renovação" : "AVL"}-${id}/${safe(dados?.razaosocial)}`,
@@ -330,9 +331,18 @@ function buildForumPost(type, data) {
           `**Cidadão:** ${safe(cid?.nomeCompleto)} (${mentionUser(cid?.discordId)})\n` +
           `**Identidade:** ${safe(cid?.identidade)}\n`,
         embeds: [
-          { ...base,
-            color: 0x3498db,
-            author: { name: "Atlanta Juridico", icon_url: ""},
+          {
+            ...base,
+            title: "Alvará de Funcionamento APROVADO",
+            description: `ALVARÁ DE FUNCIONAMENTO N° ${dados?.id} - APROVADO`,
+            fields: [
+              { name: "RAZÃO SOCIAL", value: dados?.razaosocial, inline: false },
+              { name: "ENDEREÇO", value: `${dados?.estado}, ${dados?.cidade}`, inline: false },
+              { name: "SETOR", value: dados?.setor, inline: false },
+              { name: "SÓCIO ADMINISTRADOR", value: dados?.nomeCompleto, inline: false},
+              { name: "VALIDADE", value: `\`${dados?.validade}\``, inline: true},
+            ]
+
           },
         ],
       },

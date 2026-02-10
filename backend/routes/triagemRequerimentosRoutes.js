@@ -135,6 +135,7 @@ function buildWebhookPayload(item, reqUser) {
             setor: dados?.setor,
             cidade: dados?.cidade,
             estado: dados?.nomeEstado,
+            validade: dados?.workflow?.juiz?.validade,
         };
     }
 
