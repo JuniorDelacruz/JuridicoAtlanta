@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
       createdBy: { type: DataTypes.INTEGER, allowNull: false }, // userId do criador
 
       // vínculo com requerimento
-      requerimentoNumero: { type: DataTypes.INTEGER, allowNull: true, unique: true },
+      requerimentoNumero: { type: DataTypes.INTEGER, allowNull: true, },
       numeroVinculo: { type: DataTypes.INTEGER, allowNull: true },
       // “de quem é quem”
       solicitanteNome: { type: DataTypes.STRING, allowNull: true },
