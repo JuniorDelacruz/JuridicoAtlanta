@@ -44,6 +44,21 @@ async function resolveNomePorDiscordId(discordId) {
     return cad?.nomeCompleto || null;
 }
 
+
+function countArmasFromDados(dados) {
+    const a = dados?.arma;
+    if (!a) return 0;
+    if (Array.isArray(a)) return a.filter(Boolean).length;
+    // se for objeto único, conta 1
+    return 1;
+}
+
+function isPorteTipo(tipo) {
+    const t = norm(tipo);
+    // ajusta conforme seus valores reais
+    return t.includes("porte");
+}
+
 /**
  * =========================
  * VALIDAR REQUERIMENTO
@@ -62,24 +77,53 @@ router.get("/validar-requerimento/:numero", authMiddleware(), async (req, res) =
             return res.status(404).json({ ok: false, msg: "Requerimento não encontrado." });
         }
 
-        const ja = await Lancamento.findOne({ where: { requerimentoNumero: numero } });
-        if (ja) {
-            return res.status(409).json({
-                ok: false,
-                msg: "Esse requerimento já está vinculado a um lançamento.",
-                vinculado: { lancamentoId: ja.id },
-            });
-        }
-
         const dados = requerimento.dados || {};
-        if (dados?.lancamentoVinculado?.id) {
-            return res.status(409).json({
-                ok: false,
-                msg: "Esse requerimento já possui vínculo registrado.",
-                vinculado: { lancamentoId: dados.lancamentoVinculado.id },
+        const porte = isPorteTipo(requerimento.tipo);
+
+        if (!porte) {
+            const ja = await Lancamento.findOne({ where: { requerimentoNumero: numero } });
+            if (ja) {
+                return res.status(409).json({
+                    ok: false,
+                    msg: "Esse requerimento já está vinculado a um lançamento.",
+                    vinculado: { lancamentoId: ja.id },
+                });
+            }
+        } else {
+            const armasCount = countArmasFromDados(dados);
+            const vinculosCount = await Lancamento.count({ where: { requerimentoNumero: numero } });
+
+            if (armasCount <= 0) {
+                return res.status(400).json({ ok: false, msg: "Porte sem armas em dados.arma." });
+            }
+
+            if (vinculosCount >= armasCount) {
+                return res.status(409).json({
+                    ok: false,
+                    msg: `Todas as armas desse porte já foram lançadas (${vinculosCount}/${armasCount}).`,
+                    limite: { armasCount, vinculosCount }
+                });
+            }
+
+            // se quiser, já devolve qual seria o próximo
+            return res.json({
+                ok: true,
+                msg: `Requerimento OK para vínculo (porte). (${vinculosCount}/${armasCount})`,
+                requerimento: {
+                    numero: requerimento.numero,
+                    tipo: requerimento.tipo,
+                    status: requerimento.status,
+                    solicitante: requerimento.solicitante,
+                },
+                porte: {
+                    armasCount,
+                    vinculosCount,
+                    proximoVinculo: vinculosCount + 1
+                }
             });
         }
 
+        // fluxo padrão não-porte cai no return antigo
         return res.json({
             ok: true,
             msg: "Requerimento OK para vínculo.",
@@ -168,7 +212,7 @@ router.get("/membros-juridico", authMiddleware(), async (req, res) => {
  */
 router.get("/", authMiddleware(), requirePerm("lancamentos.view_all"), async (req, res) => {
     try {
-        
+
         const paid = req.query.paid; // "0" | "1" | undefined
         const createdBy = req.query.createdBy ? Number(req.query.createdBy) : null;
 
@@ -212,11 +256,36 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
         const reqNum = Number(requerimentoNumero);
         if (!reqNum || Number.isNaN(reqNum)) return res.status(400).json({ msg: "Requerimento inválido." });
 
-        const requerimento = await Requerimento.findByPk(reqNum, { transaction: t });
+        const requerimento = await Requerimento.findByPk(reqNum, { transaction: t, lock: t.LOCK.UPDATE });
         if (!requerimento) return res.status(404).json({ msg: "Requerimento não encontrado." });
 
-        const ja = await Lancamento.findOne({ where: { requerimentoNumero: reqNum }, transaction: t });
-        if (ja) return res.status(409).json({ msg: "Esse requerimento já está vinculado a um lançamento." });
+        const porte = isPorteTipo(requerimento.tipo);
+
+        let numeroVinculo = null;
+
+        if (!porte) {
+            const ja = await Lancamento.findOne({ where: { requerimentoNumero: reqNum }, transaction: t, lock: t.LOCK.UPDATE });
+            if (ja) return res.status(409).json({ msg: "Esse requerimento já está vinculado a um lançamento." });
+        } else {
+            const dadosReq = requerimento.dados || {};
+            const armasCount = countArmasFromDados(dadosReq);
+
+            if (armasCount <= 0) return res.status(400).json({ msg: "Porte sem armas em dados.arma." });
+
+            const vinculosCount = await Lancamento.count({
+                where: { requerimentoNumero: reqNum },
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (vinculosCount >= armasCount) {
+                return res.status(409).json({
+                    msg: `Todas as armas desse porte já foram lançadas (${vinculosCount}/${armasCount}).`
+                });
+            }
+
+            numeroVinculo = vinculosCount + 1;
+        }
 
         const servico = await ServicoJuridico.findByPk(Number(servicoId), { transaction: t });
         if (!servico || !servico.ativo) return res.status(404).json({ msg: "Serviço não encontrado ou inativo." });
@@ -262,6 +331,7 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
                 createdBy: req.user.id,
 
                 requerimentoNumero: reqNum,
+                numeroVinculo,
                 solicitanteNome: requerimento.solicitante || null,
 
                 advogadoNome,
@@ -275,27 +345,30 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
         );
 
         const oldDados = requerimento.dados || {};
-        if (oldDados?.lancamentoVinculado?.id) {
+
+        if (!porte && oldDados?.lancamentoVinculado?.id) {
             throw new Error("DADOS_REQUERIMENTO_JA_VINCULADOS");
         }
 
-        requerimento.dados = {
-            ...oldDados,
-            lancamentoVinculado: {
+        if (porte) {
+            const arr = Array.isArray(oldDados?.lancamentosVinculados) ? oldDados.lancamentosVinculados : [];
+            arr.push({
                 id: novo.id,
-                tipo: novo.tipo,
-                servico: { id: servico.id, label: servico.label, value: servico.value },
-                valorTotal: centsToNumber(totalCents),
-                repasseAdvogado: centsToNumber(repAdvCents),
-                repasseJuridico: centsToNumber(repJurCents),
-                advogado: {
-                    userId: req.user.id,
-                    nome: advogadoNome,
-                    discordId: advogadoDiscordId,
-                },
+                numeroVinculo,
                 vinculadoEm: new Date().toISOString(),
-            },
-        };
+                advogado: { userId: req.user.id, nome: advogadoNome, discordId: advogadoDiscordId },
+            });
+
+            requerimento.dados = {
+                ...oldDados,
+                lancamentosVinculados: arr
+            };
+        } else {
+            requerimento.dados = {
+                ...oldDados,
+                lancamentoVinculado: { /* seu bloco atual */ }
+            };
+        }
 
         await requerimento.save({ transaction: t });
 

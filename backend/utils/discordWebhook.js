@@ -328,7 +328,7 @@ function buildForumPost(type, data) {
           `**Setor:** ${safe(dados?.setor)}\n` +
           `**Estado:** ${safe(dados?.nomeEstado)}\n` +
           `**Cidade:** ${safe(dados?.cidade)}\n` +
-          `**Cidadão:** ${safe(cid?.nomeCompleto)} (${mentionUser(cid?.discordId)})\n` +
+          `**Cidadão:** ${safe(cid?.nomeCompleto)} (${mentionUser(dados)})\n` +
           `**Identidade:** ${safe(cid?.identidade)}\n`,
         embeds: [
           {
@@ -339,7 +339,7 @@ function buildForumPost(type, data) {
               { name: "RAZÃO SOCIAL", value: dados?.razaosocial, inline: false },
               { name: "ENDEREÇO", value: `${dados?.estado}, ${dados?.cidade}`, inline: false },
               { name: "SETOR", value: dados?.setor, inline: false },
-              { name: "SÓCIO ADMINISTRADOR", value: dados?.nomeCompleto, inline: false},
+              { name: "SÓCIO ADMINISTRADOR", value: `${dados?.nomeCompleto} - (${mentionUser(dados?.discordId)})`, inline: false},
               { name: "VALIDADE", value: `\`${dados?.validade}\``, inline: true},
             ]
 
