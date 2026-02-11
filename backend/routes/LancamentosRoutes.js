@@ -256,7 +256,7 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
         const reqNum = Number(requerimentoNumero);
         if (!reqNum || Number.isNaN(reqNum)) return res.status(400).json({ msg: "Requerimento inválido." });
 
-        const requerimento = await Requerimento.findByPk(reqNum, { transaction: t, lock: t.LOCK.UPDATE });
+        const requerimento = await Requerimento.findByPk(reqNum, { transaction: t });
         if (!requerimento) return res.status(404).json({ msg: "Requerimento não encontrado." });
 
         const porte = isPorteTipo(requerimento.tipo);
@@ -264,7 +264,7 @@ router.post("/", authMiddleware(), requirePerm("lancamentos.create"), async (req
         let numeroVinculo = null;
 
         if (!porte) {
-            const ja = await Lancamento.findOne({ where: { requerimentoNumero: reqNum }, transaction: t, lock: t.LOCK.UPDATE });
+            const ja = await Lancamento.findOne({ where: { requerimentoNumero: reqNum }, transaction: t });
             if (ja) return res.status(409).json({ msg: "Esse requerimento já está vinculado a um lançamento." });
         } else {
             const dadosReq = requerimento.dados || {};
