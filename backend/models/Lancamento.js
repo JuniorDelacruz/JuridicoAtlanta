@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
 
       // vínculo com requerimento
       requerimentoNumero: { type: DataTypes.INTEGER, allowNull: true, unique: true },
-      lancamentoNumero: { type: DataTypes.INTEGER, allowNull: true },
+      numeroNumero: { type: DataTypes.INTEGER, allowNull: true },
       // “de quem é quem”
       solicitanteNome: { type: DataTypes.STRING, allowNull: true },
       advogadoNome: { type: DataTypes.STRING, allowNull: true },
