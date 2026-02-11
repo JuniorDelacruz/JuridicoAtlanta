@@ -85,7 +85,7 @@ db.Sequelize = Sequelize;
 if (process.env.NODE_ENV !== 'production') {
   (async () => {
     try {
-      await db.sequelize.sync({ alter: true });
+      // await db.sequelize.sync({ alter: true });
       console.log('Banco sincronizado com sucesso (alter: true)! Colunas novas adicionadas/atualizadas.');
     } catch (err) {
       console.error('Erro ao sincronizar o banco (sync alter):', err.message);

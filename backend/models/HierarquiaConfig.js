@@ -7,6 +7,7 @@ export default (sequelize) => {
   HierarquiaConfig.init({
     id: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },

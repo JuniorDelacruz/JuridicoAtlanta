@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const Lancamento = sequelize.define(
     "Lancamento",
     {
-      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: DataTypes.INTEGER,allowNull: false, primaryKey: true, autoIncrement: true },
 
       tipo: { type: DataTypes.STRING, allowNull: false },
       titulo: { type: DataTypes.STRING, allowNull: true },
@@ -22,9 +22,9 @@ export default (sequelize, DataTypes) => {
       advogadoDiscordId: { type: DataTypes.STRING, allowNull: true },
 
       // valores
-      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      repasseJuridicoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: false },
+      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: false },
+      repasseJuridicoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: false },
 
       // repasse/pagamento
       pagoEm: { type: DataTypes.DATE, allowNull: true },

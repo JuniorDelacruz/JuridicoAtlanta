@@ -5,7 +5,7 @@ export default (sequelize) => {
 
   ServicoJuridico.init(
     {
-      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: DataTypes.INTEGER, allowNull: false, primaryKey: true, autoIncrement: true },
 
       // Texto que aparece no select
       label: { type: DataTypes.STRING, allowNull: false },
@@ -16,8 +16,8 @@ export default (sequelize) => {
       ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 
       // valores padrão do serviço (em centavos)
-      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      valorTotalCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: false },
+      repasseAdvogadoCents: { type: DataTypes.INTEGER, allowNull: false, defaultValue: false },
 
       // Regras de visibilidade (mesmo padrão do seu allow)
       // { any: true } OU { roles: [...], subRoles: [...] }
