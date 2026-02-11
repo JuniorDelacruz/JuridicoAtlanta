@@ -12,7 +12,7 @@
     "start": "node server.js",
     "mig:scan": "node scripts/make-migration-skeleton.mjs add_campos",
     "mig:check": "node scripts/make-migration-skeleton.mjs check_schema",
-    "mig:drop": "node scripts/make-migration-skeleton.mjs cleanup --drop-orphans",
+    "mig:drops": "node scripts/make-migration-skeleton.mjs cleanup --drop-orphans",
     "mig:scan:name": "node scripts/make-migration-skeleton.mjs"
   },
   "dependencies": {
