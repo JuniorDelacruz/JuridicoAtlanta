@@ -139,6 +139,9 @@ export default function Dashboard() {
             <Link to="/codigo-penal" className="hover:text-white underline-offset-4 hover:underline">
               Código Penal
             </Link>
+            <Link to="/constituicao" className="hover:text-white underline-offset-4 hover:underline">
+              Constituição
+            </Link>
             <Link to="/valores" className="hover:text-white underline-offset-4 hover:underline">
               Valores de Serviços
             </Link>
